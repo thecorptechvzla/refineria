@@ -1,0 +1,10 @@
+import { IsString, MinLength } from 'class-validator';
+
+export class CreateSupplierDto {
+  @IsString()
+  @MinLength(2)
+  name: string;
+
+  @IsString()
+  contactInfo: string;
+}
