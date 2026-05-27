@@ -1,18 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
+import { useLogout } from '@/lib/hooks/useAuth';
 import { LayoutDashboard, ArrowLeftRight, Building2, LogOut, X, ShieldCheck } from 'lucide-react';
 
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user } = useGold();
+  const logout = useLogout();
 
   const handleLogout = () => {
-    document.cookie = "goldtrack_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    router.push('/login');
+    logout();
   };
 
   const links = [

@@ -1,13 +1,12 @@
 allowBuilds:
-  '0': p
-  '1': r
-  '2': i
-  '3': s
-  '4': m
-  '5': a
   '@nestjs/core': set this to true or false
   '@prisma/engines': set this to true or false
   bcrypt: set this to true or false
   prisma: set this to true or false
   unrs-resolver: set this to true or false
-onlyBuiltDependencies: '@prisma/engines'
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - bcrypt
+  - prisma
+  - unrs-resolver

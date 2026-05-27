@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, setAuthToken } from '@/lib/api';
 import type { User } from '@/types';
 
 type LoginResponse = {
@@ -17,6 +17,7 @@ export function useLogin() {
         body: JSON.stringify(data),
       }),
     onSuccess: (res) => {
+      setAuthToken(res.token);
       queryClient.setQueryData(['profile'], res.user);
     },
   });
@@ -34,8 +35,9 @@ export function useProfile() {
 export function useLogout() {
   const queryClient = useQueryClient();
 
-  return () => {
-    document.cookie = 'goldtrack_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  return async () => {
+    setAuthToken(null);
+    try { await api('/auth/logout', { method: 'POST' }); } catch {}
     queryClient.clear();
     window.location.href = '/login';
   };

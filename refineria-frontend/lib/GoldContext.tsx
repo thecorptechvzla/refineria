@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from '@/lib/api';
+import { api, getAuthToken } from '@/lib/api';
 import type { User } from '@/types';
 
 type GoldContextType = {
@@ -17,11 +17,12 @@ export function GoldProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const cookie = document.cookie
-      .split('; ')
-      .find((c) => c.startsWith('goldtrack_session='));
+    const hasAuth = !!(
+      getAuthToken() ||
+      document.cookie.includes('goldtrack_session=')
+    );
 
-    if (!cookie) {
+    if (!hasAuth) {
       setIsLoading(false);
       return;
     }

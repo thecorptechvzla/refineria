@@ -23,8 +23,9 @@ export default function LoginPage() {
       const res = await loginMutation.mutateAsync({ email, password });
       setUser(res.user);
       router.push(res.user.role === 'SUPERADMIN' ? '/' : '/transacciones');
-    } catch {
-      setError('Credenciales incorrectas. Intenta de nuevo.');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Credenciales incorrectas. Intenta de nuevo.';
+      setError(msg);
     }
   };
 
@@ -41,8 +42,9 @@ export default function LoginPage() {
       const res = await loginMutation.mutateAsync(creds);
       setUser(res.user);
       router.push(role === 'SUPERADMIN' ? '/' : '/transacciones');
-    } catch {
-      setError('Error al iniciar sesión.');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error al iniciar sesión.';
+      setError(msg);
     }
   };
 

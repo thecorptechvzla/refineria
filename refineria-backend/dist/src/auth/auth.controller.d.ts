@@ -24,6 +24,9 @@ export declare class AuthController {
             updatedAt: Date;
         };
     }>;
+    logout(res: Response): {
+        message: string;
+    };
     getProfile(user: any): Promise<{
         id: string;
         email: string;

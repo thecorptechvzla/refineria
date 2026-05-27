@@ -1,12 +1,16 @@
 'use client';
 
 import { useGold } from '@/lib/GoldContext';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/lib/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 
 export default function Header() {
   const { user } = useGold();
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <header className="h-14 bg-midnight-800/90 border-b border-blue-500/10 flex items-center justify-between px-4 sm:px-6">
@@ -33,13 +37,15 @@ export default function Header() {
           </div>
         )}
 
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 text-slate-500 hover:text-gold-400 hover:bg-gold-500/10 transition-all border border-transparent hover:border-gold-500/20"
-          title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+        {mounted && (
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-slate-500 hover:text-gold-400 hover:bg-gold-500/10 transition-all border border-transparent hover:border-gold-500/20"
+            title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        )}
       </div>
     </header>
   );
