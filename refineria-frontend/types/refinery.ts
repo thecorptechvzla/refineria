@@ -1,3 +1,5 @@
+export type ProcessStatus = 'open' | 'closed';
+
 export interface GoldBar {
   id: string;
   codigo: string;
@@ -13,7 +15,16 @@ export interface GoldBar {
 export interface ProcessLot {
   id: string;
   numero: number;
-  supplierId: string;
   barIds: string[];
   fechaCreacion: string;
+}
+
+export interface Process {
+  id: string;
+  numero: number;
+  supplierId: string;
+  status: ProcessStatus;
+  lotes: ProcessLot[];
+  createdAt: string;
+  closedAt?: string;
 }

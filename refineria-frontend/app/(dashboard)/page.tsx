@@ -5,13 +5,14 @@ import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useTransactions } from '@/lib/hooks/useTransactions';
 import { useTransactionMetrics } from '@/lib/hooks/useTransactions';
 import { useWorkers } from '@/lib/hooks/useWorkers';
+import { useProcess } from '@/lib/ProcessContext';
 import { useMemo } from 'react';
 import { toGrams, getSupplierName, formatDate, formatWeightShort } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp, TrendingDown, Wallet, Users, Activity, Crosshair,
+  TrendingUp, TrendingDown, Wallet, Users, Activity, Crosshair, Package, Settings,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -20,6 +21,35 @@ export default function DashboardPage() {
   const { data: metrics } = useTransactionMetrics();
   const { data: suppliers } = useSuppliers();
   const { data: workers } = useWorkers();
+  const { goldBars, processes } = useProcess();
+
+  const oroEnInventario = useMemo(
+    () => goldBars.filter((b) => b.disponible).reduce((s, b) => s + b.pesoBruto, 0),
+    [goldBars]
+  );
+
+  const oroPorProcesar = useMemo(() => {
+    const openLoteBarIds = processes
+      .filter((p) => p.status === 'open')
+      .flatMap((p) => p.lotes.flatMap((l) => l.barIds));
+    return goldBars
+      .filter((b) => openLoteBarIds.includes(b.id))
+      .reduce((s, b) => s + b.pesoBruto, 0);
+  }, [processes, goldBars]);
+
+  const rendimientoGeneral = useMemo(() => {
+    const closedLotes = processes
+      .filter((p) => p.status === 'closed')
+      .flatMap((p) => p.lotes);
+    let totalE = 0;
+    let totalG = 0;
+    for (const lot of closedLotes) {
+      const bars = goldBars.filter((b) => lot.barIds.includes(b.id));
+      totalE += bars.reduce((s, b) => s + b.analitico, 0);
+      totalG += bars.reduce((s, b) => s + b.recuperado, 0);
+    }
+    return totalE > 0 ? (totalG / totalE) * 100 : 0;
+  }, [processes, goldBars]);
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
@@ -63,11 +93,16 @@ export default function DashboardPage() {
   const totalIngresos = metrics ? formatWeightShort(metrics.totalIngresos) : '0 g';
   const totalEgresos = metrics ? formatWeightShort(metrics.totalEgresos) : '0 g';
   const balance = metrics ? formatWeightShort(metrics.balance) : '0 g';
+  const inventarioStr = formatWeightShort(oroEnInventario);
+  const porProcesarStr = formatWeightShort(oroPorProcesar);
 
   const kpiCards = [
     { label: 'Ingresos', value: `+${totalIngresos}`, icon: TrendingUp, accent: 'gold', subtitle: '' },
     { label: 'Egresos', value: `-${totalEgresos}`, icon: TrendingDown, accent: 'blue', subtitle: '' },
     { label: 'Balance Neto', value: balance, icon: Wallet, accent: 'gold', subtitle: '' },
+    { label: 'Oro en Inventario', value: inventarioStr, icon: Package, accent: 'gold', subtitle: `${goldBars.filter((b) => b.disponible).length} barras disponibles` },
+    { label: 'Oro por Procesar', value: porProcesarStr, icon: Settings, accent: 'blue', subtitle: `${processes.filter((p) => p.status === 'open').length} procesos activos` },
+    { label: 'Rendimiento General', value: `${rendimientoGeneral.toFixed(2)}%`, icon: Crosshair, accent: 'gold', subtitle: `Procesos cerrados: ${processes.filter((p) => p.status === 'closed').length}` },
     { label: 'Personal', value: metrics ? `${metrics.workersActivos}/${metrics.workersTotal}` : '0/0', icon: Users, accent: 'blue', subtitle: metrics ? `${metrics.workersInactivos} inactivos` : '' },
   ];
 

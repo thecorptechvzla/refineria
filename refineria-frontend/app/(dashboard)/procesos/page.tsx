@@ -4,20 +4,226 @@ import { useState, useMemo } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { getSupplierName } from '@/lib/utils';
-import { Settings, Package, Crosshair, CheckCircle } from 'lucide-react';
+import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
+import {
+  Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
+  Lock, X, Eye,
+} from 'lucide-react';
 
-export default function ProcesosPage() {
-  const { data: suppliers } = useSuppliers();
-  const { goldBars, lots, assignToLot } = useProcess();
+type PageView = 'list' | 'detail';
 
-  const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
-  const [successMessage, setSuccessMessage] = useState('');
+type LotDetail = ProcessLot & {
+  bars: GoldBar[];
+  pesoBruto: number;
+  e: number;
+  f: number;
+  g: number;
+  pct: number;
+  dif: number;
+};
 
-  const availableBars = useMemo(
-    () => goldBars.filter((b) => b.disponible && (!selectedSupplierId || b.supplierId === selectedSupplierId)),
-    [goldBars, selectedSupplierId]
+type ProcessDetail = Process & {
+  lotDetails: LotDetail[];
+  totalBruto: number;
+  totalE: number;
+  totalF: number;
+  totalG: number;
+  totalPct: number;
+  totalDif: number;
+};
+
+function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
+  const bars = allBars.filter((b) => lot.barIds.includes(b.id));
+  const pesoBruto = bars.reduce((s, b) => s + b.pesoBruto, 0);
+  const e = bars.reduce((s, b) => s + b.analitico, 0);
+  const f = bars.reduce((s, b) => s + b.esperado, 0);
+  const g = bars.reduce((s, b) => s + b.recuperado, 0);
+  return {
+    ...lot,
+    bars,
+    pesoBruto,
+    e,
+    f,
+    g,
+    pct: e > 0 ? (g / e) * 100 : 0,
+    dif: g - f,
+  };
+}
+
+function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetail {
+  const lotDetails = p.lotes.map((l) => computeLotDetail(l, allBars));
+  const totalBruto = lotDetails.reduce((s, l) => s + l.pesoBruto, 0);
+  const totalE = lotDetails.reduce((s, l) => s + l.e, 0);
+  const totalF = lotDetails.reduce((s, l) => s + l.f, 0);
+  const totalG = lotDetails.reduce((s, l) => s + l.g, 0);
+  return {
+    ...p,
+    lotDetails,
+    totalBruto,
+    totalE,
+    totalF,
+    totalG,
+    totalPct: totalE > 0 ? (totalG / totalE) * 100 : 0,
+    totalDif: totalG - totalF,
+  };
+}
+
+function ProcessModal({
+  process,
+  allBars,
+  suppliers,
+  onClose,
+}: {
+  process: Process;
+  allBars: GoldBar[];
+  suppliers: { id: string; name: string }[] | undefined;
+  onClose: () => void;
+}) {
+  const detail = useMemo(() => buildProcessDetail(process, allBars), [process, allBars]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="p-5 border-b border-blue-500/10 flex items-center justify-between sticky top-0 bg-midnight-800/95 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              <Crosshair className="w-4 h-4 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white tracking-tight">
+                Proceso #{detail.numero} — {suppliers ? getSupplierName(suppliers, detail.supplierId) : '—'}
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                  CERRADO
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {detail.lotDetails.length} lote{detail.lotDetails.length !== 1 ? 's' : ''}
+                </span>
+                {detail.closedAt && (
+                  <span className="text-[10px] text-slate-600">
+                    Cerrado el {new Date(detail.closedAt).toLocaleDateString('es-PE')}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-6">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-blue-500/10">
+                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recup.</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Dif (g)</th>
+                  <th className="px-3 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {detail.lotDetails.map((lot) => (
+                  <tr key={lot.id} className="terminal-row">
+                    <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.numero}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.pesoBruto}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                      {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
+                    </td>
+                  </tr>
+                ))}
+                {/* Totals row */}
+                <tr className="border-t border-gold-500/20 bg-gold-500/5">
+                  <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalBruto}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalE.toFixed(1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalF.toFixed(1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalG.toFixed(1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{detail.totalPct.toFixed(2)}%</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
+                    {detail.totalDif >= 0 ? '+' : ''}{detail.totalDif.toFixed(1)}
+                  </td>
+                  <td />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalle de Barras por Lote</h3>
+            {detail.lotDetails.map((lot) => (
+              <div key={lot.id} className="bg-midnight-800/50 border border-blue-500/10 p-4">
+                <p className="text-sm font-bold text-slate-300 mb-3">Lote #{lot.numero}</p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-blue-500/10">
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Barra</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Bruto (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">G (g)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lot.bars.map((bar) => (
+                        <tr key={bar.id} className="terminal-row">
+                          <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.codigo}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.pesoBruto}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.analitico}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.esperado}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.recuperado}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-5 border-t border-blue-500/10 flex justify-end">
+          <button onClick={onClose} className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
   );
+}
+
+function ProcessDetailView({
+  processDetail,
+  availableBars,
+  allBars,
+  suppliers,
+  onBack,
+  onCloseProcess,
+  onAssign,
+}: {
+  processDetail: ProcessDetail;
+  availableBars: GoldBar[];
+  allBars: GoldBar[];
+  suppliers: { id: string; name: string }[] | undefined;
+  onBack: () => void;
+  onCloseProcess: () => void;
+  onAssign: (barIds: string[]) => void;
+}) {
+  const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
 
   const toggleBar = (barId: string) => {
     setSelectedBarIds((prev) =>
@@ -26,138 +232,97 @@ export default function ProcesosPage() {
   };
 
   const handleAssign = () => {
-    if (selectedBarIds.length === 0 || !selectedSupplierId) return;
-
-    assignToLot(selectedSupplierId, selectedBarIds);
-    const count = selectedBarIds.length;
-    setSuccessMessage(`${count} barra${count !== 1 ? 's' : ''} asignada${count !== 1 ? 's' : ''} al Lote N° ${lots.length + 1}`);
+    if (selectedBarIds.length === 0) return;
+    onAssign(selectedBarIds);
     setSelectedBarIds([]);
-    setTimeout(() => setSuccessMessage(''), 4000);
   };
-
-  const lotDetails = useMemo(() => {
-    return lots.map((lot) => {
-      const bars = goldBars.filter((b) => lot.barIds.includes(b.id));
-      const pesoBruto = bars.reduce((s, b) => s + b.pesoBruto, 0);
-      const e = bars.reduce((s, b) => s + b.analitico, 0);
-      const f = bars.reduce((s, b) => s + b.esperado, 0);
-      const g = bars.reduce((s, b) => s + b.recuperado, 0);
-      const pct = e > 0 ? (g / e) * 100 : 0;
-      const dif = g - f;
-      return { ...lot, bars, pesoBruto, e, f, g, pct, dif };
-    });
-  }, [lots, goldBars]);
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Settings className="w-5 h-5 text-gold-500" />
-            Configuración de Procesos
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Asignación de Barras y Consolidado de Lotes</p>
-        </div>
-      </div>
-
-      {successMessage && (
-        <div className="glass-panel-gold p-4 flex items-center gap-3">
-          <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 text-slate-500 hover:text-slate-300 hover:bg-blue-500/5 transition-all border border-transparent hover:border-blue-500/20">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
           <div>
-            <p className="text-sm font-semibold text-gold-400">{successMessage}</p>
-            <p className="text-[10px] text-gold-500/60 uppercase tracking-wider mt-0.5">Lote generado en consolidado</p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Proceso #{processDetail.numero} — {suppliers ? getSupplierName(suppliers, processDetail.supplierId) : '—'}
+              </h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
+                ACTIVO
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">
+              {processDetail.lotDetails.length} lote{processDetail.lotDetails.length !== 1 ? 's' : ''} creado{processDetail.lotDetails.length !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
-      )}
+        <button
+          onClick={onCloseProcess}
+          className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition-all"
+        >
+          <span className="flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5" />
+            Cerrar Proceso
+          </span>
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
         <div className="lg:col-span-2 space-y-4">
           <div className="glass-panel">
             <div className="p-4 border-b border-blue-500/10">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Apertura de Proceso</h2>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Disponibles</h2>
             </div>
-
-            <div className="p-4 sm:p-5 space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  <Package className="w-3 h-3 inline mr-1" />
-                  Empresa / Proveedor
-                </label>
-                <select
-                  value={selectedSupplierId}
-                  onChange={(e) => {
-                    setSelectedSupplierId(e.target.value);
-                    setSelectedBarIds([]);
-                  }}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none transition-all"
-                >
-                  <option value="">Seleccionar proveedor...</option>
-                  {suppliers?.map((s) => (
-                    <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
+            <div className="p-4 sm:p-5 space-y-3">
+              {availableBars.length > 0 ? (
+                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+                  {availableBars.map((bar) => (
+                    <label
+                      key={bar.id}
+                      className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
+                        selectedBarIds.includes(bar.id)
+                          ? 'bg-gold-500/10 border-gold-500/30'
+                          : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedBarIds.includes(bar.id)}
+                        onChange={() => toggleBar(bar.id)}
+                        className="w-4 h-4 accent-gold-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-mono text-slate-200">{bar.codigo}</span>
+                          <span className="text-xs font-mono text-slate-400">{bar.pesoBruto} g</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
+                          <span>E: {bar.analitico}</span>
+                          <span>F: {bar.esperado}</span>
+                          <span>G: {bar.recuperado}</span>
+                        </div>
+                      </div>
+                    </label>
                   ))}
-                </select>
-              </div>
-
-              {selectedSupplierId && (
-                <>
-                  <div className="border-t border-blue-500/10 pt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Barras Disponibles</h3>
-                      <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-                        {String(availableBars.length).padStart(2, '0')}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-                      {availableBars.length > 0 ? (
-                        availableBars.map((bar) => (
-                          <label
-                            key={bar.id}
-                            className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
-                              selectedBarIds.includes(bar.id)
-                                ? 'bg-gold-500/10 border-gold-500/30'
-                                : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedBarIds.includes(bar.id)}
-                              onChange={() => toggleBar(bar.id)}
-                              className="w-4 h-4 accent-gold-500"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-mono text-slate-200">{bar.codigo}</span>
-                                <span className="text-xs font-mono text-slate-400">{bar.pesoBruto} g</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
-                                <span>E: {bar.analitico}</span>
-                                <span>F: {bar.esperado}</span>
-                                <span>G: {bar.recuperado}</span>
-                              </div>
-                            </div>
-                          </label>
-                        ))
-                      ) : (
-                        <p className="text-center text-sm text-slate-500 py-6">
-                          No hay barras disponibles para este proveedor.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleAssign}
-                    disabled={selectedBarIds.length === 0}
-                    className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <Crosshair className="w-4 h-4" />
-                      Asignar a Lote Nuevo ({selectedBarIds.length})
-                    </span>
-                  </button>
-                </>
+                </div>
+              ) : (
+                <p className="text-center text-sm text-slate-500 py-6">
+                  No hay barras disponibles para este proveedor.
+                </p>
               )}
+
+              <button
+                onClick={handleAssign}
+                disabled={selectedBarIds.length === 0}
+                className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Asignar a Lote Nuevo ({selectedBarIds.length})
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -170,51 +335,32 @@ export default function ProcesosPage() {
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Consolidado</h2>
               </div>
               <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-                {String(lotDetails.length).padStart(2, '0')} lote{lotDetails.length !== 1 ? 's' : ''}
+                {String(processDetail.lotDetails.length).padStart(2, '0')} lote{processDetail.lotDetails.length !== 1 ? 's' : ''}
               </span>
             </div>
-
             <div className="flex-1 overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
-                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote N°</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Barras</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Bruto (g)</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recup.</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Diferencia (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Dif (g)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {lotDetails.length > 0 ? (
-                    [...lotDetails].reverse().map((lot) => (
+                  {processDetail.lotDetails.length > 0 ? (
+                    [...processDetail.lotDetails].reverse().map((lot) => (
                       <tr key={lot.id} className="terminal-row">
-                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
-                          #{lot.numero}
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-sm text-slate-300 max-w-[140px] truncate">
-                          {suppliers ? getSupplierName(suppliers, lot.supplierId) : '—'}
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <div className="flex flex-wrap gap-1">
-                            {lot.bars.map((b) => (
-                              <span key={b.id} className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-1.5 py-0.5 border border-blue-500/10">
-                                {b.codigo}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.numero}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.pesoBruto}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">
-                          {lot.pct.toFixed(2)}%
-                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
                           {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
                         </td>
@@ -222,8 +368,8 @@ export default function ProcesosPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay lotes generados. Selecciona un proveedor y asigna barras para crear el primer lote.
+                      <td colSpan={7} className="px-5 py-8 text-center text-sm text-slate-500">
+                        No hay lotes en este proceso. Asigna barras para crear el primer lote.
                       </td>
                     </tr>
                   )}
@@ -233,6 +379,270 @@ export default function ProcesosPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function ProcesosPage() {
+  const { data: suppliers } = useSuppliers();
+  const { goldBars, processes, openProcess, closeProcess, assignToLot } = useProcess();
+
+  const [view, setView] = useState<PageView>('list');
+  const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
+  const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
+  const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const activeProcesses = useMemo(() => processes.filter((p) => p.status === 'open'), [processes]);
+  const closedProcesses = useMemo(() => processes.filter((p) => p.status === 'closed'), [processes]);
+
+  const managingProcess = useMemo(
+    () => (managingProcessId ? processes.find((p) => p.id === managingProcessId) ?? null : null),
+    [managingProcessId, processes]
+  );
+
+  const viewingProcess = useMemo(
+    () => (viewingProcessId ? processes.find((p) => p.id === viewingProcessId) ?? null : null),
+    [viewingProcessId, processes]
+  );
+
+  const managingDetail = useMemo(
+    () => (managingProcess ? buildProcessDetail(managingProcess, goldBars) : null),
+    [managingProcess, goldBars]
+  );
+
+  const availableBarsForManaging = useMemo(
+    () => (managingProcess ? goldBars.filter((b) => b.disponible && b.supplierId === managingProcess.supplierId) : []),
+    [managingProcess, goldBars]
+  );
+
+  const handleOpenProcess = () => {
+    if (!newProcessSupplierId) return;
+    const newProc = openProcess(newProcessSupplierId);
+    setNewProcessSupplierId('');
+    setManagingProcessId(newProc.id);
+    setView('detail');
+    setSuccessMessage(`Proceso #${newProc.numero} abierto correctamente`);
+    setTimeout(() => setSuccessMessage(''), 4000);
+  };
+
+  const handleCloseProcess = () => {
+    if (!managingProcessId) return;
+    const proc = processes.find((p) => p.id === managingProcessId);
+    closeProcess(managingProcessId);
+    setSuccessMessage(`Proceso #${proc?.numero} cerrado definitivamente`);
+    setManagingProcessId(null);
+    setView('list');
+    setTimeout(() => setSuccessMessage(''), 4000);
+  };
+
+  const handleAssign = (barIds: string[]) => {
+    if (!managingProcessId) return;
+    assignToLot(managingProcessId, barIds);
+    setSuccessMessage(`${barIds.length} barra${barIds.length !== 1 ? 's' : ''} asignada${barIds.length !== 1 ? 's' : ''} a lote nuevo`);
+    setTimeout(() => setSuccessMessage(''), 4000);
+  };
+
+  if (view === 'detail' && managingDetail) {
+    return (
+      <div className="space-y-5">
+        {successMessage && (
+          <div className="glass-panel-gold p-4 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-gold-400">{successMessage}</p>
+              <p className="text-[10px] text-gold-500/60 uppercase tracking-wider mt-0.5">Operación exitosa</p>
+            </div>
+          </div>
+        )}
+
+        <ProcessDetailView
+          processDetail={managingDetail}
+          availableBars={availableBarsForManaging}
+          allBars={goldBars}
+          suppliers={suppliers}
+          onBack={() => { setView('list'); setManagingProcessId(null); }}
+          onCloseProcess={handleCloseProcess}
+          onAssign={handleAssign}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <Settings className="w-5 h-5 text-gold-500" />
+            Configuración de Procesos
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Gestión de procesos de refinación</p>
+        </div>
+      </div>
+
+      {successMessage && (
+        <div className="glass-panel-gold p-4 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-gold-400">{successMessage}</p>
+            <p className="text-[10px] text-gold-500/60 uppercase tracking-wider mt-0.5">Operación exitosa</p>
+          </div>
+        </div>
+      )}
+
+      <div className="glass-panel">
+        <div className="p-4 sm:p-5">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Abrir Nuevo Proceso</h2>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 max-w-xs">
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                <Package className="w-3 h-3 inline mr-1" />
+                Empresa / Proveedor
+              </label>
+              <select
+                value={newProcessSupplierId}
+                onChange={(e) => setNewProcessSupplierId(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none transition-all"
+              >
+                <option value="">Seleccionar proveedor...</option>
+                {suppliers?.map((s) => (
+                  <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleOpenProcess}
+              disabled={!newProcessSupplierId}
+              className="px-5 py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Abrir Proceso
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2 h-2 bg-gold-500 rounded-sm" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              Procesos Activos
+            </h2>
+            <span className="text-[10px] font-mono text-slate-500 bg-gold-500/10 px-2 py-0.5 border border-gold-500/20">
+              {String(activeProcesses.length).padStart(2, '0')}
+            </span>
+          </div>
+
+          {activeProcesses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {activeProcesses.map((p) => {
+                const lotCount = p.lotes.length;
+                const barCount = p.lotes.reduce((s, l) => s + l.barIds.length, 0);
+                return (
+                  <div key={p.id} className="glass-panel p-4 hover:border-gold-500/30 transition-all">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-lg font-bold text-gold-500 font-mono">#{p.numero}</p>
+                        <p className="text-sm text-slate-300 mt-0.5">
+                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
+                        ACTIVO
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
+                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
+                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
+                      <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
+                    </div>
+                    <button
+                      onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
+                      className="w-full py-2 bg-gold-500/10 border border-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wider hover:bg-gold-500/20 transition-all"
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Settings className="w-3 h-3" />
+                        Gestionar
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="glass-panel p-8 text-center">
+              <p className="text-sm text-slate-500">No hay procesos activos.</p>
+              <p className="text-[10px] text-slate-600 mt-1">Selecciona un proveedor y abre un nuevo proceso.</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2 h-2 bg-blue-500 rounded-sm" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              Procesos Cerrados
+            </h2>
+            <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
+              {String(closedProcesses.length).padStart(2, '0')}
+            </span>
+          </div>
+
+          {closedProcesses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {closedProcesses.map((p) => {
+                const lotCount = p.lotes.length;
+                const barCount = p.lotes.reduce((s, l) => s + l.barIds.length, 0);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setViewingProcessId(p.id)}
+                    className="glass-panel p-4 hover:border-blue-500/30 transition-all text-left cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-lg font-bold text-slate-400 font-mono">#{p.numero}</p>
+                        <p className="text-sm text-slate-300 mt-0.5">
+                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                        CERRADO
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
+                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
+                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
+                      {p.closedAt && <span>Cerrado {new Date(p.closedAt).toLocaleDateString('es-PE')}</span>}
+                    </div>
+                    <div className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                      <Eye className="w-3 h-3" />
+                      Ver Detalle
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="glass-panel p-8 text-center">
+              <p className="text-sm text-slate-500">No hay procesos cerrados.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {viewingProcess && (
+        <ProcessModal
+          process={viewingProcess}
+          allBars={goldBars}
+          suppliers={suppliers}
+          onClose={() => setViewingProcessId(null)}
+        />
+      )}
     </div>
   );
 }
