@@ -2,22 +2,18 @@
 
 import { useState, FormEvent } from 'react';
 import { useGold } from '@/lib/GoldContext';
-import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useTransactions, useCreateTransaction } from '@/lib/hooks/useTransactions';
-import { WeightUnit, type TransactionType } from '@/types';
-import { calculateFineWeight, formatDate, getSupplierName } from '@/lib/utils';
-import { ArrowLeftRight, CheckCircle, Crosshair, Weight, Thermometer, Building2 } from 'lucide-react';
+import { WeightUnit } from '@/types';
+import { calculateFineWeight, formatDate } from '@/lib/utils';
+import { ArrowLeftRight, CheckCircle, Crosshair, Weight, Thermometer } from 'lucide-react';
 
 export default function TransaccionesPage() {
-  const { data: suppliers } = useSuppliers();
   const { data: transactions } = useTransactions();
   const createTx = useCreateTransaction();
 
-  const [type, setType] = useState<TransactionType>('IN');
   const [weight, setWeight] = useState('');
   const [unit, setUnit] = useState<WeightUnit>('g');
   const [purity, setPurity] = useState('');
-  const [supplierId, setSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const parsedWeight = parseFloat(weight) || 0;
@@ -30,17 +26,15 @@ export default function TransaccionesPage() {
 
     try {
       await createTx.mutateAsync({
-        type,
+        type: 'OUT',
         weight: parsedWeight,
         weightUnit: unit,
         purity: parsedPurity / 100,
-        supplierId: type === 'IN' ? supplierId : undefined,
       });
 
-      setSuccessMessage(`Operación ${type === 'IN' ? 'de Ingreso' : 'de Egreso'} Confirmada`);
+      setSuccessMessage('Egreso Confirmado');
       setWeight('');
       setPurity('');
-      if (type === 'IN') setSupplierId('');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
       // Silently handle
@@ -53,9 +47,9 @@ export default function TransaccionesPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <ArrowLeftRight className="w-5 h-5 text-gold-500" />
-            Estación de Operaciones
+            Salida de Material
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Registro de Ingresos y Egresos</p>
+          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Registro de Egresos / Salidas</p>
         </div>
       </div>
 
@@ -73,37 +67,9 @@ export default function TransaccionesPage() {
 
           <div className="glass-panel">
             <div className="p-4 border-b border-blue-500/10">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Nueva Operación</h2>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider tracking-wider">Nueva Salida</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Tipo de Operación</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setType('IN')}
-                    className={`py-2.5 text-xs font-bold uppercase tracking-wider border transition-all ${
-                      type === 'IN'
-                        ? 'bg-gold-500/15 border-gold-500/40 text-gold-400'
-                        : 'bg-midnight-800/50 border-blue-500/15 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
-                    }`}
-                  >
-                    ▲ Ingreso
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setType('OUT')}
-                    className={`py-2.5 text-xs font-bold uppercase tracking-wider border transition-all ${
-                      type === 'OUT'
-                        ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
-                        : 'bg-midnight-800/50 border-blue-500/15 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
-                    }`}
-                  >
-                    ▼ Egreso
-                  </button>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Weight className="w-3 h-3 inline mr-1" />
@@ -162,40 +128,20 @@ export default function TransaccionesPage() {
                 </div>
               )}
 
-              {type === 'IN' && (
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    <Building2 className="w-3 h-3 inline mr-1" />
-                    Proveedor
-                  </label>
-                  <select
-                    required
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none transition-all"
-                  >
-                    <option value="" disabled>Seleccionar proveedor...</option>
-                    {suppliers?.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={createTx.isPending || parsedWeight <= 0 || parsedPurity <= 0}
-                className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full py-2.5 bg-blue-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {createTx.isPending ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-midnight-900 border-t-transparent animate-spin" />
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin" />
                     Procesando
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    Confirmar Operación
+                    Confirmar Salida
                   </span>
                 )}
               </button>
@@ -234,7 +180,7 @@ export default function TransaccionesPage() {
                           </span>
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
-                          {suppliers ? getSupplierName(suppliers, tx.supplierId) : '—'}
+                          {tx.supplierId || '—'}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">
                           {tx.weight} {tx.weightUnit}

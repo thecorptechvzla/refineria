@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
+import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { getSupplierName } from '@/lib/utils';
 import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair } from 'lucide-react';
@@ -9,6 +10,7 @@ import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair } from 'l
 export default function IngresoPage() {
   const { data: suppliers } = useSuppliers();
   const { goldBars, addBar } = useProcess();
+  const createTx = useCreateTransaction();
 
   const [supplierId, setSupplierId] = useState('');
   const [codigo, setCodigo] = useState('');
@@ -26,7 +28,7 @@ export default function IngresoPage() {
 
   const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0 && pRecuperado > 0;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
 
@@ -38,6 +40,18 @@ export default function IngresoPage() {
       esperado: pEsperado,
       recuperado: pRecuperado,
     });
+
+    try {
+      await createTx.mutateAsync({
+        type: 'IN',
+        weight: pBruto,
+        weightUnit: 'g',
+        purity: pBruto > 0 ? pAnalitico / pBruto : 0,
+        supplierId,
+      });
+    } catch {
+      // Silently handle — bar already registered locally
+    }
 
     setSuccessMessage(`Barra ${codigo.trim()} registrada correctamente`);
     setCodigo('');
