@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import { ProcessProvider } from '@/lib/ProcessContext';
 import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -33,7 +34,9 @@ export default function DashboardLayout({
           <Menu className="w-5 h-5" />
         </button>
         <Header />
-        <div className="flex-1 p-3 sm:p-6 overflow-y-auto bg-grid">{children}</div>
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto bg-grid">
+          <ProcessProvider>{children}</ProcessProvider>
+        </div>
       </main>
     </div>
   );
