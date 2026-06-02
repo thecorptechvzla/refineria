@@ -66,6 +66,51 @@ model Transaction {
   @@map("transactions")
 }
 
+enum ProcessStatus {
+  open
+  closed
+}
+
+model GoldBar {
+  id               String   @id @default(uuid())
+  code             String   @map("code")
+  supplierId       String   @map("supplier_id")
+  grossWeight      Float    @map("gross_weight")
+  analytical       Float    @map("analytical")
+  expected         Float    @map("expected")
+  recovered        Float    @map("recovered")
+  available        Boolean  @default(true) @map("available")
+  registrationDate DateTime @default(now()) @map("registration_date")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("gold_bars")
+}
+
+model Process {
+  id         String        @id @default(uuid())
+  number     Int           @map("number")
+  supplierId String        @map("supplier_id")
+  status     ProcessStatus @default(open)
+  closedAt   DateTime?     @map("closed_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  lots       ProcessLot[]
+
+  @@map("processes")
+}
+
+model ProcessLot {
+  id           String   @id @default(uuid())
+  processId    String   @map("process_id")
+  number       Int      @map("number")
+  barIds       String[] @map("bar_ids")
+  creationDate DateTime @default(now()) @map("creation_date")
+  process      Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@map("process_lots")
+}
+
 model Worker {
   id        String       @id @default(uuid())
   name      String

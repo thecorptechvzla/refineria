@@ -5,16 +5,16 @@ export declare class UsersController {
     constructor(usersService: UsersService);
     findAll(): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;
     }[]>;
     findById(id: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;
@@ -25,8 +25,8 @@ export declare class UsersController {
         role?: Role;
     }): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;

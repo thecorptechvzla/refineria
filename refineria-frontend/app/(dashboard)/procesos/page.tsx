@@ -14,7 +14,7 @@ type PageView = 'list' | 'detail';
 
 type LotDetail = ProcessLot & {
   bars: GoldBar[];
-  pesoBruto: number;
+  grossWeight: number;
   e: number;
   f: number;
   g: number;
@@ -24,7 +24,7 @@ type LotDetail = ProcessLot & {
 
 type ProcessDetail = Process & {
   lotDetails: LotDetail[];
-  totalBruto: number;
+  totalGrossWeight: number;
   totalE: number;
   totalF: number;
   totalG: number;
@@ -34,14 +34,14 @@ type ProcessDetail = Process & {
 
 function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
   const bars = allBars.filter((b) => lot.barIds.includes(b.id));
-  const pesoBruto = bars.reduce((s, b) => s + b.pesoBruto, 0);
-  const e = bars.reduce((s, b) => s + b.analitico, 0);
-  const f = bars.reduce((s, b) => s + b.esperado, 0);
-  const g = bars.reduce((s, b) => s + b.recuperado, 0);
+  const grossWeight = bars.reduce((s, b) => s + b.grossWeight, 0);
+  const e = bars.reduce((s, b) => s + b.analytical, 0);
+  const f = bars.reduce((s, b) => s + b.expected, 0);
+  const g = bars.reduce((s, b) => s + b.recovered, 0);
   return {
     ...lot,
     bars,
-    pesoBruto,
+    grossWeight,
     e,
     f,
     g,
@@ -51,15 +51,15 @@ function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
 }
 
 function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetail {
-  const lotDetails = p.lotes.map((l) => computeLotDetail(l, allBars));
-  const totalBruto = lotDetails.reduce((s, l) => s + l.pesoBruto, 0);
+  const lotDetails = p.lots.map((l) => computeLotDetail(l, allBars));
+  const totalGrossWeight = lotDetails.reduce((s, l) => s + l.grossWeight, 0);
   const totalE = lotDetails.reduce((s, l) => s + l.e, 0);
   const totalF = lotDetails.reduce((s, l) => s + l.f, 0);
   const totalG = lotDetails.reduce((s, l) => s + l.g, 0);
   return {
     ...p,
     lotDetails,
-    totalBruto,
+    totalGrossWeight,
     totalE,
     totalF,
     totalG,
@@ -91,7 +91,7 @@ function ProcessModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">
-                Proceso #{detail.numero} — {suppliers ? getSupplierName(suppliers, detail.supplierId) : '—'}
+                Proceso #{detail.number} — {suppliers ? getSupplierName(suppliers, detail.supplierId) : '—'}
               </h2>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
@@ -131,8 +131,8 @@ function ProcessModal({
               <tbody>
                 {detail.lotDetails.map((lot) => (
                   <tr key={lot.id} className="terminal-row">
-                    <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.numero}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.pesoBruto}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
@@ -148,7 +148,7 @@ function ProcessModal({
                 {/* Totals row */}
                 <tr className="border-t border-gold-500/20 bg-gold-500/5">
                   <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalBruto}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalGrossWeight}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalE.toFixed(1)}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalF.toFixed(1)}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalG.toFixed(1)}</td>
@@ -166,7 +166,7 @@ function ProcessModal({
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalle de Barras por Lote</h3>
             {detail.lotDetails.map((lot) => (
               <div key={lot.id} className="bg-midnight-800/50 border border-blue-500/10 p-4">
-                <p className="text-sm font-bold text-slate-300 mb-3">Lote #{lot.numero}</p>
+                <p className="text-sm font-bold text-slate-300 mb-3">Lote #{lot.number}</p>
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
@@ -181,11 +181,11 @@ function ProcessModal({
                     <tbody>
                       {lot.bars.map((bar) => (
                         <tr key={bar.id} className="terminal-row">
-                          <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.codigo}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.pesoBruto}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.analitico}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.esperado}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.recuperado}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.grossWeight}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.analytical}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.expected}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.recovered}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -224,6 +224,9 @@ function ProcessDetailView({
   onAssign: (barIds: string[]) => void;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
+  const [closeWarning, setCloseWarning] = useState(false);
+
+  const hasBars = processDetail.lotDetails.length > 0;
 
   const toggleBar = (barId: string) => {
     setSelectedBarIds((prev) =>
@@ -237,6 +240,15 @@ function ProcessDetailView({
     setSelectedBarIds([]);
   };
 
+  const handleCloseClick = () => {
+    if (!hasBars) {
+      setCloseWarning(true);
+      setTimeout(() => setCloseWarning(false), 4000);
+      return;
+    }
+    onCloseProcess();
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -247,7 +259,7 @@ function ProcessDetailView({
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Proceso #{processDetail.numero} — {suppliers ? getSupplierName(suppliers, processDetail.supplierId) : '—'}
+                Proceso #{processDetail.number} — {suppliers ? getSupplierName(suppliers, processDetail.supplierId) : '—'}
               </h1>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
                 ACTIVO
@@ -258,9 +270,19 @@ function ProcessDetailView({
             </p>
           </div>
         </div>
+        {closeWarning && (
+          <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
+            <span className="text-red-400 text-xs font-medium">No se puede cerrar el proceso porque no contiene barras asignadas.</span>
+          </div>
+        )}
+
         <button
-          onClick={onCloseProcess}
-          className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition-all"
+          onClick={handleCloseClick}
+          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+            hasBars
+              ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
+              : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
+          }`}
         >
           <span className="flex items-center gap-1.5">
             <Lock className="w-3.5 h-3.5" />
@@ -295,13 +317,13 @@ function ProcessDetailView({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-mono text-slate-200">{bar.codigo}</span>
-                          <span className="text-xs font-mono text-slate-400">{bar.pesoBruto} g</span>
+                          <span className="text-sm font-mono text-slate-200">{bar.code}</span>
+                          <span className="text-xs font-mono text-slate-400">{bar.grossWeight} g</span>
                         </div>
                         <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
-                          <span>E: {bar.analitico}</span>
-                          <span>F: {bar.esperado}</span>
-                          <span>G: {bar.recuperado}</span>
+                          <span>E: {bar.analytical}</span>
+                          <span>F: {bar.expected}</span>
+                          <span>G: {bar.recovered}</span>
                         </div>
                       </div>
                     </label>
@@ -355,8 +377,8 @@ function ProcessDetailView({
                   {processDetail.lotDetails.length > 0 ? (
                     [...processDetail.lotDetails].reverse().map((lot) => (
                       <tr key={lot.id} className="terminal-row">
-                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.numero}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.pesoBruto}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
@@ -412,35 +434,47 @@ export default function ProcesosPage() {
   );
 
   const availableBarsForManaging = useMemo(
-    () => (managingProcess ? goldBars.filter((b) => b.disponible && b.supplierId === managingProcess.supplierId) : []),
+    () => (managingProcess ? goldBars.filter((b) => b.available && b.supplierId === managingProcess.supplierId) : []),
     [managingProcess, goldBars]
   );
 
-  const handleOpenProcess = () => {
+  const handleOpenProcess = async () => {
     if (!newProcessSupplierId) return;
-    const newProc = openProcess(newProcessSupplierId);
-    setNewProcessSupplierId('');
-    setManagingProcessId(newProc.id);
-    setView('detail');
-    setSuccessMessage(`Proceso #${newProc.numero} abierto correctamente`);
-    setTimeout(() => setSuccessMessage(''), 4000);
+    try {
+      const newProc = await openProcess(newProcessSupplierId);
+      setNewProcessSupplierId('');
+      setManagingProcessId(newProc.id);
+      setView('detail');
+      setSuccessMessage(`Proceso #${newProc.number} abierto correctamente`);
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch {
+      // error handled by react query
+    }
   };
 
-  const handleCloseProcess = () => {
+  const handleCloseProcess = async () => {
     if (!managingProcessId) return;
-    const proc = processes.find((p) => p.id === managingProcessId);
-    closeProcess(managingProcessId);
-    setSuccessMessage(`Proceso #${proc?.numero} cerrado definitivamente`);
-    setManagingProcessId(null);
-    setView('list');
-    setTimeout(() => setSuccessMessage(''), 4000);
+    try {
+      const proc = processes.find((p) => p.id === managingProcessId);
+      await closeProcess(managingProcessId);
+      setSuccessMessage(`Proceso #${proc?.number} cerrado definitivamente`);
+      setManagingProcessId(null);
+      setView('list');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch {
+      // error handled by react query
+    }
   };
 
-  const handleAssign = (barIds: string[]) => {
+  const handleAssign = async (barIds: string[]) => {
     if (!managingProcessId) return;
-    assignToLot(managingProcessId, barIds);
-    setSuccessMessage(`${barIds.length} barra${barIds.length !== 1 ? 's' : ''} asignada${barIds.length !== 1 ? 's' : ''} a lote nuevo`);
-    setTimeout(() => setSuccessMessage(''), 4000);
+    try {
+      await assignToLot(managingProcessId, barIds);
+      setSuccessMessage(`${barIds.length} barra${barIds.length !== 1 ? 's' : ''} asignada${barIds.length !== 1 ? 's' : ''} a lote nuevo`);
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch {
+      // error handled by react query
+    }
   };
 
   if (view === 'detail' && managingDetail) {
@@ -540,13 +574,13 @@ export default function ProcesosPage() {
           {activeProcesses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {activeProcesses.map((p) => {
-                const lotCount = p.lotes.length;
-                const barCount = p.lotes.reduce((s, l) => s + l.barIds.length, 0);
+                const lotCount = p.lots.length;
+                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                 return (
                   <div key={p.id} className="glass-panel p-4 hover:border-gold-500/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="text-lg font-bold text-gold-500 font-mono">#{p.numero}</p>
+                        <p className="text-lg font-bold text-gold-500 font-mono">#{p.number}</p>
                         <p className="text-sm text-slate-300 mt-0.5">
                           {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
                         </p>
@@ -595,8 +629,8 @@ export default function ProcesosPage() {
           {closedProcesses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {closedProcesses.map((p) => {
-                const lotCount = p.lotes.length;
-                const barCount = p.lotes.reduce((s, l) => s + l.barIds.length, 0);
+                const lotCount = p.lots.length;
+                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                 return (
                   <button
                     key={p.id}
@@ -605,7 +639,7 @@ export default function ProcesosPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="text-lg font-bold text-slate-400 font-mono">#{p.numero}</p>
+                        <p className="text-lg font-bold text-slate-400 font-mono">#{p.number}</p>
                         <p className="text-sm text-slate-300 mt-0.5">
                           {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
                         </p>

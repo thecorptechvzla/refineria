@@ -18,3 +18,8 @@ export declare const WorkerStatus: {
     readonly inactive: "inactive";
 };
 export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus];
+export declare const ProcessStatus: {
+    readonly open: "open";
+    readonly closed: "closed";
+};
+export type ProcessStatus = (typeof ProcessStatus)[keyof typeof ProcessStatus];

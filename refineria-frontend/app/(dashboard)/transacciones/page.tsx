@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useGold } from '@/lib/GoldContext';
 import { useTransactions, useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { WeightUnit } from '@/types';
-import { calculateFineWeight, formatDate } from '@/lib/utils';
+import { calculateFineWeight, formatDate, parseLocaleNumber } from '@/lib/utils';
 import { ArrowLeftRight, CheckCircle, Crosshair, Weight, Thermometer } from 'lucide-react';
 
 export default function TransaccionesPage() {
@@ -16,8 +16,8 @@ export default function TransaccionesPage() {
   const [purity, setPurity] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const parsedWeight = parseFloat(weight) || 0;
-  const parsedPurity = parseFloat(purity) || 0;
+  const parsedWeight = parseLocaleNumber(weight);
+  const parsedPurity = parseLocaleNumber(purity);
   const fineWeight = calculateFineWeight(parsedWeight, parsedPurity / 100);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -73,18 +73,17 @@ export default function TransaccionesPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Weight className="w-3 h-3 inline mr-1" />
-                  Peso Bruto
+                  Peso Bruto (g)
                 </label>
                 <div className="flex">
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     required
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     className="flex-1 min-w-0 px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                    placeholder="Ej. 150.50"
+                    placeholder="Ej. 1.500,00"
                   />
                   <select
                     value={unit}
@@ -103,15 +102,13 @@ export default function TransaccionesPage() {
                   Pureza (%)
                 </label>
                 <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
+                  type="text"
+                  inputMode="decimal"
                   required
                   value={purity}
                   onChange={(e) => setPurity(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 99.9"
+                  placeholder="Ej. 99,95"
                 />
               </div>
 

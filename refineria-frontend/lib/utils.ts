@@ -1,3 +1,25 @@
+const localeFormatter = new Intl.NumberFormat('es-VE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function parseLocaleNumber(value: string): number {
+  if (!value) return 0;
+  const normalized = value
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const parsed = parseFloat(normalized);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+export function formatLocaleNumber(value: number): string {
+  return localeFormatter.format(value);
+}
+
+export function formatLocaleWeight(value: number): string {
+  return `${localeFormatter.format(value)} g`;
+}
+
 export function gramsToKg(grams: number): number {
   return grams / 1000;
 }
@@ -12,7 +34,7 @@ export function toGrams(weight: number, unit: string): number {
 
 export function formatWeight(weight: number, unit?: string): string {
   if (unit === 'g' || (!unit && weight < 1000)) {
-    return `${weight} g`;
+    return `${localeFormatter.format(weight)} g`;
   }
   const kg = unit === 'kg' ? weight : weight / 1000;
   return `${kg.toFixed(2)} kg`;

@@ -1,0 +1,92 @@
+import { ProcessesService } from './processes.service';
+import { CreateProcessDto } from './dto/create-process.dto';
+import { UpdateProcessDto } from './dto/update-process.dto';
+import { CreateLotDto } from './dto/create-lot.dto';
+export declare class ProcessesController {
+    private readonly processesService;
+    constructor(processesService: ProcessesService);
+    create(dto: CreateProcessDto): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            processId: string;
+            barIds: string[];
+            creationDate: Date;
+        }[];
+    } & {
+        number: number;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+    }>;
+    findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<({
+        lots: {
+            number: number;
+            id: string;
+            processId: string;
+            barIds: string[];
+            creationDate: Date;
+        }[];
+    } & {
+        number: number;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+    })[]>;
+    findById(id: string): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            processId: string;
+            barIds: string[];
+            creationDate: Date;
+        }[];
+    } & {
+        number: number;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+    }>;
+    update(id: string, dto: UpdateProcessDto): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            processId: string;
+            barIds: string[];
+            creationDate: Date;
+        }[];
+    } & {
+        number: number;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+    }>;
+    addLot(id: string, dto: CreateLotDto): Promise<{
+        number: number;
+        id: string;
+        processId: string;
+        barIds: string[];
+        creationDate: Date;
+    }>;
+    remove(id: string): Promise<{
+        number: number;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+    }>;
+}

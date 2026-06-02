@@ -39,6 +39,15 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get transaction(): Prisma.TransactionDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    get goldBar(): Prisma.GoldBarDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    get process(): Prisma.ProcessDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    get processLot(): Prisma.ProcessLotDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
     get worker(): Prisma.WorkerDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;

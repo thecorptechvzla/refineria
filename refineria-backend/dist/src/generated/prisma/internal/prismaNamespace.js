@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.WorkerScalarFieldEnum = exports.TransactionScalarFieldEnum = exports.SupplierScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.WorkerScalarFieldEnum = exports.ProcessLotScalarFieldEnum = exports.ProcessScalarFieldEnum = exports.GoldBarScalarFieldEnum = exports.TransactionScalarFieldEnum = exports.SupplierScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 exports.PrismaClientKnownRequestError = runtime.PrismaClientKnownRequestError;
 exports.PrismaClientUnknownRequestError = runtime.PrismaClientUnknownRequestError;
@@ -63,6 +63,9 @@ exports.ModelName = {
     User: 'User',
     Supplier: 'Supplier',
     Transaction: 'Transaction',
+    GoldBar: 'GoldBar',
+    Process: 'Process',
+    ProcessLot: 'ProcessLot',
     Worker: 'Worker'
 };
 exports.TransactionIsolationLevel = runtime.makeStrictEnum({
@@ -98,6 +101,35 @@ exports.TransactionScalarFieldEnum = {
     date: 'date',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.GoldBarScalarFieldEnum = {
+    id: 'id',
+    code: 'code',
+    supplierId: 'supplierId',
+    grossWeight: 'grossWeight',
+    analytical: 'analytical',
+    expected: 'expected',
+    recovered: 'recovered',
+    available: 'available',
+    registrationDate: 'registrationDate',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ProcessScalarFieldEnum = {
+    id: 'id',
+    number: 'number',
+    supplierId: 'supplierId',
+    status: 'status',
+    closedAt: 'closedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ProcessLotScalarFieldEnum = {
+    id: 'id',
+    processId: 'processId',
+    number: 'number',
+    barIds: 'barIds',
+    creationDate: 'creationDate'
 };
 exports.WorkerScalarFieldEnum = {
     id: 'id',

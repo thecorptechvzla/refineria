@@ -54,6 +54,9 @@ export const ModelName = {
   User: 'User',
   Supplier: 'Supplier',
   Transaction: 'Transaction',
+  GoldBar: 'GoldBar',
+  Process: 'Process',
+  ProcessLot: 'ProcessLot',
   Worker: 'Worker'
 } as const
 
@@ -111,6 +114,47 @@ export const TransactionScalarFieldEnum = {
 } as const
 
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
+
+
+export const GoldBarScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  supplierId: 'supplierId',
+  grossWeight: 'grossWeight',
+  analytical: 'analytical',
+  expected: 'expected',
+  recovered: 'recovered',
+  available: 'available',
+  registrationDate: 'registrationDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GoldBarScalarFieldEnum = (typeof GoldBarScalarFieldEnum)[keyof typeof GoldBarScalarFieldEnum]
+
+
+export const ProcessScalarFieldEnum = {
+  id: 'id',
+  number: 'number',
+  supplierId: 'supplierId',
+  status: 'status',
+  closedAt: 'closedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProcessScalarFieldEnum = (typeof ProcessScalarFieldEnum)[keyof typeof ProcessScalarFieldEnum]
+
+
+export const ProcessLotScalarFieldEnum = {
+  id: 'id',
+  processId: 'processId',
+  number: 'number',
+  barIds: 'barIds',
+  creationDate: 'creationDate'
+} as const
+
+export type ProcessLotScalarFieldEnum = (typeof ProcessLotScalarFieldEnum)[keyof typeof ProcessLotScalarFieldEnum]
 
 
 export const WorkerScalarFieldEnum = {

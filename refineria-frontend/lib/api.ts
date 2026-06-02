@@ -1,3 +1,5 @@
+import axios, { type AxiosRequestConfig } from 'axios';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 const STORAGE_KEY = 'goldtrack_token';
 
@@ -29,27 +31,47 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+const instance = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
 
+instance.interceptors.request.use((config) => {
   const token = getStoredToken();
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: { ...headers, ...(options?.headers as Record<string, string>) },
-  });
+instance.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as Record<string, unknown> | undefined;
+      const message =
+        typeof data?.message === 'string'
+          ? data.message
+          : typeof data?.error === 'string'
+            ? data.error
+            : err.message;
+      throw new ApiError(message, err.response?.status || 500);
+    }
+    throw new ApiError(err instanceof Error ? err.message : 'Unknown error', 500);
+  },
+);
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new ApiError(body.message || body.error || res.statusText, res.status);
-  }
+export async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  const config: AxiosRequestConfig = {
+    method: options?.method || 'GET',
+    url: path,
+    data: options?.body ? JSON.parse(options.body as string) : undefined,
+    headers: options?.headers as Record<string, string>,
+  };
+
+  const res = await instance.request<T>(config);
 
   if (res.status === 204) return undefined as T;
-  return res.json();
+  return res.data;
 }

@@ -14,6 +14,9 @@ export declare const ModelName: {
     readonly User: "User";
     readonly Supplier: "Supplier";
     readonly Transaction: "Transaction";
+    readonly GoldBar: "GoldBar";
+    readonly Process: "Process";
+    readonly ProcessLot: "ProcessLot";
     readonly Worker: "Worker";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -55,6 +58,38 @@ export declare const TransactionScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum];
+export declare const GoldBarScalarFieldEnum: {
+    readonly id: "id";
+    readonly code: "code";
+    readonly supplierId: "supplierId";
+    readonly grossWeight: "grossWeight";
+    readonly analytical: "analytical";
+    readonly expected: "expected";
+    readonly recovered: "recovered";
+    readonly available: "available";
+    readonly registrationDate: "registrationDate";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type GoldBarScalarFieldEnum = (typeof GoldBarScalarFieldEnum)[keyof typeof GoldBarScalarFieldEnum];
+export declare const ProcessScalarFieldEnum: {
+    readonly id: "id";
+    readonly number: "number";
+    readonly supplierId: "supplierId";
+    readonly status: "status";
+    readonly closedAt: "closedAt";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type ProcessScalarFieldEnum = (typeof ProcessScalarFieldEnum)[keyof typeof ProcessScalarFieldEnum];
+export declare const ProcessLotScalarFieldEnum: {
+    readonly id: "id";
+    readonly processId: "processId";
+    readonly number: "number";
+    readonly barIds: "barIds";
+    readonly creationDate: "creationDate";
+};
+export type ProcessLotScalarFieldEnum = (typeof ProcessLotScalarFieldEnum)[keyof typeof ProcessLotScalarFieldEnum];
 export declare const WorkerScalarFieldEnum: {
     readonly id: "id";
     readonly name: "name";

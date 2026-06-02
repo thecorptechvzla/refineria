@@ -160,6 +160,9 @@ export declare const ModelName: {
     readonly User: "User";
     readonly Supplier: "Supplier";
     readonly Transaction: "Transaction";
+    readonly GoldBar: "GoldBar";
+    readonly Process: "Process";
+    readonly ProcessLot: "ProcessLot";
     readonly Worker: "Worker";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -173,7 +176,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "user" | "supplier" | "transaction" | "worker";
+        modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -399,6 +402,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        GoldBar: {
+            payload: Prisma.$GoldBarPayload<ExtArgs>;
+            fields: Prisma.GoldBarFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.GoldBarFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.GoldBarFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                findFirst: {
+                    args: Prisma.GoldBarFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.GoldBarFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                findMany: {
+                    args: Prisma.GoldBarFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>[];
+                };
+                create: {
+                    args: Prisma.GoldBarCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                createMany: {
+                    args: Prisma.GoldBarCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.GoldBarCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>[];
+                };
+                delete: {
+                    args: Prisma.GoldBarDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                update: {
+                    args: Prisma.GoldBarUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.GoldBarDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.GoldBarUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.GoldBarUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>[];
+                };
+                upsert: {
+                    args: Prisma.GoldBarUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$GoldBarPayload>;
+                };
+                aggregate: {
+                    args: Prisma.GoldBarAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateGoldBar>;
+                };
+                groupBy: {
+                    args: Prisma.GoldBarGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.GoldBarGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.GoldBarCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.GoldBarCountAggregateOutputType> | number;
+                };
+            };
+        };
+        Process: {
+            payload: Prisma.$ProcessPayload<ExtArgs>;
+            fields: Prisma.ProcessFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.ProcessFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.ProcessFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                findFirst: {
+                    args: Prisma.ProcessFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.ProcessFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                findMany: {
+                    args: Prisma.ProcessFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>[];
+                };
+                create: {
+                    args: Prisma.ProcessCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                createMany: {
+                    args: Prisma.ProcessCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.ProcessCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>[];
+                };
+                delete: {
+                    args: Prisma.ProcessDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                update: {
+                    args: Prisma.ProcessUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.ProcessDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.ProcessUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.ProcessUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>[];
+                };
+                upsert: {
+                    args: Prisma.ProcessUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessPayload>;
+                };
+                aggregate: {
+                    args: Prisma.ProcessAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateProcess>;
+                };
+                groupBy: {
+                    args: Prisma.ProcessGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.ProcessCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessCountAggregateOutputType> | number;
+                };
+            };
+        };
+        ProcessLot: {
+            payload: Prisma.$ProcessLotPayload<ExtArgs>;
+            fields: Prisma.ProcessLotFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.ProcessLotFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.ProcessLotFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                findFirst: {
+                    args: Prisma.ProcessLotFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.ProcessLotFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                findMany: {
+                    args: Prisma.ProcessLotFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>[];
+                };
+                create: {
+                    args: Prisma.ProcessLotCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                createMany: {
+                    args: Prisma.ProcessLotCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.ProcessLotCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>[];
+                };
+                delete: {
+                    args: Prisma.ProcessLotDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                update: {
+                    args: Prisma.ProcessLotUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.ProcessLotDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.ProcessLotUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.ProcessLotUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>[];
+                };
+                upsert: {
+                    args: Prisma.ProcessLotUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessLotPayload>;
+                };
+                aggregate: {
+                    args: Prisma.ProcessLotAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateProcessLot>;
+                };
+                groupBy: {
+                    args: Prisma.ProcessLotGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessLotGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.ProcessLotCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessLotCountAggregateOutputType> | number;
+                };
+            };
+        };
         Worker: {
             payload: Prisma.$WorkerPayload<ExtArgs>;
             fields: Prisma.WorkerFieldRefs;
@@ -535,6 +760,38 @@ export declare const TransactionScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum];
+export declare const GoldBarScalarFieldEnum: {
+    readonly id: "id";
+    readonly code: "code";
+    readonly supplierId: "supplierId";
+    readonly grossWeight: "grossWeight";
+    readonly analytical: "analytical";
+    readonly expected: "expected";
+    readonly recovered: "recovered";
+    readonly available: "available";
+    readonly registrationDate: "registrationDate";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type GoldBarScalarFieldEnum = (typeof GoldBarScalarFieldEnum)[keyof typeof GoldBarScalarFieldEnum];
+export declare const ProcessScalarFieldEnum: {
+    readonly id: "id";
+    readonly number: "number";
+    readonly supplierId: "supplierId";
+    readonly status: "status";
+    readonly closedAt: "closedAt";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type ProcessScalarFieldEnum = (typeof ProcessScalarFieldEnum)[keyof typeof ProcessScalarFieldEnum];
+export declare const ProcessLotScalarFieldEnum: {
+    readonly id: "id";
+    readonly processId: "processId";
+    readonly number: "number";
+    readonly barIds: "barIds";
+    readonly creationDate: "creationDate";
+};
+export type ProcessLotScalarFieldEnum = (typeof ProcessLotScalarFieldEnum)[keyof typeof ProcessLotScalarFieldEnum];
 export declare const WorkerScalarFieldEnum: {
     readonly id: "id";
     readonly name: "name";
@@ -572,10 +829,13 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
 export type EnumWeightUnitFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WeightUnit'>;
 export type ListEnumWeightUnitFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WeightUnit[]'>;
-export type EnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkerStatus'>;
-export type ListEnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkerStatus[]'>;
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>;
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
+export type EnumProcessStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProcessStatus'>;
+export type ListEnumProcessStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProcessStatus[]'>;
+export type EnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkerStatus'>;
+export type ListEnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkerStatus[]'>;
 export type BatchPayload = {
     count: number;
 };
@@ -604,6 +864,9 @@ export type GlobalOmitConfig = {
     user?: Prisma.UserOmit;
     supplier?: Prisma.SupplierOmit;
     transaction?: Prisma.TransactionOmit;
+    goldBar?: Prisma.GoldBarOmit;
+    process?: Prisma.ProcessOmit;
+    processLot?: Prisma.ProcessLotOmit;
     worker?: Prisma.WorkerOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';

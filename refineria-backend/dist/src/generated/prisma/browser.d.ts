@@ -5,4 +5,7 @@ export * from './enums';
 export type User = Prisma.UserModel;
 export type Supplier = Prisma.SupplierModel;
 export type Transaction = Prisma.TransactionModel;
+export type GoldBar = Prisma.GoldBarModel;
+export type Process = Prisma.ProcessModel;
+export type ProcessLot = Prisma.ProcessLotModel;
 export type Worker = Prisma.WorkerModel;

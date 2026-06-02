@@ -33,6 +33,21 @@ export type Supplier = Prisma.SupplierModel
  */
 export type Transaction = Prisma.TransactionModel
 /**
+ * Model GoldBar
+ * 
+ */
+export type GoldBar = Prisma.GoldBarModel
+/**
+ * Model Process
+ * 
+ */
+export type Process = Prisma.ProcessModel
+/**
+ * Model ProcessLot
+ * 
+ */
+export type ProcessLot = Prisma.ProcessLotModel
+/**
  * Model Worker
  * 
  */

@@ -39,3 +39,11 @@ export const WorkerStatus = {
 } as const
 
 export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus]
+
+
+export const ProcessStatus = {
+  open: 'open',
+  closed: 'closed'
+} as const
+
+export type ProcessStatus = (typeof ProcessStatus)[keyof typeof ProcessStatus]

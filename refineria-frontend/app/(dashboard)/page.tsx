@@ -7,12 +7,12 @@ import { useTransactionMetrics } from '@/lib/hooks/useTransactions';
 import { useWorkers } from '@/lib/hooks/useWorkers';
 import { useProcess } from '@/lib/ProcessContext';
 import { useMemo } from 'react';
-import { toGrams, getSupplierName, formatDate, formatWeightShort } from '@/lib/utils';
+import { toGrams, getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp, TrendingDown, Wallet, Users, Activity, Crosshair, Package, Settings,
+  TrendingUp, Wallet, Users, Activity, Crosshair, Package, Settings,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -24,38 +24,42 @@ export default function DashboardPage() {
   const { goldBars, processes } = useProcess();
 
   const oroEnInventario = useMemo(
-    () => goldBars.filter((b) => b.disponible).reduce((s, b) => s + b.pesoBruto, 0),
+    () => goldBars.filter((b) => b.available).reduce((s, b) => s + b.grossWeight, 0),
     [goldBars]
   );
 
-  const oroPorProcesar = useMemo(() => {
-    const openLoteBarIds = processes
+  const oroIngresado = useMemo(
+    () => goldBars.reduce((s, b) => s + b.grossWeight, 0),
+    [goldBars]
+  );
+
+  const oroEnProceso = useMemo(() => {
+    const openLotBarIds = processes
       .filter((p) => p.status === 'open')
-      .flatMap((p) => p.lotes.flatMap((l) => l.barIds));
+      .flatMap((p) => p.lots.flatMap((l) => l.barIds));
     return goldBars
-      .filter((b) => openLoteBarIds.includes(b.id))
-      .reduce((s, b) => s + b.pesoBruto, 0);
+      .filter((b) => openLotBarIds.includes(b.id))
+      .reduce((s, b) => s + b.grossWeight, 0);
   }, [processes, goldBars]);
 
-  const rendimientoGeneral = useMemo(() => {
-    const closedLotes = processes
+  const oroRefinado = useMemo(() => {
+    const closedLots = processes
       .filter((p) => p.status === 'closed')
-      .flatMap((p) => p.lotes);
-    let totalE = 0;
-    let totalG = 0;
-    for (const lot of closedLotes) {
-      const bars = goldBars.filter((b) => lot.barIds.includes(b.id));
-      totalE += bars.reduce((s, b) => s + b.analitico, 0);
-      totalG += bars.reduce((s, b) => s + b.recuperado, 0);
-    }
-    return totalE > 0 ? (totalG / totalE) * 100 : 0;
+      .flatMap((p) => p.lots);
+    return closedLots.reduce((sum, lot) => {
+      return sum + goldBars
+        .filter((b) => lot.barIds.includes(b.id))
+        .reduce((s, b) => s + b.recovered, 0);
+    }, 0);
   }, [processes, goldBars]);
+
+  const faltaPorRefinar = oroEnInventario + oroEnProceso;
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
-    const map: Record<string, { name: string; in: number; out: number }> = {};
+    const map: Record<string, { id: string; name: string; in: number; out: number }> = {};
     suppliers.forEach((s) => {
-      map[s.id] = { name: s.name.split(' ').slice(0, 2).join(' '), in: 0, out: 0 };
+      map[s.id] = { id: s.id, name: s.name.split(' ').slice(0, 2).join(' '), in: 0, out: 0 };
     });
     transactions.forEach((tx) => {
       const grams = toGrams(tx.weight, tx.weightUnit);
@@ -90,20 +94,12 @@ export default function DashboardPage() {
     );
   }
 
-  const totalIngresos = metrics ? formatWeightShort(metrics.totalIngresos) : '0 g';
-  const totalEgresos = metrics ? formatWeightShort(metrics.totalEgresos) : '0 g';
-  const balance = metrics ? formatWeightShort(metrics.balance) : '0 g';
-  const inventarioStr = formatWeightShort(oroEnInventario);
-  const porProcesarStr = formatWeightShort(oroPorProcesar);
-
   const kpiCards = [
-    { label: 'Ingresos', value: `+${totalIngresos}`, icon: TrendingUp, accent: 'gold', subtitle: '' },
-    { label: 'Egresos', value: `-${totalEgresos}`, icon: TrendingDown, accent: 'blue', subtitle: '' },
-    { label: 'Balance Neto', value: balance, icon: Wallet, accent: 'gold', subtitle: '' },
-    { label: 'Oro en Inventario', value: inventarioStr, icon: Package, accent: 'gold', subtitle: `${goldBars.filter((b) => b.disponible).length} barras disponibles` },
-    { label: 'Oro por Procesar', value: porProcesarStr, icon: Settings, accent: 'blue', subtitle: `${processes.filter((p) => p.status === 'open').length} procesos activos` },
-    { label: 'Rendimiento General', value: `${rendimientoGeneral.toFixed(2)}%`, icon: Crosshair, accent: 'gold', subtitle: `Procesos cerrados: ${processes.filter((p) => p.status === 'closed').length}` },
-    { label: 'Personal', value: metrics ? `${metrics.workersActivos}/${metrics.workersTotal}` : '0/0', icon: Users, accent: 'blue', subtitle: metrics ? `${metrics.workersInactivos} inactivos` : '' },
+    { label: 'Oro en Inventario', value: formatLocaleWeight(oroEnInventario), icon: Package, accent: 'gold', subtitle: `${goldBars.filter((b) => b.available).length} barras disponibles` },
+    { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: TrendingUp, accent: 'gold', subtitle: `${goldBars.length} barras registradas` },
+    { label: 'Oro en Proceso', value: formatLocaleWeight(oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${processes.filter((p) => p.status === 'open').length} procesos activos` },
+    { label: 'Oro Refinado', value: formatLocaleWeight(oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${processes.filter((p) => p.status === 'closed').length} procesos cerrados` },
+    { label: 'Falta por Refinar', value: formatLocaleWeight(faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Inventario + en proceso' },
   ];
 
   return (
@@ -118,7 +114,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         {kpiCards.map((kpi) => {
           const isGold = kpi.accent === 'gold';
           const Icon = kpi.icon;
@@ -133,7 +129,7 @@ export default function DashboardPage() {
                 </span>
                 <Icon className={`w-4 h-4 ${isGold ? 'text-gold-500' : 'text-blue-500'}`} />
               </div>
-              <p className="hud-number text-2xl sm:text-3xl text-white tracking-tight">{kpi.value}</p>
+              <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
               {kpi.subtitle && kpi.subtitle.length > 0 && (
                 <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
               )}
@@ -166,6 +162,40 @@ export default function DashboardPage() {
                   <Bar dataKey="out" name="Egresos" fill="#3B82F6" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="border-t border-blue-500/10 p-4 sm:p-5">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-blue-500/10">
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingresos (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {supplierChartData.length > 0 ? (
+                    supplierChartData.map((row) => (
+                      <tr key={row.id} className="terminal-row">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.in)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.out)}</td>
+                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.in - row.out) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(row.in - row.out) >= 0 ? '+' : ''}{formatLocaleNumber(row.in - row.out)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-500">
+                        No hay datos de proveedores.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -212,7 +242,7 @@ export default function DashboardPage() {
       <div className="glass-panel">
         <div className="p-4 sm:p-5 border-b border-blue-500/10">
           <div className="flex items-center gap-2">
-            <Crosshair className="w-4 h-4 text-gold-500" />
+            <Crosshair className="w-5 h-5 text-gold-500" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Feed de Actividad — Últimas Transacciones</h2>
           </div>
         </div>
@@ -241,7 +271,7 @@ export default function DashboardPage() {
                     {suppliers ? getSupplierName(suppliers, tx.supplierId) : '—'}
                   </td>
                   <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">
-                    {tx.weight} {tx.weightUnit}
+                    {formatLocaleNumber(tx.weight)} {tx.weightUnit}
                   </td>
                   <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">
                     {(tx.purity * 100).toFixed(0)}%

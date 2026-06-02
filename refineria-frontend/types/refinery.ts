@@ -2,29 +2,30 @@ export type ProcessStatus = 'open' | 'closed';
 
 export interface GoldBar {
   id: string;
-  codigo: string;
+  code: string;
   supplierId: string;
-  pesoBruto: number;
-  analitico: number;
-  esperado: number;
-  recuperado: number;
-  disponible: boolean;
-  fechaRegistro: string;
+  grossWeight: number;
+  analytical: number;
+  expected: number;
+  recovered: number;
+  available: boolean;
+  registrationDate: string;
 }
 
 export interface ProcessLot {
   id: string;
-  numero: number;
+  processId: string;
+  number: number;
   barIds: string[];
-  fechaCreacion: string;
+  creationDate: string;
 }
 
 export interface Process {
   id: string;
-  numero: number;
+  number: number;
   supplierId: string;
   status: ProcessStatus;
-  lotes: ProcessLot[];
+  lots: ProcessLot[];
   createdAt: string;
   closedAt?: string;
 }

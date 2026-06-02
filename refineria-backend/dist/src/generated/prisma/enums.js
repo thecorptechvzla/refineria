@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WorkerStatus = exports.WeightUnit = exports.TransactionType = exports.Role = void 0;
+exports.ProcessStatus = exports.WorkerStatus = exports.WeightUnit = exports.TransactionType = exports.Role = void 0;
 exports.Role = {
     ADMIN: 'ADMIN',
     SUPERADMIN: 'SUPERADMIN'
@@ -16,5 +16,9 @@ exports.WeightUnit = {
 exports.WorkerStatus = {
     active: 'active',
     inactive: 'inactive'
+};
+exports.ProcessStatus = {
+    open: 'open',
+    closed: 'closed'
 };
 //# sourceMappingURL=enums.js.map

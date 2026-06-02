@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
-import { getSupplierName } from '@/lib/utils';
+import { getSupplierName, parseLocaleNumber, formatLocaleNumber } from '@/lib/utils';
 import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair } from 'lucide-react';
 
 export default function IngresoPage() {
@@ -14,13 +14,13 @@ export default function IngresoPage() {
 
   const [supplierId, setSupplierId] = useState('');
   const [codigo, setCodigo] = useState('');
-  const [pesoBruto, setPesoBruto] = useState('');
+  const [pesoBruto, setPesoBruto] = useState(''); // eslint-disable-line
   const [analitico, setAnalitico] = useState('');
   const [esperado, setEsperado] = useState('');
   const [recuperado, setRecuperado] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const parseNum = (v: string) => parseFloat(v) || 0;
+  const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
   const pAnalitico = parseNum(analitico);
   const pEsperado = parseNum(esperado);
@@ -32,16 +32,16 @@ export default function IngresoPage() {
     e.preventDefault();
     if (!canSubmit) return;
 
-    addBar({
-      codigo: codigo.trim(),
-      supplierId,
-      pesoBruto: pBruto,
-      analitico: pAnalitico,
-      esperado: pEsperado,
-      recuperado: pRecuperado,
-    });
-
     try {
+      await addBar({
+        code: codigo.trim(),
+        supplierId,
+        grossWeight: pBruto,
+        analytical: pAnalitico,
+        expected: pEsperado,
+        recovered: pRecuperado,
+      });
+
       await createTx.mutateAsync({
         type: 'IN',
         weight: pBruto,
@@ -49,8 +49,10 @@ export default function IngresoPage() {
         purity: pBruto > 0 ? pAnalitico / pBruto : 0,
         supplierId,
       });
-    } catch {
-      // Silently handle — bar already registered locally
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error al registrar';
+      alert(msg);
+      return;
     }
 
     setSuccessMessage(`Barra ${codigo.trim()} registrada correctamente`);
@@ -134,14 +136,13 @@ export default function IngresoPage() {
                   Peso Bruto (g)
                 </label>
                 <input
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   required
                   value={pesoBruto}
                   onChange={(e) => setPesoBruto(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3500"
+                  placeholder="Ej. 3.500,00"
                 />
               </div>
 
@@ -151,14 +152,13 @@ export default function IngresoPage() {
                   Peso Fino Analítico — E (g)
                 </label>
                 <input
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   required
                   value={analitico}
                   onChange={(e) => setAnalitico(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3325.0"
+                  placeholder="Ej. 3.325,00"
                 />
               </div>
 
@@ -168,14 +168,13 @@ export default function IngresoPage() {
                   Peso Fino Esperado — F (g)
                 </label>
                 <input
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   required
                   value={esperado}
                   onChange={(e) => setEsperado(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3335.0"
+                  placeholder="Ej. 3.335,00"
                 />
               </div>
 
@@ -185,16 +184,41 @@ export default function IngresoPage() {
                   Peso Fino Recuperado — G (g)
                 </label>
                 <input
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   required
                   value={recuperado}
                   onChange={(e) => setRecuperado(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3320.0"
+                  placeholder="Ej. 3.320,00"
                 />
               </div>
+
+              {pRecuperado > 0 && pAnalitico > 0 && (
+                <div className="bg-gold-500/5 border border-gold-500/20 p-4">
+                  <p className="text-[10px] font-semibold text-gold-400/80 uppercase tracking-widest mb-2">Previsualización</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">% Recuperación</p>
+                      <p className="hud-number text-xl text-gold-500 mt-0.5">
+                        {((pRecuperado / pAnalitico) * 100).toFixed(2)}%
+                      </p>
+                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pRecuperado)} / {formatLocaleNumber(pAnalitico)} × 100</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Diferencia</p>
+                      <p className={`hud-number text-xl mt-0.5 ${(pRecuperado - pEsperado) < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        {(pRecuperado - pEsperado) >= 0 ? '+' : ''}{formatLocaleNumber(pRecuperado - pEsperado)} g
+                      </p>
+                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pRecuperado)} − {formatLocaleNumber(pEsperado)}</p>
+                    </div>
+                  </div>
+                  <div className="h-[2px] w-full bg-gold-500/20 mt-3" />
+                  <p className="text-[10px] text-slate-600 mt-2 font-mono">
+                    Bruto: {formatLocaleNumber(pBruto)} g &middot; E: {formatLocaleNumber(pAnalitico)} g &middot; F: {formatLocaleNumber(pEsperado)} g &middot; G: {formatLocaleNumber(pRecuperado)} g
+                  </p>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -251,21 +275,21 @@ export default function IngresoPage() {
                   {filteredBars.length > 0 ? (
                     filteredBars.map((bar) => (
                       <tr key={bar.id} className="terminal-row">
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.codigo}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
                           {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
                         </td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.pesoBruto}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analitico}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.esperado}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.recuperado}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
-                            bar.disponible
+                            bar.available
                               ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
                               : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
                           }`}>
-                            {bar.disponible ? 'DISPONIBLE' : 'EN LOTE'}
+                            {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
                           </span>
                         </td>
                       </tr>
