@@ -151,6 +151,7 @@ export const ProcessLotScalarFieldEnum = {
   processId: 'processId',
   number: 'number',
   barIds: 'barIds',
+  recovered: 'recovered',
   creationDate: 'creationDate'
 } as const
 

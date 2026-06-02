@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGoldBarDto } from './dto/create-gold-bar.dto';
 import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
@@ -7,8 +7,15 @@ import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
 export class GoldBarsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateGoldBarDto) {
-    return this.prisma.goldBar.create({ data: dto });
+  async create(dto: CreateGoldBarDto) {
+    const existing = await this.prisma.goldBar.findFirst({
+      where: { code: dto.code },
+    });
+    if (existing) {
+      throw new ConflictException(`Ya existe una barra con el código "${dto.code}"`);
+    }
+    const data = { ...dto, recovered: dto.recovered ?? 0 };
+    return this.prisma.goldBar.create({ data });
   }
 
   findAll(available?: string) {

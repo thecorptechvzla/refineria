@@ -8,7 +8,7 @@ type CreateGoldBarData = {
   grossWeight: number;
   analytical: number;
   expected: number;
-  recovered: number;
+  recovered?: number;
 };
 
 export function useGoldBars(available?: boolean) {
@@ -44,6 +44,18 @@ export function useUpdateGoldBar() {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
+export function useDeleteGoldBar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<void>(`/gold-bars/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
     },

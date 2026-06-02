@@ -44,12 +44,28 @@ let ProcessesService = class ProcessesService {
     }
     async update(id, dto) {
         await this.findById(id);
-        return this.prisma.process.update({
+        const data = {};
+        if (dto.status === 'closed') {
+            data.closedAt = new Date();
+        }
+        if (dto.status) {
+            data.status = dto.status;
+        }
+        const process = await this.prisma.process.update({
             where: { id },
-            data: {
-                ...(dto.status === 'closed' ? { closedAt: new Date() } : {}),
-                status: dto.status,
-            },
+            data,
+            include: { lots: true },
+        });
+        if (dto.lots && dto.lots.length > 0) {
+            for (const lot of dto.lots) {
+                await this.prisma.processLot.update({
+                    where: { id: lot.id },
+                    data: { recovered: lot.recovered },
+                });
+            }
+        }
+        return this.prisma.process.findUnique({
+            where: { id },
             include: { lots: true },
         });
     }
@@ -75,8 +91,16 @@ let ProcessesService = class ProcessesService {
         return lot;
     }
     async remove(id) {
-        await this.findById(id);
-        return this.prisma.process.delete({ where: { id } });
+        const process = await this.findById(id);
+        const allBarIds = process.lots.flatMap((lot) => lot.barIds);
+        if (allBarIds.length > 0) {
+            await this.prisma.goldBar.updateMany({
+                where: { id: { in: allBarIds } },
+                data: { available: true },
+            });
+        }
+        await this.prisma.process.delete({ where: { id } });
+        return { deleted: true };
     }
 };
 exports.ProcessesService = ProcessesService;

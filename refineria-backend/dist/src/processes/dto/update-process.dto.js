@@ -13,6 +13,7 @@ exports.UpdateProcessDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateProcessDto {
     status;
+    lots;
 }
 exports.UpdateProcessDto = UpdateProcessDto;
 __decorate([
@@ -20,4 +21,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateProcessDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], UpdateProcessDto.prototype, "lots", void 0);
 //# sourceMappingURL=update-process.dto.js.map

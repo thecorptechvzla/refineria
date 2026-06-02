@@ -47,6 +47,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateGoldBarDto.prototype, "recovered", void 0);
 __decorate([

@@ -17,8 +17,15 @@ let GoldBarsService = class GoldBarsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    create(dto) {
-        return this.prisma.goldBar.create({ data: dto });
+    async create(dto) {
+        const existing = await this.prisma.goldBar.findFirst({
+            where: { code: dto.code },
+        });
+        if (existing) {
+            throw new common_1.ConflictException(`Ya existe una barra con el código "${dto.code}"`);
+        }
+        const data = { ...dto, recovered: dto.recovered ?? 0 };
+        return this.prisma.goldBar.create({ data });
     }
     findAll(available) {
         const where = available !== undefined

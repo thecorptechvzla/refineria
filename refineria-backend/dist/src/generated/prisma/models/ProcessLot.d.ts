@@ -10,20 +10,24 @@ export type AggregateProcessLot = {
 };
 export type ProcessLotAvgAggregateOutputType = {
     number: number | null;
+    recovered: number | null;
 };
 export type ProcessLotSumAggregateOutputType = {
     number: number | null;
+    recovered: number | null;
 };
 export type ProcessLotMinAggregateOutputType = {
     id: string | null;
     processId: string | null;
     number: number | null;
+    recovered: number | null;
     creationDate: Date | null;
 };
 export type ProcessLotMaxAggregateOutputType = {
     id: string | null;
     processId: string | null;
     number: number | null;
+    recovered: number | null;
     creationDate: Date | null;
 };
 export type ProcessLotCountAggregateOutputType = {
@@ -31,25 +35,30 @@ export type ProcessLotCountAggregateOutputType = {
     processId: number;
     number: number;
     barIds: number;
+    recovered: number;
     creationDate: number;
     _all: number;
 };
 export type ProcessLotAvgAggregateInputType = {
     number?: true;
+    recovered?: true;
 };
 export type ProcessLotSumAggregateInputType = {
     number?: true;
+    recovered?: true;
 };
 export type ProcessLotMinAggregateInputType = {
     id?: true;
     processId?: true;
     number?: true;
+    recovered?: true;
     creationDate?: true;
 };
 export type ProcessLotMaxAggregateInputType = {
     id?: true;
     processId?: true;
     number?: true;
+    recovered?: true;
     creationDate?: true;
 };
 export type ProcessLotCountAggregateInputType = {
@@ -57,6 +66,7 @@ export type ProcessLotCountAggregateInputType = {
     processId?: true;
     number?: true;
     barIds?: true;
+    recovered?: true;
     creationDate?: true;
     _all?: true;
 };
@@ -93,6 +103,7 @@ export type ProcessLotGroupByOutputType = {
     processId: string;
     number: number;
     barIds: string[];
+    recovered: number | null;
     creationDate: Date;
     _count: ProcessLotCountAggregateOutputType | null;
     _avg: ProcessLotAvgAggregateOutputType | null;
@@ -111,6 +122,7 @@ export type ProcessLotWhereInput = {
     processId?: Prisma.StringFilter<"ProcessLot"> | string;
     number?: Prisma.IntFilter<"ProcessLot"> | number;
     barIds?: Prisma.StringNullableListFilter<"ProcessLot">;
+    recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null;
     creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string;
     process?: Prisma.XOR<Prisma.ProcessScalarRelationFilter, Prisma.ProcessWhereInput>;
 };
@@ -119,6 +131,7 @@ export type ProcessLotOrderByWithRelationInput = {
     processId?: Prisma.SortOrder;
     number?: Prisma.SortOrder;
     barIds?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrderInput | Prisma.SortOrder;
     creationDate?: Prisma.SortOrder;
     process?: Prisma.ProcessOrderByWithRelationInput;
 };
@@ -130,6 +143,7 @@ export type ProcessLotWhereUniqueInput = Prisma.AtLeast<{
     processId?: Prisma.StringFilter<"ProcessLot"> | string;
     number?: Prisma.IntFilter<"ProcessLot"> | number;
     barIds?: Prisma.StringNullableListFilter<"ProcessLot">;
+    recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null;
     creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string;
     process?: Prisma.XOR<Prisma.ProcessScalarRelationFilter, Prisma.ProcessWhereInput>;
 }, "id">;
@@ -138,6 +152,7 @@ export type ProcessLotOrderByWithAggregationInput = {
     processId?: Prisma.SortOrder;
     number?: Prisma.SortOrder;
     barIds?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrderInput | Prisma.SortOrder;
     creationDate?: Prisma.SortOrder;
     _count?: Prisma.ProcessLotCountOrderByAggregateInput;
     _avg?: Prisma.ProcessLotAvgOrderByAggregateInput;
@@ -153,12 +168,14 @@ export type ProcessLotScalarWhereWithAggregatesInput = {
     processId?: Prisma.StringWithAggregatesFilter<"ProcessLot"> | string;
     number?: Prisma.IntWithAggregatesFilter<"ProcessLot"> | number;
     barIds?: Prisma.StringNullableListFilter<"ProcessLot">;
+    recovered?: Prisma.FloatNullableWithAggregatesFilter<"ProcessLot"> | number | null;
     creationDate?: Prisma.DateTimeWithAggregatesFilter<"ProcessLot"> | Date | string;
 };
 export type ProcessLotCreateInput = {
     id?: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
     process: Prisma.ProcessCreateNestedOneWithoutLotsInput;
 };
@@ -167,12 +184,14 @@ export type ProcessLotUncheckedCreateInput = {
     processId: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
 };
 export type ProcessLotUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     process?: Prisma.ProcessUpdateOneRequiredWithoutLotsNestedInput;
 };
@@ -181,6 +200,7 @@ export type ProcessLotUncheckedUpdateInput = {
     processId?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotCreateManyInput = {
@@ -188,12 +208,14 @@ export type ProcessLotCreateManyInput = {
     processId: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
 };
 export type ProcessLotUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotUncheckedUpdateManyInput = {
@@ -201,6 +223,7 @@ export type ProcessLotUncheckedUpdateManyInput = {
     processId?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotListRelationFilter = {
@@ -223,25 +246,30 @@ export type ProcessLotCountOrderByAggregateInput = {
     processId?: Prisma.SortOrder;
     number?: Prisma.SortOrder;
     barIds?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrder;
     creationDate?: Prisma.SortOrder;
 };
 export type ProcessLotAvgOrderByAggregateInput = {
     number?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrder;
 };
 export type ProcessLotMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     processId?: Prisma.SortOrder;
     number?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrder;
     creationDate?: Prisma.SortOrder;
 };
 export type ProcessLotMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     processId?: Prisma.SortOrder;
     number?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrder;
     creationDate?: Prisma.SortOrder;
 };
 export type ProcessLotSumOrderByAggregateInput = {
     number?: Prisma.SortOrder;
+    recovered?: Prisma.SortOrder;
 };
 export type ProcessLotCreateNestedManyWithoutProcessInput = {
     create?: Prisma.XOR<Prisma.ProcessLotCreateWithoutProcessInput, Prisma.ProcessLotUncheckedCreateWithoutProcessInput> | Prisma.ProcessLotCreateWithoutProcessInput[] | Prisma.ProcessLotUncheckedCreateWithoutProcessInput[];
@@ -288,16 +316,25 @@ export type ProcessLotUpdatebarIdsInput = {
     set?: string[];
     push?: string | string[];
 };
+export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
+};
 export type ProcessLotCreateWithoutProcessInput = {
     id?: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
 };
 export type ProcessLotUncheckedCreateWithoutProcessInput = {
     id?: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
 };
 export type ProcessLotCreateOrConnectWithoutProcessInput = {
@@ -329,30 +366,35 @@ export type ProcessLotScalarWhereInput = {
     processId?: Prisma.StringFilter<"ProcessLot"> | string;
     number?: Prisma.IntFilter<"ProcessLot"> | number;
     barIds?: Prisma.StringNullableListFilter<"ProcessLot">;
+    recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null;
     creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string;
 };
 export type ProcessLotCreateManyProcessInput = {
     id?: string;
     number: number;
     barIds?: Prisma.ProcessLotCreatebarIdsInput | string[];
+    recovered?: number | null;
     creationDate?: Date | string;
 };
 export type ProcessLotUpdateWithoutProcessInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotUncheckedUpdateWithoutProcessInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotUncheckedUpdateManyWithoutProcessInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     number?: Prisma.IntFieldUpdateOperationsInput | number;
     barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[];
+    recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type ProcessLotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -360,6 +402,7 @@ export type ProcessLotSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
     processId?: boolean;
     number?: boolean;
     barIds?: boolean;
+    recovered?: boolean;
     creationDate?: boolean;
     process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["processLot"]>;
@@ -368,6 +411,7 @@ export type ProcessLotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
     processId?: boolean;
     number?: boolean;
     barIds?: boolean;
+    recovered?: boolean;
     creationDate?: boolean;
     process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["processLot"]>;
@@ -376,6 +420,7 @@ export type ProcessLotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
     processId?: boolean;
     number?: boolean;
     barIds?: boolean;
+    recovered?: boolean;
     creationDate?: boolean;
     process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["processLot"]>;
@@ -384,9 +429,10 @@ export type ProcessLotSelectScalar = {
     processId?: boolean;
     number?: boolean;
     barIds?: boolean;
+    recovered?: boolean;
     creationDate?: boolean;
 };
-export type ProcessLotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "processId" | "number" | "barIds" | "creationDate", ExtArgs["result"]["processLot"]>;
+export type ProcessLotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "processId" | "number" | "barIds" | "recovered" | "creationDate", ExtArgs["result"]["processLot"]>;
 export type ProcessLotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>;
 };
@@ -406,6 +452,7 @@ export type $ProcessLotPayload<ExtArgs extends runtime.Types.Extensions.Internal
         processId: string;
         number: number;
         barIds: string[];
+        recovered: number | null;
         creationDate: Date;
     }, ExtArgs["result"]["processLot"]>;
     composites: {};
@@ -469,6 +516,7 @@ export interface ProcessLotFieldRefs {
     readonly processId: Prisma.FieldRef<"ProcessLot", 'String'>;
     readonly number: Prisma.FieldRef<"ProcessLot", 'Int'>;
     readonly barIds: Prisma.FieldRef<"ProcessLot", 'String[]'>;
+    readonly recovered: Prisma.FieldRef<"ProcessLot", 'Float'>;
     readonly creationDate: Prisma.FieldRef<"ProcessLot", 'DateTime'>;
 }
 export type ProcessLotFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {

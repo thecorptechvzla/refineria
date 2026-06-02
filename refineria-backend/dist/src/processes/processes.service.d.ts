@@ -9,6 +9,7 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
             creationDate: Date;
@@ -26,6 +27,7 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
             creationDate: Date;
@@ -43,6 +45,7 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
             creationDate: Date;
@@ -56,10 +59,11 @@ export declare class ProcessesService {
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
     }>;
-    update(id: string, dto: UpdateProcessDto): Promise<{
+    update(id: string, dto: UpdateProcessDto): Promise<({
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
             creationDate: Date;
@@ -72,21 +76,16 @@ export declare class ProcessesService {
         supplierId: string;
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
-    }>;
+    }) | null>;
     addLot(processId: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;
+        recovered: number | null;
         processId: string;
         barIds: string[];
         creationDate: Date;
     }>;
     remove(id: string): Promise<{
-        number: number;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        supplierId: string;
-        status: import("../generated/prisma/enums").ProcessStatus;
-        closedAt: Date | null;
+        deleted: boolean;
     }>;
 }

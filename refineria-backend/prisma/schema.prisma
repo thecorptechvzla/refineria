@@ -105,6 +105,7 @@ model ProcessLot {
   processId    String   @map("process_id")
   number       Int      @map("number")
   barIds       String[] @map("bar_ids")
+  recovered    Float?
   creationDate DateTime @default(now()) @map("creation_date")
   process      Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
 

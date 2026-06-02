@@ -29,13 +29,33 @@ export function useCloseProcess() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (processId: string) =>
+    mutationFn: ({
+      processId,
+      lots,
+    }: {
+      processId: string;
+      lots?: { id: string; recovered: number }[];
+    }) =>
       api<Process>(`/processes/${processId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'closed' }),
+        body: JSON.stringify({ status: 'closed', lots }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['processes'] });
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
+export function useDeleteProcess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<void>(`/processes/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
     },
   });
 }

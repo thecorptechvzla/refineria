@@ -4,7 +4,7 @@ import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
 export declare class GoldBarsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    create(dto: CreateGoldBarDto): import("../generated/prisma/models").Prisma__GoldBarClient<{
+    create(dto: CreateGoldBarDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -16,8 +16,6 @@ export declare class GoldBarsService {
         expected: number;
         recovered: number;
         available: boolean;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, {
-        omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
     findAll(available?: string): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<{
         id: string;

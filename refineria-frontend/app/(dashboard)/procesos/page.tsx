@@ -3,11 +3,12 @@
 import { useState, useMemo } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
-import { getSupplierName } from '@/lib/utils';
+import { useDeleteProcess } from '@/lib/hooks/useProcesses';
+import { getSupplierName, parseLocaleNumber, formatLocaleNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import {
   Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
-  Lock, X, Eye,
+  Lock, X, Eye, Save, ChevronDown, ChevronRight, Trash2,
 } from 'lucide-react';
 
 type PageView = 'list' | 'detail';
@@ -220,13 +221,23 @@ function ProcessDetailView({
   allBars: GoldBar[];
   suppliers: { id: string; name: string }[] | undefined;
   onBack: () => void;
-  onCloseProcess: () => void;
+  onCloseProcess: (lots?: { id: string; recovered: number }[]) => void;
   onAssign: (barIds: string[]) => void;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [closeWarning, setCloseWarning] = useState(false);
+  const [lotG, setLotG] = useState<Record<string, string>>({});
+  const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const hasBars = processDetail.lotDetails.length > 0;
+
+  const getLotG = (lotId: string): number | null => {
+    const v = lotG[lotId];
+    if (!v || !v.trim()) return null;
+    const parsed = parseLocaleNumber(v);
+    return isNaN(parsed) ? null : parsed;
+  };
 
   const toggleBar = (barId: string) => {
     setSelectedBarIds((prev) =>
@@ -240,13 +251,24 @@ function ProcessDetailView({
     setSelectedBarIds([]);
   };
 
-  const handleCloseClick = () => {
+  const handleCloseClick = async () => {
     if (!hasBars) {
       setCloseWarning(true);
       setTimeout(() => setCloseWarning(false), 4000);
       return;
     }
-    onCloseProcess();
+    setIsSaving(true);
+    try {
+      const lots = processDetail.lotDetails
+        .map((lot) => {
+          const gVal = getLotG(lot.id);
+          return gVal !== null && gVal >= 0 ? { id: lot.id, recovered: gVal } : null;
+        })
+        .filter((l): l is { id: string; recovered: number } => l !== null);
+      onCloseProcess(lots.length > 0 ? lots : undefined);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -278,15 +300,16 @@ function ProcessDetailView({
 
         <button
           onClick={handleCloseClick}
+          disabled={isSaving}
           className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-            hasBars
+            hasBars && !isSaving
               ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
               : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
           }`}
         >
           <span className="flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5" />
-            Cerrar Proceso
+            {isSaving ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+            {isSaving ? 'Guardando...' : 'Cerrar Proceso'}
           </span>
         </button>
       </div>
@@ -401,6 +424,107 @@ function ProcessDetailView({
           </div>
         </div>
       </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Crosshair className="w-4 h-4 text-blue-400" />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Captura de Peso Fino Recuperado (G) por Lote</h2>
+        </div>
+
+        {processDetail.lotDetails.length > 0 ? (
+          [...processDetail.lotDetails].reverse().map((lot) => {
+            const sumE = lot.bars.reduce((s, b) => s + b.analytical, 0);
+            const sumF = lot.bars.reduce((s, b) => s + b.expected, 0);
+            const gVal = getLotG(lot.id);
+            const pct = gVal !== null && sumE > 0 ? (gVal / sumE) * 100 : null;
+            const dif = gVal !== null ? gVal - sumF : null;
+            const isExpanded = expandedLots[lot.id] ?? false;
+
+            return (
+              <div key={lot.id} className="glass-panel">
+                <div className="p-4 sm:p-5 border-b border-blue-500/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-base font-bold text-gold-500 font-mono">Lote #{lot.number}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 font-mono">
+                        Σ E: {formatLocaleNumber(sumE)} g &middot; Σ F: {formatLocaleNumber(sumF)} g
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                          G (g)
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={lotG[lot.id] ?? ''}
+                          onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: e.target.value }))}
+                          placeholder="0,00"
+                          className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
+                        />
+                      </div>
+                      <div className="flex items-center gap-4 text-sm font-mono">
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block -mb-0.5">% Recup.</span>
+                          <span className="font-bold" style={{ color: pct !== null ? (pct < 100 ? '#EF4444' : '#22C55E') : '#64748B' }}>
+                            {pct !== null ? `${pct.toFixed(2)}%` : '—'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block -mb-0.5">Dif (g)</span>
+                          <span className="font-bold" style={{ color: dif !== null ? (dif < 0 ? '#EF4444' : '#22C55E') : '#64748B' }}>
+                            {dif !== null ? `${dif >= 0 ? '+' : ''}${formatLocaleNumber(dif)}` : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    onClick={() => setExpandedLots((prev) => ({ ...prev, [lot.id]: !isExpanded }))}
+                    className="w-full flex items-center gap-2 px-4 sm:px-5 py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-widest hover:bg-blue-500/5 transition-all"
+                  >
+                    {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    Barras del Lote #{lot.number} ({lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''})
+                  </button>
+
+                  {isExpanded && (
+                    <div className="overflow-x-auto border-t border-blue-500/10">
+                      <table className="min-w-full">
+                        <thead>
+                          <tr className="border-b border-blue-500/10">
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Barra</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Bruto (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lot.bars.map((bar) => (
+                            <tr key={bar.id} className="terminal-row">
+                              <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="glass-panel p-8 text-center">
+            <p className="text-sm text-slate-500">No hay lotes en este proceso.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -438,6 +562,20 @@ export default function ProcesosPage() {
     [managingProcess, goldBars]
   );
 
+  const deleteProcess = useDeleteProcess();
+  const [confirmDeleteProcessId, setConfirmDeleteProcessId] = useState<string | null>(null);
+
+  const handleDeleteProcess = async (processId: string) => {
+    try {
+      await deleteProcess.mutateAsync(processId);
+      setConfirmDeleteProcessId(null);
+      setSuccessMessage('Proceso eliminado correctamente');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch {
+      alert('Error al eliminar el proceso');
+    }
+  };
+
   const handleOpenProcess = async () => {
     if (!newProcessSupplierId) return;
     try {
@@ -452,11 +590,11 @@ export default function ProcesosPage() {
     }
   };
 
-  const handleCloseProcess = async () => {
+  const handleCloseProcess = async (lots?: { id: string; recovered: number }[]) => {
     if (!managingProcessId) return;
     try {
       const proc = processes.find((p) => p.id === managingProcessId);
-      await closeProcess(managingProcessId);
+      await closeProcess(managingProcessId, lots);
       setSuccessMessage(`Proceso #${proc?.number} cerrado definitivamente`);
       setManagingProcessId(null);
       setView('list');
@@ -594,15 +732,41 @@ export default function ProcesosPage() {
                       <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
                       <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
                     </div>
-                    <button
-                      onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
-                      className="w-full py-2 bg-gold-500/10 border border-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wider hover:bg-gold-500/20 transition-all"
-                    >
-                      <span className="flex items-center justify-center gap-1.5">
-                        <Settings className="w-3 h-3" />
-                        Gestionar
-                      </span>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
+                        className="flex-1 py-2 bg-gold-500/10 border border-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wider hover:bg-gold-500/20 transition-all"
+                      >
+                        <span className="flex items-center justify-center gap-1.5">
+                          <Settings className="w-3 h-3" />
+                          Gestionar
+                        </span>
+                      </button>
+                      {confirmDeleteProcessId === p.id ? (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleDeleteProcess(p.id)}
+                            className="px-2 py-2 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                          >
+                            Confirmar
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteProcessId(null)}
+                            className="px-2 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteProcessId(p.id)}
+                          className="px-3 py-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
+                          title="Eliminar proceso"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -632,11 +796,7 @@ export default function ProcesosPage() {
                 const lotCount = p.lots.length;
                 const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                 return (
-                  <button
-                    key={p.id}
-                    onClick={() => setViewingProcessId(p.id)}
-                    className="glass-panel p-4 hover:border-blue-500/30 transition-all text-left cursor-pointer"
-                  >
+                  <div key={p.id} className="glass-panel p-4 hover:border-blue-500/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="text-lg font-bold text-slate-400 font-mono">#{p.number}</p>
@@ -644,20 +804,51 @@ export default function ProcesosPage() {
                           {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
                         </p>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                        CERRADO
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                          CERRADO
+                        </span>
+                        {confirmDeleteProcessId === p.id ? (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleDeleteProcess(p.id)}
+                              className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteProcessId(null)}
+                              className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteProcessId(p.id)}
+                            className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="Eliminar proceso"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
                       <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
                       <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
                       {p.closedAt && <span>Cerrado {new Date(p.closedAt).toLocaleDateString('es-PE')}</span>}
                     </div>
-                    <div className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
-                      <Eye className="w-3 h-3" />
-                      Ver Detalle
-                    </div>
-                  </button>
+                    <button
+                      onClick={() => setViewingProcessId(p.id)}
+                      className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Eye className="w-3 h-3" />
+                        Ver Detalle
+                      </span>
+                    </button>
+                  </div>
                 );
               })}
             </div>

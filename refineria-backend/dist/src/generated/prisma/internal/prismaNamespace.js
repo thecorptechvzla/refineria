@@ -129,6 +129,7 @@ exports.ProcessLotScalarFieldEnum = {
     processId: 'processId',
     number: 'number',
     barIds: 'barIds',
+    recovered: 'recovered',
     creationDate: 'creationDate'
 };
 exports.WorkerScalarFieldEnum = {

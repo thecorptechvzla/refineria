@@ -21,7 +21,8 @@ export class CreateGoldBarDto {
 
   @IsNumber()
   @Min(0)
-  recovered: number;
+  @IsOptional()
+  recovered?: number;
 
   @IsBoolean()
   @IsOptional()

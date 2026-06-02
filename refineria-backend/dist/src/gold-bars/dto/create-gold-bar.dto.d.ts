@@ -4,6 +4,6 @@ export declare class CreateGoldBarDto {
     grossWeight: number;
     analytical: number;
     expected: number;
-    recovered: number;
+    recovered?: number;
     available?: boolean;
 }

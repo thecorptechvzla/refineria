@@ -12,7 +12,7 @@ interface ProcessContextType {
   isLoadingProcesses: boolean;
   addBar: (data: Omit<GoldBar, 'id' | 'available' | 'registrationDate'>) => Promise<GoldBar>;
   openProcess: (supplierId: string) => Promise<Process>;
-  closeProcess: (processId: string) => Promise<Process>;
+  closeProcess: (processId: string, lots?: { id: string; recovered: number }[]) => Promise<Process>;
   assignToLot: (processId: string, barIds: string[]) => Promise<ProcessLot>;
 }
 
@@ -42,8 +42,8 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
   );
 
   const closeProcess = useCallback(
-    async (processId: string) => {
-      return closeProcessMutation.mutateAsync(processId);
+    async (processId: string, lots?: { id: string; recovered: number }[]) => {
+      return closeProcessMutation.mutateAsync({ processId, lots });
     },
     [closeProcessMutation]
   );

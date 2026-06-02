@@ -4,8 +4,9 @@ import { useState, FormEvent } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
+import { useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber } from '@/lib/utils';
-import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair } from 'lucide-react';
+import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, Trash2 } from 'lucide-react';
 
 export default function IngresoPage() {
   const { data: suppliers } = useSuppliers();
@@ -17,16 +18,16 @@ export default function IngresoPage() {
   const [pesoBruto, setPesoBruto] = useState(''); // eslint-disable-line
   const [analitico, setAnalitico] = useState('');
   const [esperado, setEsperado] = useState('');
-  const [recuperado, setRecuperado] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
   const pAnalitico = parseNum(analitico);
   const pEsperado = parseNum(esperado);
-  const pRecuperado = parseNum(recuperado);
+  const displayedG = esperado;
+  const pDisplayedG = pEsperado;
 
-  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0 && pRecuperado > 0;
+  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,7 +40,7 @@ export default function IngresoPage() {
         grossWeight: pBruto,
         analytical: pAnalitico,
         expected: pEsperado,
-        recovered: pRecuperado,
+        recovered: 0,
       });
 
       await createTx.mutateAsync({
@@ -60,9 +61,20 @@ export default function IngresoPage() {
     setPesoBruto('');
     setAnalitico('');
     setEsperado('');
-    setRecuperado('');
     setSupplierId('');
     setTimeout(() => setSuccessMessage(''), 4000);
+  };
+
+  const deleteGoldBar = useDeleteGoldBar();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDeleteBar = async (barId: string) => {
+    try {
+      await deleteGoldBar.mutateAsync(barId);
+      setConfirmDeleteId(null);
+    } catch {
+      alert('Error al eliminar la barra');
+    }
   };
 
   const filteredBars = supplierId ? goldBars.filter((b) => b.supplierId === supplierId) : goldBars;
@@ -182,40 +194,39 @@ export default function IngresoPage() {
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Ruler className="w-3 h-3 inline mr-1" />
                   Peso Fino Recuperado — G (g)
+                  <span className="ml-1.5 text-[9px] text-slate-600 italic">(proyección)</span>
                 </label>
                 <input
                   type="text"
-                  inputMode="decimal"
-                  required
-                  value={recuperado}
-                  onChange={(e) => setRecuperado(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3.320,00"
+                  disabled
+                  value={displayedG}
+                  className="w-full px-3 py-2.5 bg-midnight-900 border border-blue-500/10 text-slate-400 text-sm outline-none cursor-not-allowed"
+                  placeholder="—"
                 />
               </div>
 
-              {pRecuperado > 0 && pAnalitico > 0 && (
+              {pDisplayedG > 0 && pAnalitico > 0 && (
                 <div className="bg-gold-500/5 border border-gold-500/20 p-4">
                   <p className="text-[10px] font-semibold text-gold-400/80 uppercase tracking-widest mb-2">Previsualización</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">% Recuperación</p>
                       <p className="hud-number text-xl text-gold-500 mt-0.5">
-                        {((pRecuperado / pAnalitico) * 100).toFixed(2)}%
+                        {((pDisplayedG / pAnalitico) * 100).toFixed(2)}%
                       </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pRecuperado)} / {formatLocaleNumber(pAnalitico)} × 100</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pDisplayedG)} / {formatLocaleNumber(pAnalitico)} × 100</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">Diferencia</p>
-                      <p className={`hud-number text-xl mt-0.5 ${(pRecuperado - pEsperado) < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        {(pRecuperado - pEsperado) >= 0 ? '+' : ''}{formatLocaleNumber(pRecuperado - pEsperado)} g
+                      <p className={`hud-number text-xl mt-0.5 ${(pDisplayedG - pEsperado) < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        {(pDisplayedG - pEsperado) >= 0 ? '+' : ''}{formatLocaleNumber(pDisplayedG - pEsperado)} g
                       </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pRecuperado)} − {formatLocaleNumber(pEsperado)}</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pDisplayedG)} − {formatLocaleNumber(pEsperado)}</p>
                     </div>
                   </div>
                   <div className="h-[2px] w-full bg-gold-500/20 mt-3" />
                   <p className="text-[10px] text-slate-600 mt-2 font-mono">
-                    Bruto: {formatLocaleNumber(pBruto)} g &middot; E: {formatLocaleNumber(pAnalitico)} g &middot; F: {formatLocaleNumber(pEsperado)} g &middot; G: {formatLocaleNumber(pRecuperado)} g
+                    Bruto: {formatLocaleNumber(pBruto)} g &middot; E: {formatLocaleNumber(pAnalitico)} g &middot; F: {formatLocaleNumber(pEsperado)} g &middot; G: {formatLocaleNumber(pDisplayedG)} g
                   </p>
                 </div>
               )}
@@ -269,6 +280,7 @@ export default function IngresoPage() {
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>
+                    <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,11 +304,37 @@ export default function IngresoPage() {
                             {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
                           </span>
                         </td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
+                          {confirmDeleteId === bar.id ? (
+                            <div className="flex items-center gap-1 justify-end">
+                              <button
+                                onClick={() => handleDeleteBar(bar.id)}
+                                className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                              >
+                                Confirmar
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteId(bar.id)}
+                              className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              title="Eliminar barra"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-5 py-8 text-center text-sm text-slate-500">
+                      <td colSpan={8} className="px-5 py-8 text-center text-sm text-slate-500">
                         No hay barras registradas para este proveedor.
                       </td>
                     </tr>
