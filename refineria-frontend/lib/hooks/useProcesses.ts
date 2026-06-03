@@ -60,6 +60,30 @@ export function useDeleteProcess() {
   });
 }
 
+export function useRemoveBarsFromLot() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      processId,
+      lotId,
+      barIds,
+    }: {
+      processId: string;
+      lotId: string;
+      barIds: string[];
+    }) =>
+      api<void>(`/processes/${processId}/lots/${lotId}/bars`, {
+        method: 'PATCH',
+        body: JSON.stringify({ barIds }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
 export function useAddLot() {
   const queryClient = useQueryClient();
 

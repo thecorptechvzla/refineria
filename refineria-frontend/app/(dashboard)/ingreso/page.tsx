@@ -5,7 +5,7 @@ import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
-import { getSupplierName, parseLocaleNumber, formatLocaleNumber } from '@/lib/utils';
+import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, Trash2 } from 'lucide-react';
 
 export default function IngresoPage() {
@@ -24,10 +24,9 @@ export default function IngresoPage() {
   const pBruto = parseNum(pesoBruto);
   const pAnalitico = parseNum(analitico);
   const pEsperado = parseNum(esperado);
-  const displayedG = esperado;
-  const pDisplayedG = pEsperado;
+  const pesoExceeds = pBruto > 24900;
 
-  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0;
+  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0 && !pesoExceeds;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -152,10 +151,15 @@ export default function IngresoPage() {
                   inputMode="decimal"
                   required
                   value={pesoBruto}
-                  onChange={(e) => setPesoBruto(e.target.value)}
+                  onChange={(e) => setPesoBruto(formatInputNumber(e.target.value))}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. 3.500,00"
                 />
+                {pesoExceeds && (
+                  <div className="bg-red-500/10 border border-red-500/30 p-2 mt-1.5">
+                    <p className="text-xs text-red-400">El peso bruto no puede exceder los 24.900 g</p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -168,7 +172,7 @@ export default function IngresoPage() {
                   inputMode="decimal"
                   required
                   value={analitico}
-                  onChange={(e) => setAnalitico(e.target.value)}
+                  onChange={(e) => setAnalitico(formatInputNumber(e.target.value))}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. 3.325,00"
                 />
@@ -184,52 +188,11 @@ export default function IngresoPage() {
                   inputMode="decimal"
                   required
                   value={esperado}
-                  onChange={(e) => setEsperado(e.target.value)}
+                  onChange={(e) => setEsperado(formatInputNumber(e.target.value))}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. 3.335,00"
                 />
               </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  <Ruler className="w-3 h-3 inline mr-1" />
-                  Peso Fino Recuperado — G (g)
-                  <span className="ml-1.5 text-[9px] text-slate-600 italic">(proyección)</span>
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={displayedG}
-                  className="w-full px-3 py-2.5 bg-midnight-900 border border-blue-500/10 text-slate-400 text-sm outline-none cursor-not-allowed"
-                  placeholder="—"
-                />
-              </div>
-
-              {pDisplayedG > 0 && pAnalitico > 0 && (
-                <div className="bg-gold-500/5 border border-gold-500/20 p-4">
-                  <p className="text-[10px] font-semibold text-gold-400/80 uppercase tracking-widest mb-2">Previsualización</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">% Recuperación</p>
-                      <p className="hud-number text-xl text-gold-500 mt-0.5">
-                        {((pDisplayedG / pAnalitico) * 100).toFixed(2)}%
-                      </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pDisplayedG)} / {formatLocaleNumber(pAnalitico)} × 100</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Diferencia</p>
-                      <p className={`hud-number text-xl mt-0.5 ${(pDisplayedG - pEsperado) < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        {(pDisplayedG - pEsperado) >= 0 ? '+' : ''}{formatLocaleNumber(pDisplayedG - pEsperado)} g
-                      </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5 font-mono">{formatLocaleNumber(pDisplayedG)} − {formatLocaleNumber(pEsperado)}</p>
-                    </div>
-                  </div>
-                  <div className="h-[2px] w-full bg-gold-500/20 mt-3" />
-                  <p className="text-[10px] text-slate-600 mt-2 font-mono">
-                    Bruto: {formatLocaleNumber(pBruto)} g &middot; E: {formatLocaleNumber(pAnalitico)} g &middot; F: {formatLocaleNumber(pEsperado)} g &middot; G: {formatLocaleNumber(pDisplayedG)} g
-                  </p>
-                </div>
-              )}
 
               <button
                 type="submit"

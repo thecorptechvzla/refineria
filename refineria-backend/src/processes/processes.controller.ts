@@ -13,6 +13,7 @@ import { ProcessesService } from './processes.service';
 import { CreateProcessDto } from './dto/create-process.dto';
 import { UpdateProcessDto } from './dto/update-process.dto';
 import { CreateLotDto } from './dto/create-lot.dto';
+import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 
 @Controller('processes')
 @UseGuards(AuthGuard('jwt'))
@@ -42,6 +43,14 @@ export class ProcessesController {
   @Post(':id/lots')
   addLot(@Param('id') id: string, @Body() dto: CreateLotDto) {
     return this.processesService.addLot(id, dto);
+  }
+
+  @Patch(':id/lots/:lotId/bars')
+  removeBarsFromLot(
+    @Param('lotId') lotId: string,
+    @Body() dto: RemoveBarsFromLotDto,
+  ) {
+    return this.processesService.removeBarsFromLot(lotId, dto);
   }
 
   @Delete(':id')

@@ -90,6 +90,27 @@ let ProcessesService = class ProcessesService {
         });
         return lot;
     }
+    async removeBarsFromLot(lotId, dto) {
+        const lot = await this.prisma.processLot.findUnique({
+            where: { id: lotId },
+        });
+        if (!lot)
+            throw new common_1.NotFoundException(`Lot with id ${lotId} not found`);
+        const remainingBarIds = lot.barIds.filter((bid) => !dto.barIds.includes(bid));
+        await this.prisma.goldBar.updateMany({
+            where: { id: { in: dto.barIds } },
+            data: { available: true },
+        });
+        if (remainingBarIds.length === 0) {
+            await this.prisma.processLot.delete({ where: { id: lotId } });
+            return { deleted: true, lotId };
+        }
+        await this.prisma.processLot.update({
+            where: { id: lotId },
+            data: { barIds: remainingBarIds },
+        });
+        return { deleted: false, lotId };
+    }
     async remove(id) {
         const process = await this.findById(id);
         const allBarIds = process.lots.flatMap((lot) => lot.barIds);

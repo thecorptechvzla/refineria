@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
-import { useDeleteProcess } from '@/lib/hooks/useProcesses';
-import { getSupplierName, parseLocaleNumber, formatLocaleNumber } from '@/lib/utils';
+import { useDeleteProcess, useRemoveBarsFromLot } from '@/lib/hooks/useProcesses';
+import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import {
   Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
@@ -38,7 +38,7 @@ function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
   const grossWeight = bars.reduce((s, b) => s + b.grossWeight, 0);
   const e = bars.reduce((s, b) => s + b.analytical, 0);
   const f = bars.reduce((s, b) => s + b.expected, 0);
-  const g = bars.reduce((s, b) => s + b.recovered, 0);
+  const g = lot.recovered ?? bars.reduce((s, b) => s + b.recovered, 0);
   return {
     ...lot,
     bars,
@@ -225,10 +225,25 @@ function ProcessDetailView({
   onAssign: (barIds: string[]) => void;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
-  const [closeWarning, setCloseWarning] = useState(false);
+  const [closeWarning, setCloseWarning] = useState('');
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
+  const removeBarsFromLot = useRemoveBarsFromLot();
+
+  const handleRemoveBar = async (lotId: string, barId: string) => {
+    try {
+      await removeBarsFromLot.mutateAsync({
+        processId: processDetail.id,
+        lotId,
+        barIds: [barId],
+      });
+      setConfirmDeleteBarId(null);
+    } catch {
+      alert('Error al eliminar la barra del lote');
+    }
+  };
 
   const hasBars = processDetail.lotDetails.length > 0;
 
@@ -253,19 +268,27 @@ function ProcessDetailView({
 
   const handleCloseClick = async () => {
     if (!hasBars) {
-      setCloseWarning(true);
-      setTimeout(() => setCloseWarning(false), 4000);
+      setCloseWarning('No se puede cerrar el proceso porque no contiene barras asignadas.');
+      setTimeout(() => setCloseWarning(''), 4000);
       return;
     }
+
+    const missingG = processDetail.lotDetails.some(
+      (lot) => getLotG(lot.id) === null,
+    );
+    if (missingG) {
+      setCloseWarning('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
+      setTimeout(() => setCloseWarning(''), 5000);
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const lots = processDetail.lotDetails
-        .map((lot) => {
-          const gVal = getLotG(lot.id);
-          return gVal !== null && gVal >= 0 ? { id: lot.id, recovered: gVal } : null;
-        })
-        .filter((l): l is { id: string; recovered: number } => l !== null);
-      onCloseProcess(lots.length > 0 ? lots : undefined);
+      const lots = processDetail.lotDetails.map((lot) => ({
+        id: lot.id,
+        recovered: getLotG(lot.id)!,
+      }));
+      onCloseProcess(lots);
     } finally {
       setIsSaving(false);
     }
@@ -294,7 +317,7 @@ function ProcessDetailView({
         </div>
         {closeWarning && (
           <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
-            <span className="text-red-400 text-xs font-medium">No se puede cerrar el proceso porque no contiene barras asignadas.</span>
+            <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
           </div>
         )}
 
@@ -459,7 +482,7 @@ function ProcessDetailView({
                           type="text"
                           inputMode="decimal"
                           value={lotG[lot.id] ?? ''}
-                          onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: e.target.value }))}
+                          onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
                           placeholder="0,00"
                           className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
                         />
@@ -500,6 +523,7 @@ function ProcessDetailView({
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Bruto (g)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
+                            <th className="px-3 py-2" />
                           </tr>
                         </thead>
                         <tbody>
@@ -509,6 +533,32 @@ function ProcessDetailView({
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right">
+                                {confirmDeleteBarId === bar.id ? (
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <button
+                                      onClick={() => handleRemoveBar(lot.id, bar.id)}
+                                      className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                                    >
+                                      Confirmar
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDeleteBarId(null)}
+                                      className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setConfirmDeleteBarId(bar.id)}
+                                    className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    title="Quitar barra del lote"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -558,7 +608,11 @@ export default function ProcesosPage() {
   );
 
   const availableBarsForManaging = useMemo(
-    () => (managingProcess ? goldBars.filter((b) => b.available && b.supplierId === managingProcess.supplierId) : []),
+    () => (managingProcess
+      ? goldBars
+          .filter((b) => b.available && b.supplierId === managingProcess.supplierId)
+          .sort((a, b) => b.grossWeight - a.grossWeight)
+      : []),
     [managingProcess, goldBars]
   );
 

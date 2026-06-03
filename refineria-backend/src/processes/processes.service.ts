@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProcessDto } from './dto/create-process.dto';
 import { UpdateProcessDto } from './dto/update-process.dto';
 import { CreateLotDto } from './dto/create-lot.dto';
+import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 
 @Injectable()
 export class ProcessesService {
@@ -95,6 +96,34 @@ export class ProcessesService {
     });
 
     return lot;
+  }
+
+  async removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto) {
+    const lot = await this.prisma.processLot.findUnique({
+      where: { id: lotId },
+    });
+    if (!lot) throw new NotFoundException(`Lot with id ${lotId} not found`);
+
+    const remainingBarIds = lot.barIds.filter(
+      (bid) => !dto.barIds.includes(bid),
+    );
+
+    await this.prisma.goldBar.updateMany({
+      where: { id: { in: dto.barIds } },
+      data: { available: true },
+    });
+
+    if (remainingBarIds.length === 0) {
+      await this.prisma.processLot.delete({ where: { id: lotId } });
+      return { deleted: true, lotId };
+    }
+
+    await this.prisma.processLot.update({
+      where: { id: lotId },
+      data: { barIds: remainingBarIds },
+    });
+
+    return { deleted: false, lotId };
   }
 
   async remove(id: string) {

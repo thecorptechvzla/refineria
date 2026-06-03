@@ -3,6 +3,15 @@ const localeFormatter = new Intl.NumberFormat('es-VE', {
   maximumFractionDigits: 2,
 });
 
+export function formatInputNumber(v: string): string {
+  const raw = v.replace(/[^\d,]/g, '');
+  const commaIdx = raw.indexOf(',');
+  const intPart = commaIdx === -1 ? raw : raw.slice(0, commaIdx);
+  const decPart = commaIdx !== -1 ? ',' + raw.slice(commaIdx + 1, commaIdx + 3) : '';
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return formattedInt + decPart;
+}
+
 export function parseLocaleNumber(value: string): number {
   if (!value) return 0;
   const normalized = value

@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useGold } from '@/lib/GoldContext';
 import { useTransactions, useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { WeightUnit } from '@/types';
-import { calculateFineWeight, formatDate, parseLocaleNumber } from '@/lib/utils';
+import { calculateFineWeight, formatDate, parseLocaleNumber, formatInputNumber } from '@/lib/utils';
 import { ArrowLeftRight, CheckCircle, Crosshair, Weight, Thermometer } from 'lucide-react';
 
 export default function TransaccionesPage() {
@@ -81,7 +81,7 @@ export default function TransaccionesPage() {
                     inputMode="decimal"
                     required
                     value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
+                    onChange={(e) => setWeight(formatInputNumber(e.target.value))}
                     className="flex-1 min-w-0 px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                     placeholder="Ej. 1.500,00"
                   />
@@ -106,7 +106,7 @@ export default function TransaccionesPage() {
                   inputMode="decimal"
                   required
                   value={purity}
-                  onChange={(e) => setPurity(e.target.value)}
+                  onChange={(e) => setPurity(formatInputNumber(e.target.value))}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. 99,95"
                 />
