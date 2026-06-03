@@ -18,6 +18,7 @@ const passport_1 = require("@nestjs/passport");
 const processes_service_1 = require("./processes.service");
 const create_process_dto_1 = require("./dto/create-process.dto");
 const update_process_dto_1 = require("./dto/update-process.dto");
+const update_lot_dto_1 = require("./dto/update-lot.dto");
 const create_lot_dto_1 = require("./dto/create-lot.dto");
 const remove_bars_from_lot_dto_1 = require("./dto/remove-bars-from-lot.dto");
 let ProcessesController = class ProcessesController {
@@ -42,6 +43,9 @@ let ProcessesController = class ProcessesController {
     }
     removeBarsFromLot(lotId, dto) {
         return this.processesService.removeBarsFromLot(lotId, dto);
+    }
+    updateLot(lotId, dto) {
+        return this.processesService.updateLot(lotId, dto);
     }
     remove(id) {
         return this.processesService.remove(id);
@@ -92,6 +96,14 @@ __decorate([
     __metadata("design:paramtypes", [String, remove_bars_from_lot_dto_1.RemoveBarsFromLotDto]),
     __metadata("design:returntype", void 0)
 ], ProcessesController.prototype, "removeBarsFromLot", null);
+__decorate([
+    (0, common_1.Patch)(':id/lots/:lotId'),
+    __param(0, (0, common_1.Param)('lotId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_lot_dto_1.UpdateLotDto]),
+    __metadata("design:returntype", void 0)
+], ProcessesController.prototype, "updateLot", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),

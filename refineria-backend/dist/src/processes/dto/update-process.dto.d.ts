@@ -1,5 +1,5 @@
 export declare class UpdateProcessDto {
-    status?: 'open' | 'closed';
+    status?: 'open' | 'in_progress' | 'closed';
     lots?: {
         id: string;
         recovered: number;

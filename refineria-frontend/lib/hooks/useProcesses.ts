@@ -84,6 +84,44 @@ export function useRemoveBarsFromLot() {
   });
 }
 
+export function useUpdateProcessStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ processId, status }: { processId: string; status: string }) =>
+      api<Process>(`/processes/${processId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+    },
+  });
+}
+
+export function useUpdateLotRecovered() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      processId,
+      lotId,
+      recovered,
+    }: {
+      processId: string;
+      lotId: string;
+      recovered: number;
+    }) =>
+      api<ProcessLot>(`/processes/${processId}/lots/${lotId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ recovered }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+    },
+  });
+}
+
 export function useAddLot() {
   const queryClient = useQueryClient();
 

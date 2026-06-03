@@ -172,21 +172,23 @@ function ProcessModal({
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-blue-500/10">
-                        <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Barra</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Bruto (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">G (g)</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Serial</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Bruto (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley (‰)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Recuperado — G (g)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {lot.bars.map((bar) => (
                         <tr key={bar.id} className="terminal-row">
                           <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.grossWeight}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.analytical}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.expected}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.recovered}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.recovered)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -215,6 +217,8 @@ function ProcessDetailView({
   onBack,
   onCloseProcess,
   onAssign,
+  onMarkComplete,
+  saveLotRecovered,
 }: {
   processDetail: ProcessDetail;
   availableBars: GoldBar[];
@@ -223,14 +227,21 @@ function ProcessDetailView({
   onBack: () => void;
   onCloseProcess: (lots?: { id: string; recovered: number }[]) => void;
   onAssign: (barIds: string[]) => void;
+  onMarkComplete: () => Promise<void>;
+  saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<unknown>;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [closeWarning, setCloseWarning] = useState('');
   const [lotG, setLotG] = useState<Record<string, string>>({});
+  const [savingG, setSavingG] = useState<Record<string, boolean>>({});
+  const [savedG, setSavedG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const removeBarsFromLot = useRemoveBarsFromLot();
+
+  const isOpen = processDetail.status === 'open';
+  const isInProgress = processDetail.status === 'in_progress';
 
   const handleRemoveBar = async (lotId: string, barId: string) => {
     try {
@@ -264,6 +275,34 @@ function ProcessDetailView({
     if (selectedBarIds.length === 0) return;
     onAssign(selectedBarIds);
     setSelectedBarIds([]);
+  };
+
+  const handleMarkCompleteClick = async () => {
+    setIsSaving(true);
+    try {
+      await onMarkComplete();
+    } catch {
+      alert('Error al finalizar la asignación');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveLotG = async (lotId: string) => {
+    const gVal = getLotG(lotId);
+    if (gVal === null) return;
+    setSavingG((prev) => ({ ...prev, [lotId]: true }));
+    try {
+      await saveLotRecovered(processDetail.id, lotId, gVal);
+      setSavedG((prev) => ({ ...prev, [lotId]: true }));
+      setTimeout(() => {
+        setSavedG((prev) => ({ ...prev, [lotId]: false }));
+      }, 3000);
+    } catch {
+      alert('Error al guardar el peso recuperado');
+    } finally {
+      setSavingG((prev) => ({ ...prev, [lotId]: false }));
+    }
   };
 
   const handleCloseClick = async () => {
@@ -306,9 +345,19 @@ function ProcessDetailView({
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Proceso #{processDetail.number} — {suppliers ? getSupplierName(suppliers, processDetail.supplierId) : '—'}
               </h1>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
-                ACTIVO
-              </span>
+              {isOpen ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
+                  ABIERTO
+                </span>
+              ) : isInProgress ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                  EN PROCESO
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-slate-500/10 border border-slate-500/20 text-slate-400">
+                  CERRADO
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">
               {processDetail.lotDetails.length} lote{processDetail.lotDetails.length !== 1 ? 's' : ''} creado{processDetail.lotDetails.length !== 1 ? 's' : ''}
@@ -321,81 +370,103 @@ function ProcessDetailView({
           </div>
         )}
 
-        <button
-          onClick={handleCloseClick}
-          disabled={isSaving}
-          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-            hasBars && !isSaving
-              ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
-              : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            {isSaving ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
-            {isSaving ? 'Guardando...' : 'Cerrar Proceso'}
-          </span>
-        </button>
+        <div className="flex items-center gap-2">
+          {isOpen && (
+            <button
+              onClick={handleMarkCompleteClick}
+              disabled={!hasBars || isSaving}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+                hasBars && !isSaving
+                  ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
+                  : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
+                {isSaving ? 'Guardando...' : 'Finalizar Asignación'}
+              </span>
+            </button>
+          )}
+
+          <button
+            onClick={handleCloseClick}
+            disabled={isSaving}
+            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+              hasBars && !isSaving
+                ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
+                : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              {isSaving ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+              {isSaving ? 'Guardando...' : 'Cerrar Proceso'}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="glass-panel">
-            <div className="p-4 border-b border-blue-500/10">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Disponibles</h2>
-            </div>
-            <div className="p-4 sm:p-5 space-y-3">
-              {availableBars.length > 0 ? (
-                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-                  {availableBars.map((bar) => (
-                    <label
-                      key={bar.id}
-                      className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
-                        selectedBarIds.includes(bar.id)
-                          ? 'bg-gold-500/10 border-gold-500/30'
-                          : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedBarIds.includes(bar.id)}
-                        onChange={() => toggleBar(bar.id)}
-                        className="w-4 h-4 accent-gold-500"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-mono text-slate-200">{bar.code}</span>
-                          <span className="text-xs font-mono text-slate-400">{bar.grossWeight} g</span>
+        {isOpen && (
+          <div className="lg:col-span-2 space-y-4">
+            <div className="glass-panel">
+              <div className="p-4 border-b border-blue-500/10">
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Disponibles</h2>
+              </div>
+              <div className="p-4 sm:p-5 space-y-3">
+                {availableBars.length > 0 ? (
+                  <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+                    {availableBars.map((bar) => (
+                      <label
+                        key={bar.id}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
+                          selectedBarIds.includes(bar.id)
+                            ? 'bg-gold-500/10 border-gold-500/30'
+                            : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedBarIds.includes(bar.id)}
+                          onChange={() => toggleBar(bar.id)}
+                          className="w-4 h-4 accent-gold-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-mono text-slate-200">{bar.code}</span>
+                            <span className="text-xs font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)} g</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
+                            <span>Ley: {bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</span>
+                            <span>E: {formatLocaleNumber(bar.analytical)}</span>
+                            <span>F: {formatLocaleNumber(bar.expected)}</span>
+                            <span>G: {formatLocaleNumber(bar.recovered)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
-                          <span>E: {bar.analytical}</span>
-                          <span>F: {bar.expected}</span>
-                          <span>G: {bar.recovered}</span>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-sm text-slate-500 py-6">
-                  No hay barras disponibles para este proveedor.
-                </p>
-              )}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-sm text-slate-500 py-6">
+                    No hay barras disponibles para este proveedor.
+                  </p>
+                )}
 
-              <button
-                onClick={handleAssign}
-                disabled={selectedBarIds.length === 0}
-                className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <Package className="w-4 h-4" />
-                  Asignar a Lote Nuevo ({selectedBarIds.length})
-                </span>
-              </button>
+                <button
+                  onClick={handleAssign}
+                  disabled={selectedBarIds.length === 0}
+                  className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Asignar a Lote Nuevo ({selectedBarIds.length})
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="lg:col-span-3">
+        <div className={isOpen ? 'lg:col-span-3' : 'lg:col-span-5'}>
           <div className="glass-panel h-full flex flex-col">
             <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -410,13 +481,13 @@ function ProcessDetailView({
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
-                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recup.</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Dif (g)</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote N°</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Bruto (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Recuperado — G (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recuperación</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Diferencia (g)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -424,13 +495,13 @@ function ProcessDetailView({
                     [...processDetail.lotDetails].reverse().map((lot) => (
                       <tr key={lot.id} className="terminal-row">
                         <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.grossWeight)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.e)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.f)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.g)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatLocaleNumber(lot.pct)}%</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                          {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
+                          {lot.dif >= 0 ? '+' : ''}{formatLocaleNumber(lot.dif)}
                         </td>
                       </tr>
                     ))
@@ -486,6 +557,27 @@ function ProcessDetailView({
                           placeholder="0,00"
                           className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
                         />
+                        {isInProgress && (
+                          <button
+                            onClick={() => handleSaveLotG(lot.id)}
+                            disabled={savingG[lot.id] || getLotG(lot.id) === null}
+                            className="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                          >
+                            {savingG[lot.id] ? (
+                              <Save className="w-3 h-3 animate-spin" />
+                            ) : savedG[lot.id] ? (
+                              <span className="flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Guardado
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Save className="w-3 h-3" />
+                                Guardar G
+                              </span>
+                            )}
+                          </button>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm font-mono">
                         <div>
@@ -519,11 +611,12 @@ function ProcessDetailView({
                       <table className="min-w-full">
                         <thead>
                           <tr className="border-b border-blue-500/10">
-                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Barra</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Bruto (g)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
-                            <th className="px-3 py-2" />
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Serial</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Bruto (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley (‰)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
+                            {isOpen && <th className="px-3 py-2" />}
                           </tr>
                         </thead>
                         <tbody>
@@ -531,10 +624,11 @@ function ProcessDetailView({
                             <tr key={bar.id} className="terminal-row">
                               <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right">
-                                {confirmDeleteBarId === bar.id ? (
+                                {isOpen && (confirmDeleteBarId === bar.id ? (
                                   <div className="flex items-center gap-1 justify-end">
                                     <button
                                       onClick={() => handleRemoveBar(lot.id, bar.id)}
@@ -557,7 +651,7 @@ function ProcessDetailView({
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
-                                )}
+                                ))}
                               </td>
                             </tr>
                           ))}
@@ -581,7 +675,7 @@ function ProcessDetailView({
 
 export default function ProcesosPage() {
   const { data: suppliers } = useSuppliers();
-  const { goldBars, processes, openProcess, closeProcess, assignToLot } = useProcess();
+  const { goldBars, processes, openProcess, closeProcess, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
 
   const [view, setView] = useState<PageView>('list');
   const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
@@ -589,7 +683,8 @@ export default function ProcesosPage() {
   const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const activeProcesses = useMemo(() => processes.filter((p) => p.status === 'open'), [processes]);
+  const openProcesses = useMemo(() => processes.filter((p) => p.status === 'open'), [processes]);
+  const inProgressProcesses = useMemo(() => processes.filter((p) => p.status === 'in_progress'), [processes]);
   const closedProcesses = useMemo(() => processes.filter((p) => p.status === 'closed'), [processes]);
 
   const managingProcess = useMemo(
@@ -658,6 +753,17 @@ export default function ProcesosPage() {
     }
   };
 
+  const handleMarkComplete = async () => {
+    if (!managingProcessId) return;
+    try {
+      await updateProcessStatus(managingProcessId, 'in_progress');
+      setSuccessMessage('Asignación finalizada. Ahora puede ingresar el Peso Fino Recuperado (G) por lote.');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch {
+      // error handled by react query
+    }
+  };
+
   const handleAssign = async (barIds: string[]) => {
     if (!managingProcessId) return;
     try {
@@ -690,6 +796,8 @@ export default function ProcesosPage() {
           onBack={() => { setView('list'); setManagingProcessId(null); }}
           onCloseProcess={handleCloseProcess}
           onAssign={handleAssign}
+          onMarkComplete={handleMarkComplete}
+          saveLotRecovered={saveLotRecovered}
         />
       </div>
     );
@@ -759,13 +867,13 @@ export default function ProcesosPage() {
               Procesos Activos
             </h2>
             <span className="text-[10px] font-mono text-slate-500 bg-gold-500/10 px-2 py-0.5 border border-gold-500/20">
-              {String(activeProcesses.length).padStart(2, '0')}
+              {String(openProcesses.length).padStart(2, '0')}
             </span>
           </div>
 
-          {activeProcesses.length > 0 ? (
+          {openProcesses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {activeProcesses.map((p) => {
+              {openProcesses.map((p) => {
                 const lotCount = p.lots.length;
                 const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                 return (
@@ -836,6 +944,62 @@ export default function ProcesosPage() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-2 h-2 bg-blue-500 rounded-sm" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              Procesos en Proceso
+            </h2>
+            <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
+              {String(inProgressProcesses.length).padStart(2, '0')}
+            </span>
+          </div>
+
+          {inProgressProcesses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {inProgressProcesses.map((p) => {
+                const lotCount = p.lots.length;
+                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
+                const gCount = p.lots.filter((l) => l.recovered !== null).length;
+                return (
+                  <div key={p.id} className="glass-panel p-4 hover:border-blue-500/30 transition-all">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-lg font-bold text-blue-400 font-mono">#{p.number}</p>
+                        <p className="text-sm text-slate-300 mt-0.5">
+                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                        EN PROCESO
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
+                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
+                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
+                      <span>G: {gCount}/{lotCount} guardado{gCount !== 1 ? 's' : ''}</span>
+                      <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
+                    </div>
+                    <button
+                      onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
+                      className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Settings className="w-3 h-3" />
+                        Ingresar G
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="glass-panel p-8 text-center">
+              <p className="text-sm text-slate-500">No hay procesos en esta etapa.</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2 h-2 bg-slate-500 rounded-sm" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
               Procesos Cerrados
             </h2>

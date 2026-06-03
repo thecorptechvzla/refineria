@@ -68,6 +68,7 @@ model Transaction {
 
 enum ProcessStatus {
   open
+  in_progress
   closed
 }
 

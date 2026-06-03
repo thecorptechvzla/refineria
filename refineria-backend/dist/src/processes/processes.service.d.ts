@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProcessDto } from './dto/create-process.dto';
 import { UpdateProcessDto } from './dto/update-process.dto';
+import { UpdateLotDto } from './dto/update-lot.dto';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 export declare class ProcessesService {
@@ -78,6 +79,14 @@ export declare class ProcessesService {
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
     }) | null>;
+    updateLot(lotId: string, dto: UpdateLotDto): Promise<{
+        number: number;
+        id: string;
+        recovered: number | null;
+        barIds: string[];
+        processId: string;
+        creationDate: Date;
+    }>;
     addLot(processId: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;

@@ -12,6 +12,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ProcessesService } from './processes.service';
 import { CreateProcessDto } from './dto/create-process.dto';
 import { UpdateProcessDto } from './dto/update-process.dto';
+import { UpdateLotDto } from './dto/update-lot.dto';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 
@@ -51,6 +52,14 @@ export class ProcessesController {
     @Body() dto: RemoveBarsFromLotDto,
   ) {
     return this.processesService.removeBarsFromLot(lotId, dto);
+  }
+
+  @Patch(':id/lots/:lotId')
+  updateLot(
+    @Param('lotId') lotId: string,
+    @Body() dto: UpdateLotDto,
+  ) {
+    return this.processesService.updateLot(lotId, dto);
   }
 
   @Delete(':id')

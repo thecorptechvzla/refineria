@@ -1,4 +1,4 @@
-export type ProcessStatus = 'open' | 'closed';
+export type ProcessStatus = 'open' | 'in_progress' | 'closed';
 
 export interface GoldBar {
   id: string;

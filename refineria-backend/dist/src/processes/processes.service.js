@@ -43,18 +43,26 @@ let ProcessesService = class ProcessesService {
         return process;
     }
     async update(id, dto) {
-        await this.findById(id);
+        const process = await this.findById(id);
         const data = {};
+        if (dto.status === 'in_progress' && process.status !== 'open') {
+            throw new common_1.BadRequestException('Only open processes can be moved to in_progress');
+        }
         if (dto.status === 'closed') {
+            if (process.status === 'open') {
+                const lotsWithoutG = process.lots.filter((l) => l.recovered === null);
+                if (lotsWithoutG.length > 0) {
+                    throw new common_1.BadRequestException(`Cannot close process. Lots ${lotsWithoutG.map((l) => l.number).join(', ')} have no recovered weight`);
+                }
+            }
             data.closedAt = new Date();
         }
         if (dto.status) {
             data.status = dto.status;
         }
-        const process = await this.prisma.process.update({
+        await this.prisma.process.update({
             where: { id },
             data,
-            include: { lots: true },
         });
         if (dto.lots && dto.lots.length > 0) {
             for (const lot of dto.lots) {
@@ -69,10 +77,22 @@ let ProcessesService = class ProcessesService {
             include: { lots: true },
         });
     }
+    async updateLot(lotId, dto) {
+        const lot = await this.prisma.processLot.findUnique({
+            where: { id: lotId },
+            include: { process: true },
+        });
+        if (!lot)
+            throw new common_1.NotFoundException(`Lot with id ${lotId} not found`);
+        return this.prisma.processLot.update({
+            where: { id: lotId },
+            data: { recovered: dto.recovered },
+        });
+    }
     async addLot(processId, dto) {
         const process = await this.findById(processId);
-        if (process.status === 'closed') {
-            throw new common_1.BadRequestException('Cannot add lot to a closed process');
+        if (process.status !== 'open') {
+            throw new common_1.BadRequestException('Cannot add lot to a process that is not open');
         }
         const lotCount = await this.prisma.processLot.count({
             where: { processId },
@@ -93,9 +113,13 @@ let ProcessesService = class ProcessesService {
     async removeBarsFromLot(lotId, dto) {
         const lot = await this.prisma.processLot.findUnique({
             where: { id: lotId },
+            include: { process: true },
         });
         if (!lot)
             throw new common_1.NotFoundException(`Lot with id ${lotId} not found`);
+        if (lot.process.status !== 'open') {
+            throw new common_1.BadRequestException('Cannot remove bars from a lot in a process that is not open');
+        }
         const remainingBarIds = lot.barIds.filter((bid) => !dto.barIds.includes(bid));
         await this.prisma.goldBar.updateMany({
             where: { id: { in: dto.barIds } },

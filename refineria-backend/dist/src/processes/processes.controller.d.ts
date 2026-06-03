@@ -1,6 +1,7 @@
 import { ProcessesService } from './processes.service';
 import { CreateProcessDto } from './dto/create-process.dto';
 import { UpdateProcessDto } from './dto/update-process.dto';
+import { UpdateLotDto } from './dto/update-lot.dto';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 export declare class ProcessesController {
@@ -89,6 +90,14 @@ export declare class ProcessesController {
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
         deleted: boolean;
         lotId: string;
+    }>;
+    updateLot(lotId: string, dto: UpdateLotDto): Promise<{
+        number: number;
+        id: string;
+        recovered: number | null;
+        barIds: string[];
+        processId: string;
+        creationDate: Date;
     }>;
     remove(id: string): Promise<{
         deleted: boolean;
