@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteProcess, useRemoveBarsFromLot } from '@/lib/hooks/useProcesses';
@@ -239,6 +239,18 @@ function ProcessDetailView({
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const removeBarsFromLot = useRemoveBarsFromLot();
+
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    for (const lot of processDetail.lotDetails) {
+      if (lot.recovered != null && lot.recovered > 0) {
+        initial[lot.id] = formatLocaleNumber(lot.recovered);
+      }
+    }
+    setLotG(initial);
+    setSavingG({});
+    setSavedG({});
+  }, [processDetail.id]);
 
   const isOpen = processDetail.status === 'open';
   const isInProgress = processDetail.status === 'in_progress';
@@ -492,19 +504,24 @@ function ProcessDetailView({
                 </thead>
                 <tbody>
                   {processDetail.lotDetails.length > 0 ? (
-                    [...processDetail.lotDetails].reverse().map((lot) => (
-                      <tr key={lot.id} className="terminal-row">
-                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.grossWeight)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.e)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.f)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.g)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatLocaleNumber(lot.pct)}%</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                          {lot.dif >= 0 ? '+' : ''}{formatLocaleNumber(lot.dif)}
-                        </td>
-                      </tr>
-                    ))
+                    [...processDetail.lotDetails].reverse().map((lot) => {
+                      const liveG = getLotG(lot.id) ?? lot.g;
+                      const livePct = lot.e > 0 ? (liveG / lot.e) * 100 : 0;
+                      const liveDif = liveG - lot.f;
+                      return (
+                        <tr key={lot.id} className="terminal-row">
+                          <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.grossWeight)}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.e)}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(lot.f)}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatLocaleNumber(liveG)}</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatLocaleNumber(livePct)}%</td>
+                          <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: liveDif < 0 ? '#EF4444' : '#22C55E' }}>
+                            {liveDif >= 0 ? '+' : ''}{formatLocaleNumber(liveDif)}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={7} className="px-5 py-8 text-center text-sm text-slate-500">
@@ -549,14 +566,20 @@ function ProcessDetailView({
                         <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                           G (g)
                         </label>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={lotG[lot.id] ?? ''}
-                          onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
-                          placeholder="0,00"
-                          className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
-                        />
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={lotG[lot.id] ?? ''}
+                            onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && isInProgress) {
+                                e.preventDefault();
+                                handleSaveLotG(lot.id);
+                              }
+                            }}
+                            placeholder="0,00"
+                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
+                          />
                         {isInProgress && (
                           <button
                             onClick={() => handleSaveLotG(lot.id)}

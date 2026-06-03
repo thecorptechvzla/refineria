@@ -43,6 +43,7 @@ export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus]
 
 export const ProcessStatus = {
   open: 'open',
+  in_progress: 'in_progress',
   closed: 'closed'
 } as const
 

@@ -20,6 +20,7 @@ export declare const WorkerStatus: {
 export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus];
 export declare const ProcessStatus: {
     readonly open: "open";
+    readonly in_progress: "in_progress";
     readonly closed: "closed";
 };
 export type ProcessStatus = (typeof ProcessStatus)[keyof typeof ProcessStatus];

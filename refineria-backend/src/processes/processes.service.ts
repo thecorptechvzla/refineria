@@ -42,6 +42,15 @@ export class ProcessesService {
   }
 
   async update(id: string, dto: UpdateProcessDto) {
+    if (dto.lots && dto.lots.length > 0) {
+      for (const lot of dto.lots) {
+        await this.prisma.processLot.update({
+          where: { id: lot.id },
+          data: { recovered: lot.recovered },
+        });
+      }
+    }
+
     const process = await this.findById(id);
     const data: any = {};
 
@@ -69,15 +78,6 @@ export class ProcessesService {
       where: { id },
       data,
     });
-
-    if (dto.lots && dto.lots.length > 0) {
-      for (const lot of dto.lots) {
-        await this.prisma.processLot.update({
-          where: { id: lot.id },
-          data: { recovered: lot.recovered },
-        });
-      }
-    }
 
     return this.prisma.process.findUnique({
       where: { id },
