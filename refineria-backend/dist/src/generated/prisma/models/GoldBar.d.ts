@@ -10,12 +10,14 @@ export type AggregateGoldBar = {
 };
 export type GoldBarAvgAggregateOutputType = {
     grossWeight: number | null;
+    ley: number | null;
     analytical: number | null;
     expected: number | null;
     recovered: number | null;
 };
 export type GoldBarSumAggregateOutputType = {
     grossWeight: number | null;
+    ley: number | null;
     analytical: number | null;
     expected: number | null;
     recovered: number | null;
@@ -25,6 +27,7 @@ export type GoldBarMinAggregateOutputType = {
     code: string | null;
     supplierId: string | null;
     grossWeight: number | null;
+    ley: number | null;
     analytical: number | null;
     expected: number | null;
     recovered: number | null;
@@ -38,6 +41,7 @@ export type GoldBarMaxAggregateOutputType = {
     code: string | null;
     supplierId: string | null;
     grossWeight: number | null;
+    ley: number | null;
     analytical: number | null;
     expected: number | null;
     recovered: number | null;
@@ -51,6 +55,7 @@ export type GoldBarCountAggregateOutputType = {
     code: number;
     supplierId: number;
     grossWeight: number;
+    ley: number;
     analytical: number;
     expected: number;
     recovered: number;
@@ -62,12 +67,14 @@ export type GoldBarCountAggregateOutputType = {
 };
 export type GoldBarAvgAggregateInputType = {
     grossWeight?: true;
+    ley?: true;
     analytical?: true;
     expected?: true;
     recovered?: true;
 };
 export type GoldBarSumAggregateInputType = {
     grossWeight?: true;
+    ley?: true;
     analytical?: true;
     expected?: true;
     recovered?: true;
@@ -77,6 +84,7 @@ export type GoldBarMinAggregateInputType = {
     code?: true;
     supplierId?: true;
     grossWeight?: true;
+    ley?: true;
     analytical?: true;
     expected?: true;
     recovered?: true;
@@ -90,6 +98,7 @@ export type GoldBarMaxAggregateInputType = {
     code?: true;
     supplierId?: true;
     grossWeight?: true;
+    ley?: true;
     analytical?: true;
     expected?: true;
     recovered?: true;
@@ -103,6 +112,7 @@ export type GoldBarCountAggregateInputType = {
     code?: true;
     supplierId?: true;
     grossWeight?: true;
+    ley?: true;
     analytical?: true;
     expected?: true;
     recovered?: true;
@@ -145,6 +155,7 @@ export type GoldBarGroupByOutputType = {
     code: string;
     supplierId: string;
     grossWeight: number;
+    ley: number | null;
     analytical: number;
     expected: number;
     recovered: number;
@@ -169,6 +180,7 @@ export type GoldBarWhereInput = {
     code?: Prisma.StringFilter<"GoldBar"> | string;
     supplierId?: Prisma.StringFilter<"GoldBar"> | string;
     grossWeight?: Prisma.FloatFilter<"GoldBar"> | number;
+    ley?: Prisma.FloatNullableFilter<"GoldBar"> | number | null;
     analytical?: Prisma.FloatFilter<"GoldBar"> | number;
     expected?: Prisma.FloatFilter<"GoldBar"> | number;
     recovered?: Prisma.FloatFilter<"GoldBar"> | number;
@@ -182,6 +194,7 @@ export type GoldBarOrderByWithRelationInput = {
     code?: Prisma.SortOrder;
     supplierId?: Prisma.SortOrder;
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrderInput | Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -198,6 +211,7 @@ export type GoldBarWhereUniqueInput = Prisma.AtLeast<{
     code?: Prisma.StringFilter<"GoldBar"> | string;
     supplierId?: Prisma.StringFilter<"GoldBar"> | string;
     grossWeight?: Prisma.FloatFilter<"GoldBar"> | number;
+    ley?: Prisma.FloatNullableFilter<"GoldBar"> | number | null;
     analytical?: Prisma.FloatFilter<"GoldBar"> | number;
     expected?: Prisma.FloatFilter<"GoldBar"> | number;
     recovered?: Prisma.FloatFilter<"GoldBar"> | number;
@@ -211,6 +225,7 @@ export type GoldBarOrderByWithAggregationInput = {
     code?: Prisma.SortOrder;
     supplierId?: Prisma.SortOrder;
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrderInput | Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -232,6 +247,7 @@ export type GoldBarScalarWhereWithAggregatesInput = {
     code?: Prisma.StringWithAggregatesFilter<"GoldBar"> | string;
     supplierId?: Prisma.StringWithAggregatesFilter<"GoldBar"> | string;
     grossWeight?: Prisma.FloatWithAggregatesFilter<"GoldBar"> | number;
+    ley?: Prisma.FloatNullableWithAggregatesFilter<"GoldBar"> | number | null;
     analytical?: Prisma.FloatWithAggregatesFilter<"GoldBar"> | number;
     expected?: Prisma.FloatWithAggregatesFilter<"GoldBar"> | number;
     recovered?: Prisma.FloatWithAggregatesFilter<"GoldBar"> | number;
@@ -245,6 +261,7 @@ export type GoldBarCreateInput = {
     code: string;
     supplierId: string;
     grossWeight: number;
+    ley?: number | null;
     analytical: number;
     expected: number;
     recovered: number;
@@ -258,6 +275,7 @@ export type GoldBarUncheckedCreateInput = {
     code: string;
     supplierId: string;
     grossWeight: number;
+    ley?: number | null;
     analytical: number;
     expected: number;
     recovered: number;
@@ -271,6 +289,7 @@ export type GoldBarUpdateInput = {
     code?: Prisma.StringFieldUpdateOperationsInput | string;
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number;
+    ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     analytical?: Prisma.FloatFieldUpdateOperationsInput | number;
     expected?: Prisma.FloatFieldUpdateOperationsInput | number;
     recovered?: Prisma.FloatFieldUpdateOperationsInput | number;
@@ -284,6 +303,7 @@ export type GoldBarUncheckedUpdateInput = {
     code?: Prisma.StringFieldUpdateOperationsInput | string;
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number;
+    ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     analytical?: Prisma.FloatFieldUpdateOperationsInput | number;
     expected?: Prisma.FloatFieldUpdateOperationsInput | number;
     recovered?: Prisma.FloatFieldUpdateOperationsInput | number;
@@ -297,6 +317,7 @@ export type GoldBarCreateManyInput = {
     code: string;
     supplierId: string;
     grossWeight: number;
+    ley?: number | null;
     analytical: number;
     expected: number;
     recovered: number;
@@ -310,6 +331,7 @@ export type GoldBarUpdateManyMutationInput = {
     code?: Prisma.StringFieldUpdateOperationsInput | string;
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number;
+    ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     analytical?: Prisma.FloatFieldUpdateOperationsInput | number;
     expected?: Prisma.FloatFieldUpdateOperationsInput | number;
     recovered?: Prisma.FloatFieldUpdateOperationsInput | number;
@@ -323,6 +345,7 @@ export type GoldBarUncheckedUpdateManyInput = {
     code?: Prisma.StringFieldUpdateOperationsInput | string;
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number;
+    ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
     analytical?: Prisma.FloatFieldUpdateOperationsInput | number;
     expected?: Prisma.FloatFieldUpdateOperationsInput | number;
     recovered?: Prisma.FloatFieldUpdateOperationsInput | number;
@@ -336,6 +359,7 @@ export type GoldBarCountOrderByAggregateInput = {
     code?: Prisma.SortOrder;
     supplierId?: Prisma.SortOrder;
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -346,6 +370,7 @@ export type GoldBarCountOrderByAggregateInput = {
 };
 export type GoldBarAvgOrderByAggregateInput = {
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -355,6 +380,7 @@ export type GoldBarMaxOrderByAggregateInput = {
     code?: Prisma.SortOrder;
     supplierId?: Prisma.SortOrder;
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -368,6 +394,7 @@ export type GoldBarMinOrderByAggregateInput = {
     code?: Prisma.SortOrder;
     supplierId?: Prisma.SortOrder;
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
@@ -378,9 +405,17 @@ export type GoldBarMinOrderByAggregateInput = {
 };
 export type GoldBarSumOrderByAggregateInput = {
     grossWeight?: Prisma.SortOrder;
+    ley?: Prisma.SortOrder;
     analytical?: Prisma.SortOrder;
     expected?: Prisma.SortOrder;
     recovered?: Prisma.SortOrder;
+};
+export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
 };
 export type BoolFieldUpdateOperationsInput = {
     set?: boolean;
@@ -390,6 +425,7 @@ export type GoldBarSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     code?: boolean;
     supplierId?: boolean;
     grossWeight?: boolean;
+    ley?: boolean;
     analytical?: boolean;
     expected?: boolean;
     recovered?: boolean;
@@ -403,6 +439,7 @@ export type GoldBarSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
     code?: boolean;
     supplierId?: boolean;
     grossWeight?: boolean;
+    ley?: boolean;
     analytical?: boolean;
     expected?: boolean;
     recovered?: boolean;
@@ -416,6 +453,7 @@ export type GoldBarSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
     code?: boolean;
     supplierId?: boolean;
     grossWeight?: boolean;
+    ley?: boolean;
     analytical?: boolean;
     expected?: boolean;
     recovered?: boolean;
@@ -429,6 +467,7 @@ export type GoldBarSelectScalar = {
     code?: boolean;
     supplierId?: boolean;
     grossWeight?: boolean;
+    ley?: boolean;
     analytical?: boolean;
     expected?: boolean;
     recovered?: boolean;
@@ -437,7 +476,7 @@ export type GoldBarSelectScalar = {
     createdAt?: boolean;
     updatedAt?: boolean;
 };
-export type GoldBarOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "supplierId" | "grossWeight" | "analytical" | "expected" | "recovered" | "available" | "registrationDate" | "createdAt" | "updatedAt", ExtArgs["result"]["goldBar"]>;
+export type GoldBarOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "supplierId" | "grossWeight" | "ley" | "analytical" | "expected" | "recovered" | "available" | "registrationDate" | "createdAt" | "updatedAt", ExtArgs["result"]["goldBar"]>;
 export type $GoldBarPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "GoldBar";
     objects: {};
@@ -446,6 +485,7 @@ export type $GoldBarPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
         code: string;
         supplierId: string;
         grossWeight: number;
+        ley: number | null;
         analytical: number;
         expected: number;
         recovered: number;
@@ -514,6 +554,7 @@ export interface GoldBarFieldRefs {
     readonly code: Prisma.FieldRef<"GoldBar", 'String'>;
     readonly supplierId: Prisma.FieldRef<"GoldBar", 'String'>;
     readonly grossWeight: Prisma.FieldRef<"GoldBar", 'Float'>;
+    readonly ley: Prisma.FieldRef<"GoldBar", 'Float'>;
     readonly analytical: Prisma.FieldRef<"GoldBar", 'Float'>;
     readonly expected: Prisma.FieldRef<"GoldBar", 'Float'>;
     readonly recovered: Prisma.FieldRef<"GoldBar", 'Float'>;

@@ -92,6 +92,7 @@ exports.GoldBarScalarFieldEnum = {
     code: 'code',
     supplierId: 'supplierId',
     grossWeight: 'grossWeight',
+    ley: 'ley',
     analytical: 'analytical',
     expected: 'expected',
     recovered: 'recovered',

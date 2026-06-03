@@ -5,6 +5,7 @@ export interface GoldBar {
   code: string;
   supplierId: string;
   grossWeight: number;
+  ley?: number | null;
   analytical: number;
   expected: number;
   recovered: number;

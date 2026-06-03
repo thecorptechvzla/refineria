@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
-import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, Trash2 } from 'lucide-react';
+import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2 } from 'lucide-react';
 
 export default function IngresoPage() {
   const { data: suppliers } = useSuppliers();
@@ -15,30 +15,46 @@ export default function IngresoPage() {
 
   const [supplierId, setSupplierId] = useState('');
   const [codigo, setCodigo] = useState('');
-  const [pesoBruto, setPesoBruto] = useState(''); // eslint-disable-line
+  const [pesoBruto, setPesoBruto] = useState('');
+  const [ley, setLey] = useState('');
   const [analitico, setAnalitico] = useState('');
   const [esperado, setEsperado] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
-  const pAnalitico = parseNum(analitico);
-  const pEsperado = parseNum(esperado);
+  const pLey = parseNum(ley);
   const pesoExceeds = pBruto > 24900;
 
-  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pAnalitico > 0 && pEsperado > 0 && !pesoExceeds;
+  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pLey > 0 && !pesoExceeds;
+
+  useEffect(() => {
+    if (pBruto > 0 && pLey > 0) {
+      const e = pBruto * pLey / 1000;
+      const f = e * 0.99;
+      setAnalitico(formatLocaleNumber(e));
+      setEsperado(formatLocaleNumber(f));
+    } else {
+      setAnalitico('');
+      setEsperado('');
+    }
+  }, [pBruto, pLey]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
+
+    const rawE = pBruto * pLey / 1000;
+    const rawF = rawE * 0.99;
 
     try {
       await addBar({
         code: codigo.trim(),
         supplierId,
         grossWeight: pBruto,
-        analytical: pAnalitico,
-        expected: pEsperado,
+        ley: pLey,
+        analytical: rawE,
+        expected: rawF,
         recovered: 0,
       });
 
@@ -46,7 +62,7 @@ export default function IngresoPage() {
         type: 'IN',
         weight: pBruto,
         weightUnit: 'g',
-        purity: pBruto > 0 ? pAnalitico / pBruto : 0,
+        purity: rawE / pBruto,
         supplierId,
       });
     } catch (e: unknown) {
@@ -58,6 +74,7 @@ export default function IngresoPage() {
     setSuccessMessage(`Barra ${codigo.trim()} registrada correctamente`);
     setCodigo('');
     setPesoBruto('');
+    setLey('');
     setAnalitico('');
     setEsperado('');
     setSupplierId('');
@@ -164,17 +181,37 @@ export default function IngresoPage() {
 
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  <FlaskConical className="w-3 h-3 inline mr-1" />
+                  Ley — Pureza (‰)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={ley}
+                  onChange={(e) => setLey(formatInputNumber(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
+                  placeholder="Ej. 913,90"
+                />
+                {pBruto > 0 && pLey > 0 && (
+                  <p className="text-[10px] text-gold-500/70 mt-1 font-mono">
+                    E = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLey)} ÷ 1000 = <span className="text-gold-400">{formatLocaleNumber(pBruto * pLey / 1000)}</span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Ruler className="w-3 h-3 inline mr-1" />
                   Peso Fino Analítico — E (g)
                 </label>
                 <input
                   type="text"
                   inputMode="decimal"
-                  required
+                  readOnly
                   value={analitico}
-                  onChange={(e) => setAnalitico(formatInputNumber(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3.325,00"
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all opacity-70 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                  tabIndex={-1}
                 />
               </div>
 
@@ -186,11 +223,11 @@ export default function IngresoPage() {
                 <input
                   type="text"
                   inputMode="decimal"
-                  required
+                  readOnly
                   value={esperado}
-                  onChange={(e) => setEsperado(formatInputNumber(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 3.335,00"
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all opacity-70 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                  tabIndex={-1}
                 />
               </div>
 
@@ -239,6 +276,7 @@ export default function IngresoPage() {
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley (‰)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
@@ -255,6 +293,7 @@ export default function IngresoPage() {
                           {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
@@ -297,7 +336,7 @@ export default function IngresoPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-5 py-8 text-center text-sm text-slate-500">
+                      <td colSpan={9} className="px-5 py-8 text-center text-sm text-slate-500">
                         No hay barras registradas para este proveedor.
                       </td>
                     </tr>

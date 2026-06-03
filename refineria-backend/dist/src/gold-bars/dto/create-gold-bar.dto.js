@@ -15,6 +15,7 @@ class CreateGoldBarDto {
     code;
     supplierId;
     grossWeight;
+    ley;
     analytical;
     expected;
     recovered;
@@ -34,6 +35,12 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateGoldBarDto.prototype, "grossWeight", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateGoldBarDto.prototype, "ley", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),

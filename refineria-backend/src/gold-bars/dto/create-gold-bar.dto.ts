@@ -13,6 +13,11 @@ export class CreateGoldBarDto {
 
   @IsNumber()
   @Min(0)
+  @IsOptional()
+  ley?: number;
+
+  @IsNumber()
+  @Min(0)
   analytical: number;
 
   @IsNumber()

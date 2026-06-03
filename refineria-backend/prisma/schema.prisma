@@ -76,6 +76,7 @@ model GoldBar {
   code             String   @map("code")
   supplierId       String   @map("supplier_id")
   grossWeight      Float    @map("gross_weight")
+  ley              Float?   @map("ley")
   analytical       Float    @map("analytical")
   expected         Float    @map("expected")
   recovered        Float    @map("recovered")
