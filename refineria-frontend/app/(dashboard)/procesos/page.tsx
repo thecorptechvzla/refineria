@@ -966,11 +966,11 @@ export default function ProcesosPage() {
 
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-blue-500 rounded-sm" />
+            <span className="w-2 h-2 bg-orange-500 rounded-sm" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Procesos en Proceso
+              Procesos Terminados
             </h2>
-            <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
+            <span className="text-[10px] font-mono text-slate-500 bg-orange-500/10 px-2 py-0.5 border border-orange-500/20">
               {String(inProgressProcesses.length).padStart(2, '0')}
             </span>
           </div>
@@ -982,16 +982,16 @@ export default function ProcesosPage() {
                 const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                 const gCount = p.lots.filter((l) => l.recovered !== null).length;
                 return (
-                  <div key={p.id} className="glass-panel p-4 hover:border-blue-500/30 transition-all">
+                  <div key={p.id} className="glass-panel p-4 hover:border-orange-500/30 transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="text-lg font-bold text-blue-400 font-mono">#{p.number}</p>
+                        <p className="text-lg font-bold text-orange-400 font-mono">#{p.number}</p>
                         <p className="text-sm text-slate-300 mt-0.5">
                           {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
                         </p>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                        EN PROCESO
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
+                        TERMINADO
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
@@ -1002,7 +1002,7 @@ export default function ProcesosPage() {
                     </div>
                     <button
                       onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
-                      className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
+                      className="w-full py-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition-all"
                     >
                       <span className="flex items-center justify-center gap-1.5">
                         <Settings className="w-3 h-3" />

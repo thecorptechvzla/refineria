@@ -3,8 +3,7 @@
 import { useGold } from '@/lib/GoldContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useTransactions } from '@/lib/hooks/useTransactions';
-import { useTransactionMetrics } from '@/lib/hooks/useTransactions';
-import { useWorkers } from '@/lib/hooks/useWorkers';
+
 import { useProcess } from '@/lib/ProcessContext';
 import { useMemo } from 'react';
 import { toGrams, getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
@@ -12,15 +11,13 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp, Wallet, Users, Activity, Crosshair, Package, Settings,
+  TrendingUp, Wallet, Activity, Crosshair, Package, Settings,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useGold();
   const { data: transactions, isLoading: txLoading } = useTransactions();
-  const { data: metrics } = useTransactionMetrics();
   const { data: suppliers } = useSuppliers();
-  const { data: workers } = useWorkers();
   const { goldBars, processes } = useProcess();
 
   const oroEnInventario = useMemo(
@@ -34,6 +31,15 @@ export default function DashboardPage() {
   );
 
   const oroEnProceso = useMemo(() => {
+    const inProgressLotBarIds = processes
+      .filter((p) => p.status === 'in_progress')
+      .flatMap((p) => p.lots.flatMap((l) => l.barIds));
+    return goldBars
+      .filter((b) => inProgressLotBarIds.includes(b.id))
+      .reduce((s, b) => s + b.grossWeight, 0);
+  }, [processes, goldBars]);
+
+  const oroEnProcesosAbiertos = useMemo(() => {
     const openLotBarIds = processes
       .filter((p) => p.status === 'open')
       .flatMap((p) => p.lots.flatMap((l) => l.barIds));
@@ -53,7 +59,29 @@ export default function DashboardPage() {
     }, 0);
   }, [processes, goldBars]);
 
-  const faltaPorRefinar = oroEnInventario + oroEnProceso;
+  const faltaPorRefinar = oroEnInventario + oroEnProcesosAbiertos;
+
+  const processCounts = useMemo(() => ({
+    open: processes.filter((p) => p.status === 'open').length,
+    inProgress: processes.filter((p) => p.status === 'in_progress').length,
+    closed: processes.filter((p) => p.status === 'closed').length,
+  }), [processes]);
+
+const processBySupplier = useMemo(() => {
+  if (!suppliers) return [];
+  return suppliers
+    .map((s) => {
+      const sp = processes.filter((p) => p.supplierId === s.id);
+      return {
+        id: s.id,
+        name: s.name,
+        open: sp.filter((p) => p.status === 'open').length,
+        inProgress: sp.filter((p) => p.status === 'in_progress').length,
+        closed: sp.filter((p) => p.status === 'closed').length,
+      };
+    })
+    .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
+}, [processes, suppliers]);
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
@@ -97,8 +125,8 @@ export default function DashboardPage() {
   const kpiCards = [
     { label: 'Oro en Inventario', value: formatLocaleWeight(oroEnInventario), icon: Package, accent: 'gold', subtitle: `${goldBars.filter((b) => b.available).length} barras disponibles` },
     { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: TrendingUp, accent: 'gold', subtitle: `${goldBars.length} barras registradas` },
-    { label: 'Oro en Proceso', value: formatLocaleWeight(oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${processes.filter((p) => p.status === 'open').length} procesos activos` },
-    { label: 'Oro Refinado', value: formatLocaleWeight(oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${processes.filter((p) => p.status === 'closed').length} procesos cerrados` },
+    { label: 'Oro en Proceso', value: formatLocaleWeight(oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${processCounts.inProgress} procesos terminados` },
+    { label: 'Oro Refinado', value: formatLocaleWeight(oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${processCounts.closed} procesos cerrados` },
     { label: 'Falta por Refinar', value: formatLocaleWeight(faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Inventario + en proceso' },
   ];
 
@@ -203,38 +231,37 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 glass-panel">
           <div className="p-4 sm:p-5 border-b border-blue-500/10">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Personal</h2>
+              <Crosshair className="w-4 h-4 text-blue-400" />
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Estado de los Procesos</h2>
             </div>
           </div>
-          <div className="p-4 sm:p-5 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gold-500/5 border border-gold-500/15 p-4 text-center">
-                <p className="hud-number text-3xl text-gold-500">{metrics?.workersActivos ?? 0}</p>
-                <p className="text-[10px] text-gold-400/70 uppercase tracking-wider mt-1">Activos</p>
-              </div>
-              <div className="bg-blue-500/5 border border-blue-500/15 p-4 text-center">
-                <p className="hud-number text-3xl text-blue-400">{metrics?.workersInactivos ?? 0}</p>
-                <p className="text-[10px] text-blue-400/70 uppercase tracking-wider mt-1">Inactivos</p>
-              </div>
-            </div>
-            <div className="space-y-1">
-              {(workers ?? []).slice(0, 5).map((w) => (
-                <div key={w.id} className="terminal-row flex items-center justify-between py-2 px-2">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-300 truncate">{w.name}</p>
-                    <p className="text-[10px] text-slate-600">{w.position}</p>
+          <div className="p-4 sm:p-5 max-h-[360px] overflow-y-auto space-y-2">
+            {processBySupplier.length > 0 ? (
+              processBySupplier.map((s) => (
+                <div key={s.id} className="terminal-row flex items-center justify-between py-2.5 px-3">
+                  <span className="text-sm font-medium text-slate-300 truncate min-w-0">{s.name}</span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {s.open > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                        {s.open} A
+                      </span>
+                    )}
+                    {s.inProgress > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
+                        {s.inProgress} T
+                      </span>
+                    )}
+                    {s.closed > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-400">
+                        {s.closed} C
+                      </span>
+                    )}
                   </div>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 ${
-                    w.status === 'active'
-                      ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
-                      : 'text-slate-500 bg-slate-500/10 border border-slate-500/20'
-                  }`}>
-                    {w.status === 'active' ? 'ACT' : 'INA'}
-                  </span>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="text-center text-sm text-slate-500 py-6">No hay procesos activos.</p>
+            )}
           </div>
         </div>
       </div>
