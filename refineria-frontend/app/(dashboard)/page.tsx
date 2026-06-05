@@ -5,13 +5,13 @@ import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useTransactions } from '@/lib/hooks/useTransactions';
 
 import { useProcess } from '@/lib/ProcessContext';
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { toGrams, getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp, Wallet, Activity, Crosshair, Package, Settings,
+  TrendingUp, Wallet, Activity, Crosshair, Package, Settings, ChevronDown,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -20,58 +20,85 @@ export default function DashboardPage() {
   const { data: suppliers } = useSuppliers();
   const { goldBars, processes } = useProcess();
 
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('all');
+  const [selectOpen, setSelectOpen] = useState(false);
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selectOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(e.target as Node)) {
+        setSelectOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [selectOpen]);
+
+  const filteredBars = useMemo(() =>
+    selectedSupplierId === 'all'
+      ? goldBars
+      : goldBars.filter((b) => b.supplierId === selectedSupplierId),
+    [goldBars, selectedSupplierId]);
+
+  const filteredProcesses = useMemo(() =>
+    selectedSupplierId === 'all'
+      ? processes
+      : processes.filter((p) => p.supplierId === selectedSupplierId),
+    [processes, selectedSupplierId]);
+
   const oroEnInventario = useMemo(
-    () => goldBars.filter((b) => b.available).reduce((s, b) => s + b.grossWeight, 0),
-    [goldBars]
+    () => filteredBars.filter((b) => b.available).reduce((s, b) => s + b.grossWeight, 0),
+    [filteredBars]
   );
 
   const oroIngresado = useMemo(
-    () => goldBars.reduce((s, b) => s + b.grossWeight, 0),
-    [goldBars]
+    () => filteredBars.reduce((s, b) => s + b.grossWeight, 0),
+    [filteredBars]
   );
 
   const oroEnProceso = useMemo(() => {
-    const inProgressLotBarIds = processes
+    const inProgressLotBarIds = filteredProcesses
       .filter((p) => p.status === 'in_progress')
       .flatMap((p) => p.lots.flatMap((l) => l.barIds));
-    return goldBars
+    return filteredBars
       .filter((b) => inProgressLotBarIds.includes(b.id))
       .reduce((s, b) => s + b.grossWeight, 0);
-  }, [processes, goldBars]);
+  }, [filteredProcesses, filteredBars]);
 
   const oroEnProcesosAbiertos = useMemo(() => {
-    const openLotBarIds = processes
+    const openLotBarIds = filteredProcesses
       .filter((p) => p.status === 'open')
       .flatMap((p) => p.lots.flatMap((l) => l.barIds));
-    return goldBars
+    return filteredBars
       .filter((b) => openLotBarIds.includes(b.id))
       .reduce((s, b) => s + b.grossWeight, 0);
-  }, [processes, goldBars]);
+  }, [filteredProcesses, filteredBars]);
 
   const oroRefinado = useMemo(() => {
-    const closedLots = processes
+    const closedLots = filteredProcesses
       .filter((p) => p.status === 'closed')
       .flatMap((p) => p.lots);
     return closedLots.reduce((sum, lot) => {
-      return sum + goldBars
+      return sum + filteredBars
         .filter((b) => lot.barIds.includes(b.id))
         .reduce((s, b) => s + b.recovered, 0);
     }, 0);
-  }, [processes, goldBars]);
+  }, [filteredProcesses, filteredBars]);
 
   const faltaPorRefinar = oroEnInventario + oroEnProcesosAbiertos;
 
   const processCounts = useMemo(() => ({
-    open: processes.filter((p) => p.status === 'open').length,
-    inProgress: processes.filter((p) => p.status === 'in_progress').length,
-    closed: processes.filter((p) => p.status === 'closed').length,
-  }), [processes]);
+    open: filteredProcesses.filter((p) => p.status === 'open').length,
+    inProgress: filteredProcesses.filter((p) => p.status === 'in_progress').length,
+    closed: filteredProcesses.filter((p) => p.status === 'closed').length,
+  }), [filteredProcesses]);
 
 const processBySupplier = useMemo(() => {
   if (!suppliers) return [];
   return suppliers
     .map((s) => {
-      const sp = processes.filter((p) => p.supplierId === s.id);
+      const sp = filteredProcesses.filter((p) => p.supplierId === s.id);
       return {
         id: s.id,
         name: s.name,
@@ -81,7 +108,7 @@ const processBySupplier = useMemo(() => {
       };
     })
     .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
-}, [processes, suppliers]);
+}, [filteredProcesses, suppliers]);
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
@@ -98,8 +125,11 @@ const processBySupplier = useMemo(() => {
         map[tx.supplierId].out += grams;
       }
     });
-    return Object.values(map).filter((d) => d.in > 0 || d.out > 0);
-  }, [suppliers, transactions]);
+    const result = Object.values(map).filter((d) => d.in > 0 || d.out > 0);
+    return selectedSupplierId === 'all'
+      ? result
+      : result.filter((d) => d.id === selectedSupplierId);
+  }, [suppliers, transactions, selectedSupplierId]);
 
   const recentTransactions = useMemo(
     () => (transactions ?? []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8),
@@ -123,8 +153,8 @@ const processBySupplier = useMemo(() => {
   }
 
   const kpiCards = [
-    { label: 'Oro en Inventario', value: formatLocaleWeight(oroEnInventario), icon: Package, accent: 'gold', subtitle: `${goldBars.filter((b) => b.available).length} barras disponibles` },
-    { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: TrendingUp, accent: 'gold', subtitle: `${goldBars.length} barras registradas` },
+    { label: 'Oro en Inventario', value: formatLocaleWeight(oroEnInventario), icon: Package, accent: 'gold', subtitle: `${filteredBars.filter((b) => b.available).length} barras disponibles` },
+    { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: TrendingUp, accent: 'gold', subtitle: `${filteredBars.length} barras registradas` },
     { label: 'Oro en Proceso', value: formatLocaleWeight(oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${processCounts.inProgress} procesos terminados` },
     { label: 'Oro Refinado', value: formatLocaleWeight(oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${processCounts.closed} procesos cerrados` },
     { label: 'Falta por Refinar', value: formatLocaleWeight(faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Inventario + en proceso' },
@@ -132,13 +162,37 @@ const processBySupplier = useMemo(() => {
 
   return (
     <div className="space-y-5 pb-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <Crosshair className="w-5 h-5 text-gold-500" />
             Panel de Mando
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Resumen Ejecutivo — Tiempo Real</p>
+        </div>
+        <div ref={selectRef} className="relative w-full sm:w-auto">
+          <button
+            onClick={() => setSelectOpen(!selectOpen)}
+            className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
+          >
+            <span className="truncate">{selectedSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === selectedSupplierId)?.name}</span>
+            <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${selectOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {selectOpen && (
+            <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
+              <li
+                className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                onClick={() => { setSelectedSupplierId('all'); setSelectOpen(false); }}
+              >Todos los clientes</li>
+              {suppliers?.map((s) => (
+                <li
+                  key={s.id}
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === s.id ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedSupplierId(s.id); setSelectOpen(false); }}
+                >{s.name}</li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
