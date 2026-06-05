@@ -127,12 +127,8 @@ export default function DashboardPage() {
     const closedLots = filteredProcesses
       .filter((p) => p.status === 'closed')
       .flatMap((p) => p.lots);
-    return closedLots.reduce((sum, lot) => {
-      return sum + filteredBars
-        .filter((b) => lot.barIds.includes(b.id))
-        .reduce((s, b) => s + b.recovered, 0);
-    }, 0);
-  }, [filteredProcesses, filteredBars]);
+    return closedLots.reduce((sum, lot) => sum + (lot.recovered ?? 0), 0);
+  }, [filteredProcesses]);
 
   const faltaPorRefinar = oroEnInventario + oroEnProceso;
 
