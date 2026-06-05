@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  TrendingUp, Wallet, Activity, Crosshair, Package, Settings, ChevronDown,
+  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -35,17 +35,65 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [selectOpen]);
 
+  const [selectedPeriod, setSelectedPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('last_two');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const periodRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!periodOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (periodRef.current && !periodRef.current.contains(e.target as Node)) {
+        setPeriodOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [periodOpen]);
+
+  const monthRange = useMemo(() => {
+    const now = new Date();
+    const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfCurrent = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { startOfCurrent, startOfPrevious, endOfCurrent };
+  }, []);
+
+  const dateFilterFn = useMemo(() => {
+    const { startOfCurrent, startOfPrevious, endOfCurrent } = monthRange;
+    return (dateStr: string) => {
+      const d = new Date(dateStr);
+      switch (selectedPeriod) {
+        case 'current':
+          return d >= startOfCurrent && d <= endOfCurrent;
+        case 'previous':
+          return d >= startOfPrevious && d < startOfCurrent;
+        case 'custom':
+          if (!startDate && !endDate) return true;
+          if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
+          if (endDate && d > new Date(endDate + 'T23:59:59.999')) return false;
+          return true;
+        case 'last_two':
+        default:
+          return d >= startOfPrevious;
+      }
+    };
+  }, [monthRange, selectedPeriod, startDate, endDate]);
+
   const filteredBars = useMemo(() =>
-    selectedSupplierId === 'all'
-      ? goldBars
-      : goldBars.filter((b) => b.supplierId === selectedSupplierId),
-    [goldBars, selectedSupplierId]);
+    goldBars.filter((b) => {
+      if (selectedSupplierId !== 'all' && b.supplierId !== selectedSupplierId) return false;
+      return dateFilterFn(b.registrationDate);
+    }),
+    [goldBars, selectedSupplierId, dateFilterFn]);
 
   const filteredProcesses = useMemo(() =>
-    selectedSupplierId === 'all'
-      ? processes
-      : processes.filter((p) => p.supplierId === selectedSupplierId),
-    [processes, selectedSupplierId]);
+    processes.filter((p) => {
+      if (selectedSupplierId !== 'all' && p.supplierId !== selectedSupplierId) return false;
+      return dateFilterFn(p.createdAt);
+    }),
+    [processes, selectedSupplierId, dateFilterFn]);
 
   const oroEnInventario = useMemo(
     () => filteredBars.filter((b) => b.available).reduce((s, b) => s + b.grossWeight, 0),
@@ -86,7 +134,7 @@ export default function DashboardPage() {
     }, 0);
   }, [filteredProcesses, filteredBars]);
 
-  const faltaPorRefinar = oroEnInventario + oroEnProcesosAbiertos;
+  const faltaPorRefinar = oroEnInventario + oroEnProceso;
 
   const processCounts = useMemo(() => ({
     open: filteredProcesses.filter((p) => p.status === 'open').length,
@@ -153,11 +201,11 @@ const processBySupplier = useMemo(() => {
   }
 
   const kpiCards = [
-    { label: 'Oro en Inventario', value: formatLocaleWeight(oroEnInventario), icon: Package, accent: 'gold', subtitle: `${filteredBars.filter((b) => b.available).length} barras disponibles` },
-    { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: TrendingUp, accent: 'gold', subtitle: `${filteredBars.length} barras registradas` },
+    { label: 'Oro Ingresado', value: formatLocaleWeight(oroIngresado), icon: Database, accent: 'gold', subtitle: `${filteredBars.length} barras registradas` },
+    { label: 'Oro en Bóveda', value: formatLocaleWeight(oroEnInventario), icon: Shield, accent: 'gold', subtitle: `${filteredBars.filter((b) => b.available).length} barras sin procesar` },
     { label: 'Oro en Proceso', value: formatLocaleWeight(oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${processCounts.inProgress} procesos terminados` },
     { label: 'Oro Refinado', value: formatLocaleWeight(oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${processCounts.closed} procesos cerrados` },
-    { label: 'Falta por Refinar', value: formatLocaleWeight(faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Inventario + en proceso' },
+    { label: 'Falta por Refinar', value: formatLocaleWeight(faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Bóveda + En proceso' },
   ];
 
   return (
@@ -170,28 +218,78 @@ const processBySupplier = useMemo(() => {
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Resumen Ejecutivo — Tiempo Real</p>
         </div>
-        <div ref={selectRef} className="relative w-full sm:w-auto">
-          <button
-            onClick={() => setSelectOpen(!selectOpen)}
-            className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
-          >
-            <span className="truncate">{selectedSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === selectedSupplierId)?.name}</span>
-            <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${selectOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {selectOpen && (
-            <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
-              <li
-                className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
-                onClick={() => { setSelectedSupplierId('all'); setSelectOpen(false); }}
-              >Todos los clientes</li>
-              {suppliers?.map((s) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <div ref={selectRef} className="relative w-full sm:w-auto">
+            <button
+              onClick={() => setSelectOpen(!selectOpen)}
+              className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
+            >
+              <span className="truncate">{selectedSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === selectedSupplierId)?.name}</span>
+              <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${selectOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {selectOpen && (
+              <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
                 <li
-                  key={s.id}
-                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === s.id ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
-                  onClick={() => { setSelectedSupplierId(s.id); setSelectOpen(false); }}
-                >{s.name}</li>
-              ))}
-            </ul>
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedSupplierId('all'); setSelectOpen(false); }}
+                >Todos los clientes</li>
+                {suppliers?.map((s) => (
+                  <li
+                    key={s.id}
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === s.id ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setSelectedSupplierId(s.id); setSelectOpen(false); }}
+                  >{s.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div ref={periodRef} className="relative w-full sm:w-auto">
+            <button
+              onClick={() => setPeriodOpen(!periodOpen)}
+              className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
+            >
+              <span className="truncate">
+                {selectedPeriod === 'current' ? 'Mes actual' : selectedPeriod === 'previous' ? 'Mes anterior' : selectedPeriod === 'custom' ? 'Personalizado' : 'Últimos 2 meses'}
+              </span>
+              <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${periodOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {periodOpen && (
+              <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
+                <li
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedPeriod === 'last_two' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedPeriod('last_two'); setPeriodOpen(false); }}
+                >Últimos 2 meses</li>
+                <li
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedPeriod === 'current' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedPeriod('current'); setPeriodOpen(false); }}
+                >Mes actual</li>
+                <li
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedPeriod === 'previous' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedPeriod('previous'); setPeriodOpen(false); }}
+                >Mes anterior</li>
+                <li
+                  className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedPeriod === 'custom' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                  onClick={() => { setSelectedPeriod('custom'); setPeriodOpen(false); }}
+                >Personalizado</li>
+              </ul>
+            )}
+          </div>
+          {selectedPeriod === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full sm:w-auto px-3 py-[7px] text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 focus:outline-none focus:border-blue-500/50 [color-scheme:dark]"
+              />
+              <span className="text-slate-600 text-[10px] shrink-0">—</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full sm:w-auto px-3 py-[7px] text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 focus:outline-none focus:border-blue-500/50 [color-scheme:dark]"
+              />
+            </div>
           )}
         </div>
       </div>
