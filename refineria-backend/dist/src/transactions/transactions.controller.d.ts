@@ -17,8 +17,8 @@ export declare class TransactionsController {
             weight: number;
             weightUnit: import("../generated/prisma/enums").WeightUnit;
             purity: number;
-            date: Date;
             supplierId: string | null;
+            date: Date;
         })[];
         total: number;
         page: number;
@@ -33,8 +33,8 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, {
         omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
@@ -63,8 +63,8 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -74,7 +74,7 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }>;
 }

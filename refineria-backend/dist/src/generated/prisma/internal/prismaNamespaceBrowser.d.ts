@@ -79,6 +79,9 @@ export declare const ProcessScalarFieldEnum: {
     readonly supplierId: "supplierId";
     readonly status: "status";
     readonly closedAt: "closedAt";
+    readonly actaRecepcion: "actaRecepcion";
+    readonly actaFundicion: "actaFundicion";
+    readonly actaConformidad: "actaConformidad";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
 };

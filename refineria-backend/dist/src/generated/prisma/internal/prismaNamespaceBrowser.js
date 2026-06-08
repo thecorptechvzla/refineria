@@ -107,6 +107,9 @@ exports.ProcessScalarFieldEnum = {
     supplierId: 'supplierId',
     status: 'status',
     closedAt: 'closedAt',
+    actaRecepcion: 'actaRecepcion',
+    actaFundicion: 'actaFundicion',
+    actaConformidad: 'actaConformidad',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

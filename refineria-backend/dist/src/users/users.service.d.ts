@@ -5,24 +5,24 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     findAll(): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;
     }[]>;
     findById(id: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;
     }>;
     findByEmail(email: string): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         password: string;
         role: Role;
         createdAt: Date;
@@ -34,8 +34,8 @@ export declare class UsersService {
         role?: Role;
     }): Promise<{
         id: string;
-        email: string;
         name: string;
+        email: string;
         role: Role;
         createdAt: Date;
         updatedAt: Date;

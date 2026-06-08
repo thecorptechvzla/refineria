@@ -21,6 +21,9 @@ export type ProcessMinAggregateOutputType = {
     supplierId: string | null;
     status: $Enums.ProcessStatus | null;
     closedAt: Date | null;
+    actaRecepcion: string | null;
+    actaFundicion: string | null;
+    actaConformidad: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
 };
@@ -30,6 +33,9 @@ export type ProcessMaxAggregateOutputType = {
     supplierId: string | null;
     status: $Enums.ProcessStatus | null;
     closedAt: Date | null;
+    actaRecepcion: string | null;
+    actaFundicion: string | null;
+    actaConformidad: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
 };
@@ -39,6 +45,9 @@ export type ProcessCountAggregateOutputType = {
     supplierId: number;
     status: number;
     closedAt: number;
+    actaRecepcion: number;
+    actaFundicion: number;
+    actaConformidad: number;
     createdAt: number;
     updatedAt: number;
     _all: number;
@@ -55,6 +64,9 @@ export type ProcessMinAggregateInputType = {
     supplierId?: true;
     status?: true;
     closedAt?: true;
+    actaRecepcion?: true;
+    actaFundicion?: true;
+    actaConformidad?: true;
     createdAt?: true;
     updatedAt?: true;
 };
@@ -64,6 +76,9 @@ export type ProcessMaxAggregateInputType = {
     supplierId?: true;
     status?: true;
     closedAt?: true;
+    actaRecepcion?: true;
+    actaFundicion?: true;
+    actaConformidad?: true;
     createdAt?: true;
     updatedAt?: true;
 };
@@ -73,6 +88,9 @@ export type ProcessCountAggregateInputType = {
     supplierId?: true;
     status?: true;
     closedAt?: true;
+    actaRecepcion?: true;
+    actaFundicion?: true;
+    actaConformidad?: true;
     createdAt?: true;
     updatedAt?: true;
     _all?: true;
@@ -111,6 +129,9 @@ export type ProcessGroupByOutputType = {
     supplierId: string;
     status: $Enums.ProcessStatus;
     closedAt: Date | null;
+    actaRecepcion: string | null;
+    actaFundicion: string | null;
+    actaConformidad: string | null;
     createdAt: Date;
     updatedAt: Date;
     _count: ProcessCountAggregateOutputType | null;
@@ -131,6 +152,9 @@ export type ProcessWhereInput = {
     supplierId?: Prisma.StringFilter<"Process"> | string;
     status?: Prisma.EnumProcessStatusFilter<"Process"> | $Enums.ProcessStatus;
     closedAt?: Prisma.DateTimeNullableFilter<"Process"> | Date | string | null;
+    actaRecepcion?: Prisma.StringNullableFilter<"Process"> | string | null;
+    actaFundicion?: Prisma.StringNullableFilter<"Process"> | string | null;
+    actaConformidad?: Prisma.StringNullableFilter<"Process"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"Process"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"Process"> | Date | string;
     lots?: Prisma.ProcessLotListRelationFilter;
@@ -141,6 +165,9 @@ export type ProcessOrderByWithRelationInput = {
     supplierId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
     closedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaRecepcion?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaFundicion?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaConformidad?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     lots?: Prisma.ProcessLotOrderByRelationAggregateInput;
@@ -154,6 +181,9 @@ export type ProcessWhereUniqueInput = Prisma.AtLeast<{
     supplierId?: Prisma.StringFilter<"Process"> | string;
     status?: Prisma.EnumProcessStatusFilter<"Process"> | $Enums.ProcessStatus;
     closedAt?: Prisma.DateTimeNullableFilter<"Process"> | Date | string | null;
+    actaRecepcion?: Prisma.StringNullableFilter<"Process"> | string | null;
+    actaFundicion?: Prisma.StringNullableFilter<"Process"> | string | null;
+    actaConformidad?: Prisma.StringNullableFilter<"Process"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"Process"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"Process"> | Date | string;
     lots?: Prisma.ProcessLotListRelationFilter;
@@ -164,6 +194,9 @@ export type ProcessOrderByWithAggregationInput = {
     supplierId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
     closedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaRecepcion?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaFundicion?: Prisma.SortOrderInput | Prisma.SortOrder;
+    actaConformidad?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     _count?: Prisma.ProcessCountOrderByAggregateInput;
@@ -181,6 +214,9 @@ export type ProcessScalarWhereWithAggregatesInput = {
     supplierId?: Prisma.StringWithAggregatesFilter<"Process"> | string;
     status?: Prisma.EnumProcessStatusWithAggregatesFilter<"Process"> | $Enums.ProcessStatus;
     closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Process"> | Date | string | null;
+    actaRecepcion?: Prisma.StringNullableWithAggregatesFilter<"Process"> | string | null;
+    actaFundicion?: Prisma.StringNullableWithAggregatesFilter<"Process"> | string | null;
+    actaConformidad?: Prisma.StringNullableWithAggregatesFilter<"Process"> | string | null;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"Process"> | Date | string;
     updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Process"> | Date | string;
 };
@@ -190,6 +226,9 @@ export type ProcessCreateInput = {
     supplierId: string;
     status?: $Enums.ProcessStatus;
     closedAt?: Date | string | null;
+    actaRecepcion?: string | null;
+    actaFundicion?: string | null;
+    actaConformidad?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     lots?: Prisma.ProcessLotCreateNestedManyWithoutProcessInput;
@@ -200,6 +239,9 @@ export type ProcessUncheckedCreateInput = {
     supplierId: string;
     status?: $Enums.ProcessStatus;
     closedAt?: Date | string | null;
+    actaRecepcion?: string | null;
+    actaFundicion?: string | null;
+    actaConformidad?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     lots?: Prisma.ProcessLotUncheckedCreateNestedManyWithoutProcessInput;
@@ -210,6 +252,9 @@ export type ProcessUpdateInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     lots?: Prisma.ProcessLotUpdateManyWithoutProcessNestedInput;
@@ -220,6 +265,9 @@ export type ProcessUncheckedUpdateInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     lots?: Prisma.ProcessLotUncheckedUpdateManyWithoutProcessNestedInput;
@@ -230,6 +278,9 @@ export type ProcessCreateManyInput = {
     supplierId: string;
     status?: $Enums.ProcessStatus;
     closedAt?: Date | string | null;
+    actaRecepcion?: string | null;
+    actaFundicion?: string | null;
+    actaConformidad?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
 };
@@ -239,6 +290,9 @@ export type ProcessUpdateManyMutationInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -248,6 +302,9 @@ export type ProcessUncheckedUpdateManyInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -257,6 +314,9 @@ export type ProcessCountOrderByAggregateInput = {
     supplierId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
     closedAt?: Prisma.SortOrder;
+    actaRecepcion?: Prisma.SortOrder;
+    actaFundicion?: Prisma.SortOrder;
+    actaConformidad?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
 };
@@ -269,6 +329,9 @@ export type ProcessMaxOrderByAggregateInput = {
     supplierId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
     closedAt?: Prisma.SortOrder;
+    actaRecepcion?: Prisma.SortOrder;
+    actaFundicion?: Prisma.SortOrder;
+    actaConformidad?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
 };
@@ -278,6 +341,9 @@ export type ProcessMinOrderByAggregateInput = {
     supplierId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
     closedAt?: Prisma.SortOrder;
+    actaRecepcion?: Prisma.SortOrder;
+    actaFundicion?: Prisma.SortOrder;
+    actaConformidad?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
 };
@@ -319,6 +385,9 @@ export type ProcessCreateWithoutLotsInput = {
     supplierId: string;
     status?: $Enums.ProcessStatus;
     closedAt?: Date | string | null;
+    actaRecepcion?: string | null;
+    actaFundicion?: string | null;
+    actaConformidad?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
 };
@@ -328,6 +397,9 @@ export type ProcessUncheckedCreateWithoutLotsInput = {
     supplierId: string;
     status?: $Enums.ProcessStatus;
     closedAt?: Date | string | null;
+    actaRecepcion?: string | null;
+    actaFundicion?: string | null;
+    actaConformidad?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
 };
@@ -350,6 +422,9 @@ export type ProcessUpdateWithoutLotsInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -359,6 +434,9 @@ export type ProcessUncheckedUpdateWithoutLotsInput = {
     supplierId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -380,6 +458,9 @@ export type ProcessSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     supplierId?: boolean;
     status?: boolean;
     closedAt?: boolean;
+    actaRecepcion?: boolean;
+    actaFundicion?: boolean;
+    actaConformidad?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
     lots?: boolean | Prisma.Process$lotsArgs<ExtArgs>;
@@ -391,6 +472,9 @@ export type ProcessSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
     supplierId?: boolean;
     status?: boolean;
     closedAt?: boolean;
+    actaRecepcion?: boolean;
+    actaFundicion?: boolean;
+    actaConformidad?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 }, ExtArgs["result"]["process"]>;
@@ -400,6 +484,9 @@ export type ProcessSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
     supplierId?: boolean;
     status?: boolean;
     closedAt?: boolean;
+    actaRecepcion?: boolean;
+    actaFundicion?: boolean;
+    actaConformidad?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 }, ExtArgs["result"]["process"]>;
@@ -409,10 +496,13 @@ export type ProcessSelectScalar = {
     supplierId?: boolean;
     status?: boolean;
     closedAt?: boolean;
+    actaRecepcion?: boolean;
+    actaFundicion?: boolean;
+    actaConformidad?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 };
-export type ProcessOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "number" | "supplierId" | "status" | "closedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["process"]>;
+export type ProcessOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "number" | "supplierId" | "status" | "closedAt" | "actaRecepcion" | "actaFundicion" | "actaConformidad" | "createdAt" | "updatedAt", ExtArgs["result"]["process"]>;
 export type ProcessInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     lots?: boolean | Prisma.Process$lotsArgs<ExtArgs>;
     _count?: boolean | Prisma.ProcessCountOutputTypeDefaultArgs<ExtArgs>;
@@ -430,6 +520,9 @@ export type $ProcessPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
         supplierId: string;
         status: $Enums.ProcessStatus;
         closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
         createdAt: Date;
         updatedAt: Date;
     }, ExtArgs["result"]["process"]>;
@@ -495,6 +588,9 @@ export interface ProcessFieldRefs {
     readonly supplierId: Prisma.FieldRef<"Process", 'String'>;
     readonly status: Prisma.FieldRef<"Process", 'ProcessStatus'>;
     readonly closedAt: Prisma.FieldRef<"Process", 'DateTime'>;
+    readonly actaRecepcion: Prisma.FieldRef<"Process", 'String'>;
+    readonly actaFundicion: Prisma.FieldRef<"Process", 'String'>;
+    readonly actaConformidad: Prisma.FieldRef<"Process", 'String'>;
     readonly createdAt: Prisma.FieldRef<"Process", 'DateTime'>;
     readonly updatedAt: Prisma.FieldRef<"Process", 'DateTime'>;
 }

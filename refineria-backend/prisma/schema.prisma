@@ -90,14 +90,17 @@ model GoldBar {
 }
 
 model Process {
-  id         String        @id @default(uuid())
-  number     Int           @map("number")
-  supplierId String        @map("supplier_id")
-  status     ProcessStatus @default(open)
-  closedAt   DateTime?     @map("closed_at")
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt @map("updated_at")
-  lots       ProcessLot[]
+  id              String        @id @default(uuid())
+  number          Int           @map("number")
+  supplierId      String        @map("supplier_id")
+  status          ProcessStatus @default(open)
+  closedAt        DateTime?     @map("closed_at")
+  actaRecepcion   String?       @map("acta_recepcion")
+  actaFundicion   String?       @map("acta_fundicion")
+  actaConformidad String?       @map("acta_conformidad")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  lots            ProcessLot[]
 
   @@map("processes")
 }

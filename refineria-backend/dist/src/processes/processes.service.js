@@ -147,6 +147,27 @@ let ProcessesService = class ProcessesService {
         await this.prisma.process.delete({ where: { id } });
         return { deleted: true };
     }
+    async closeWithActas(id, actas) {
+        const process = await this.findById(id);
+        if (process.status !== 'in_progress' && process.status !== 'open') {
+            throw new common_1.BadRequestException('Solo procesos abiertos o en progreso pueden cerrarse con actas');
+        }
+        const lotsWithoutG = process.lots.filter((l) => l.recovered === null);
+        if (lotsWithoutG.length > 0) {
+            throw new common_1.BadRequestException(`Cannot close process. Lots ${lotsWithoutG.map((l) => l.number).join(', ')} have no recovered weight`);
+        }
+        return this.prisma.process.update({
+            where: { id },
+            data: {
+                status: 'closed',
+                closedAt: new Date(),
+                actaRecepcion: actas.actaRecepcion,
+                actaFundicion: actas.actaFundicion,
+                actaConformidad: actas.actaConformidad,
+            },
+            include: { lots: true },
+        });
+    }
 };
 exports.ProcessesService = ProcessesService;
 exports.ProcessesService = ProcessesService = __decorate([

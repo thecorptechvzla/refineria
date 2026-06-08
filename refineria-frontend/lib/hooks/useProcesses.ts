@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, apiUpload } from '@/lib/api';
 import type { Process, ProcessLot } from '@/types/refinery';
 
 export function useProcesses() {
@@ -131,6 +131,37 @@ export function useAddLot() {
         method: 'POST',
         body: JSON.stringify({ barIds }),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
+export function useCloseProcessWithActas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      processId,
+      actaRecepcion,
+      actaFundicion,
+      actaConformidad,
+      lots,
+    }: {
+      processId: string;
+      actaRecepcion: File;
+      actaFundicion: File;
+      actaConformidad: File;
+      lots: { id: string; recovered: number }[];
+    }) => {
+      const formData = new FormData();
+      formData.append('actaRecepcion', actaRecepcion);
+      formData.append('actaFundicion', actaFundicion);
+      formData.append('actaConformidad', actaConformidad);
+      formData.append('lots', JSON.stringify(lots));
+      return apiUpload<Process>(`/processes/${processId}/actas`, formData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['processes'] });
       queryClient.invalidateQueries({ queryKey: ['gold-bars'] });

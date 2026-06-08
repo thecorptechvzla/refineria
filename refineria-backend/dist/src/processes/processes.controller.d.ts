@@ -12,8 +12,8 @@ export declare class ProcessesController {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
@@ -24,14 +24,17 @@ export declare class ProcessesController {
         supplierId: string;
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
     }>;
     findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<({
         lots: {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
@@ -42,14 +45,17 @@ export declare class ProcessesController {
         supplierId: string;
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
     })[]>;
     findById(id: string): Promise<{
         lots: {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
@@ -60,14 +66,17 @@ export declare class ProcessesController {
         supplierId: string;
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
     }>;
     update(id: string, dto: UpdateProcessDto): Promise<({
         lots: {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
@@ -78,13 +87,16 @@ export declare class ProcessesController {
         supplierId: string;
         status: import("../generated/prisma/enums").ProcessStatus;
         closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
     }) | null>;
     addLot(id: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;
         recovered: number | null;
-        barIds: string[];
         processId: string;
+        barIds: string[];
         creationDate: Date;
     }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
@@ -95,8 +107,8 @@ export declare class ProcessesController {
         number: number;
         id: string;
         recovered: number | null;
-        barIds: string[];
         processId: string;
+        barIds: string[];
         creationDate: Date;
     }>;
     remove(id: string): Promise<{

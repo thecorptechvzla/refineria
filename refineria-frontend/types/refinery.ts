@@ -30,4 +30,7 @@ export interface Process {
   lots: ProcessLot[];
   createdAt: string;
   closedAt?: string;
+  actaRecepcion?: string | null;
+  actaFundicion?: string | null;
+  actaConformidad?: string | null;
 }

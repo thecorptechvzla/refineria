@@ -75,3 +75,13 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   if (res.status === 204) return undefined as T;
   return res.data;
 }
+
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await instance.request<T>({
+    method: 'POST',
+    url: path,
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+}

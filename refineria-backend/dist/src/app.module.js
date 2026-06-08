@@ -17,6 +17,7 @@ const transactions_module_1 = require("./transactions/transactions.module");
 const workers_module_1 = require("./workers/workers.module");
 const gold_bars_module_1 = require("./gold-bars/gold-bars.module");
 const processes_module_1 = require("./processes/processes.module");
+const files_module_1 = require("./files/files.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -32,6 +33,7 @@ exports.AppModule = AppModule = __decorate([
             workers_module_1.WorkersModule,
             gold_bars_module_1.GoldBarsModule,
             processes_module_1.ProcessesModule,
+            files_module_1.FilesModule,
         ],
     })
 ], AppModule);

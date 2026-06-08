@@ -140,6 +140,9 @@ export const ProcessScalarFieldEnum = {
   supplierId: 'supplierId',
   status: 'status',
   closedAt: 'closedAt',
+  actaRecepcion: 'actaRecepcion',
+  actaFundicion: 'actaFundicion',
+  actaConformidad: 'actaConformidad',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

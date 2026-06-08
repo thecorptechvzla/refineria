@@ -9,6 +9,7 @@ import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import {
   Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
   Lock, X, Eye, Save, ChevronDown, ChevronRight, Trash2,
+  FileText, Upload,
 } from 'lucide-react';
 
 type PageView = 'list' | 'detail';
@@ -70,7 +71,7 @@ function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetail {
 }
 
 function ProcessModal({
-  process,
+  process: procData,
   allBars,
   suppliers,
   onClose,
@@ -80,7 +81,7 @@ function ProcessModal({
   suppliers: { id: string; name: string }[] | undefined;
   onClose: () => void;
 }) {
-  const detail = useMemo(() => buildProcessDetail(process, allBars), [process, allBars]);
+  const detail = useMemo(() => buildProcessDetail(procData, allBars), [procData, allBars]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
@@ -197,7 +198,40 @@ function ProcessModal({
               </div>
             ))}
           </div>
-        </div>
+          </div>
+
+        {detail.status === 'closed' && (
+          <div className="p-5 border-t border-blue-500/10">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-4 h-4 text-blue-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Documentos de Validaci&oacute;n</h3>
+            </div>
+            {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
+                  { label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
+                  { label: 'Acta de Conformidad', url: detail.actaConformidad },
+                ].map((acta) => (
+                  acta.url ? (
+                    <a
+                      key={acta.label}
+                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
+                    >
+                      <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                      <span>{acta.label}</span>
+                    </a>
+                  ) : null
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">No hay documentos de validaci&oacute;n asociados.</p>
+            )}
+          </div>
+        )}
 
         <div className="p-5 border-t border-blue-500/10 flex justify-end">
           <button onClick={onClose} className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
@@ -216,6 +250,7 @@ function ProcessDetailView({
   suppliers,
   onBack,
   onCloseProcess,
+  onCloseProcessWithActas,
   onAssign,
   onMarkComplete,
   saveLotRecovered,
@@ -226,6 +261,7 @@ function ProcessDetailView({
   suppliers: { id: string; name: string }[] | undefined;
   onBack: () => void;
   onCloseProcess: (lots?: { id: string; recovered: number }[]) => void;
+  onCloseProcessWithActas: (files: { actaRecepcion: File; actaFundicion: File; actaConformidad: File }, lots: { id: string; recovered: number }[]) => void;
   onAssign: (barIds: string[]) => void;
   onMarkComplete: () => Promise<void>;
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<unknown>;
@@ -238,6 +274,10 @@ function ProcessDetailView({
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
+  const [actaRecepcion, setActaRecepcion] = useState<File | null>(null);
+  const [actaFundicion, setActaFundicion] = useState<File | null>(null);
+  const [actaConformidad, setActaConformidad] = useState<File | null>(null);
+  const [uploadingActas, setUploadingActas] = useState(false);
   const removeBarsFromLot = useRemoveBarsFromLot();
 
   useEffect(() => {
@@ -324,24 +364,36 @@ function ProcessDetailView({
       return;
     }
 
-    const missingG = processDetail.lotDetails.some(
-      (lot) => getLotG(lot.id) === null,
-    );
-    if (missingG) {
-      setCloseWarning('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
+    if (isInProgress) {
+      const missingG = processDetail.lotDetails.some(
+        (lot) => getLotG(lot.id) === null,
+      );
+      if (missingG) {
+        setCloseWarning('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
+        setTimeout(() => setCloseWarning(''), 5000);
+        return;
+      }
+    }
+
+    const allFilesReady = actaRecepcion && actaFundicion && actaConformidad;
+    if (!allFilesReady) {
+      setCloseWarning('Debe subir las 3 actas de validación (Recepción, Fundición y Conformidad) antes de cerrar el proceso.');
       setTimeout(() => setCloseWarning(''), 5000);
       return;
     }
 
-    setIsSaving(true);
+    setUploadingActas(true);
     try {
       const lots = processDetail.lotDetails.map((lot) => ({
         id: lot.id,
         recovered: getLotG(lot.id)!,
       }));
-      onCloseProcess(lots);
+      await onCloseProcessWithActas(
+        { actaRecepcion: actaRecepcion!, actaFundicion: actaFundicion!, actaConformidad: actaConformidad! },
+        lots,
+      );
     } finally {
-      setIsSaving(false);
+      setUploadingActas(false);
     }
   };
 
@@ -376,14 +428,7 @@ function ProcessDetailView({
             </p>
           </div>
         </div>
-        {closeWarning && (
-          <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
-            <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          {isOpen && (
+        {isOpen && (
             <button
               onClick={handleMarkCompleteClick}
               disabled={!hasBars || isSaving}
@@ -399,22 +444,6 @@ function ProcessDetailView({
               </span>
             </button>
           )}
-
-          <button
-            onClick={handleCloseClick}
-            disabled={isSaving}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-              hasBars && !isSaving
-                ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
-                : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              {isSaving ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
-              {isSaving ? 'Guardando...' : 'Cerrar Proceso'}
-            </span>
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
@@ -691,14 +720,138 @@ function ProcessDetailView({
             <p className="text-sm text-slate-500">No hay lotes en este proceso.</p>
           </div>
         )}
+
+        {processDetail.status === 'closed' && (
+          <div className="glass-panel">
+            <div className="p-4 sm:p-5 border-b border-blue-500/10">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Documentos de Validación</h2>
+              </div>
+            </div>
+            <div className="p-4 sm:p-5">
+              {processDetail.actaRecepcion || processDetail.actaFundicion || processDetail.actaConformidad ? (
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { label: 'Acta de Recepción', url: processDetail.actaRecepcion },
+                    { label: 'Acta de Fundición', url: processDetail.actaFundicion },
+                    { label: 'Acta de Conformidad', url: processDetail.actaConformidad },
+                  ].map((acta) => (
+                    acta.url ? (
+                      <a
+                        key={acta.label}
+                        href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
+                      >
+                        <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                        <span>{acta.label}</span>
+                      </a>
+                    ) : null
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No hay documentos de validación asociados.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+        {(isOpen || isInProgress) && (
+          <div className="glass-panel">
+            <div className="p-4 sm:p-5 border-b border-blue-500/10">
+              <div className="flex items-center gap-2">
+                <Upload className="w-4 h-4 text-blue-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Subir Actas de Validaci&oacute;n</h2>
+              </div>
+            </div>
+            <div className="p-4 sm:p-5 space-y-4">
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+                Adjunte las 3 actas en formato PDF para habilitar el cierre del proceso
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  { key: 'recepcion', label: 'Acta de Recepci&oacute;n', state: actaRecepcion, setter: setActaRecepcion },
+                  { key: 'fundicion', label: 'Acta de Fundici&oacute;n', state: actaFundicion, setter: setActaFundicion },
+                  { key: 'conformidad', label: 'Acta de Conformidad', state: actaConformidad, setter: setActaConformidad },
+                ] as const).map(({ key, label, state, setter }) => (
+                  <div key={key}>
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                      {label}
+                    </label>
+                    {state ? (
+                      <div className="flex items-center justify-between px-3 py-2.5 bg-blue-500/5 border border-blue-500/20">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                          <span className="text-xs text-slate-300 truncate">{state.name}</span>
+                        </div>
+                        <button
+                          onClick={() => setter(null)}
+                          className="p-1 text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center justify-center gap-2 px-3 py-3 bg-blue-500/5 border border-dashed border-slate-700 text-slate-500 hover:bg-blue-500/10 hover:border-slate-600 hover:text-slate-400 transition-all cursor-pointer">
+                        <Upload className="w-4 h-4" />
+                        <span className="text-xs font-medium uppercase tracking-wider">Seleccionar PDF</span>
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setter(file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                <div className={`w-2 h-2 rounded-full ${actaRecepcion ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <span>Recepci&oacute;n</span>
+                <div className={`w-2 h-2 rounded-full ${actaFundicion ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <span>Fundici&oacute;n</span>
+                <div className={`w-2 h-2 rounded-full ${actaConformidad ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <span>Conformidad</span>
+              </div>
+
+              {closeWarning && (
+                <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
+                  <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2 border-t border-blue-500/10">
+                <button
+                  onClick={handleCloseClick}
+                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas}
+                  className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas
+                      ? 'bg-red-600 text-white hover:bg-red-500'
+                      : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    {uploadingActas ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+                    {uploadingActas ? 'Cerrando...' : 'Cerrar Proceso'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
-
 export default function ProcesosPage() {
   const { data: suppliers } = useSuppliers();
-  const { goldBars, processes, openProcess, closeProcess, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
+  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
 
   const [view, setView] = useState<PageView>('list');
   const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
@@ -776,11 +929,27 @@ export default function ProcesosPage() {
     }
   };
 
+  const handleCloseProcessWithActas = async (
+    files: { actaRecepcion: File; actaFundicion: File; actaConformidad: File },
+    lots: { id: string; recovered: number }[],
+  ) => {
+    if (!managingProcessId) return;
+    try {
+      const proc = processes.find((p) => p.id === managingProcessId);
+      await closeProcessWithActas(managingProcessId, files, lots);
+      setSuccessMessage(`Proceso #${proc?.number} cerrado con actas`);
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err) {
+      console.error('Error cerrando proceso con actas:', err);
+      alert(`Error al cerrar el proceso: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    }
+  };
+
   const handleMarkComplete = async () => {
     if (!managingProcessId) return;
     try {
       await updateProcessStatus(managingProcessId, 'in_progress');
-      setSuccessMessage('Asignación finalizada. Ahora puede ingresar el Peso Fino Recuperado (G) por lote.');
+      setSuccessMessage('Asignaci&oacute;n finalizada. Ahora puede ingresar el Peso Fino Recuperado (G) por lote.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch {
       // error handled by react query
@@ -818,6 +987,7 @@ export default function ProcesosPage() {
           suppliers={suppliers}
           onBack={() => { setView('list'); setManagingProcessId(null); }}
           onCloseProcess={handleCloseProcess}
+          onCloseProcessWithActas={handleCloseProcessWithActas}
           onAssign={handleAssign}
           onMarkComplete={handleMarkComplete}
           saveLotRecovered={saveLotRecovered}
