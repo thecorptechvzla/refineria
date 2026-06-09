@@ -176,8 +176,12 @@ const processBySupplier = useMemo(() => {
   }, [suppliers, transactions, selectedSupplierId]);
 
   const recentTransactions = useMemo(
-    () => (transactions ?? []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8),
-    [transactions]
+    () => (transactions ?? [])
+      .filter((tx) => selectedSupplierId === 'all' || tx.supplierId === selectedSupplierId)
+      .filter((tx) => dateFilterFn(tx.date))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 8),
+    [transactions, selectedSupplierId, dateFilterFn]
   );
 
   const isLoading = authLoading || txLoading;

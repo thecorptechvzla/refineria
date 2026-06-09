@@ -1219,30 +1219,6 @@ export default function ProcesosPage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
                           CERRADO
                         </span>
-                        {confirmDeleteProcessId === p.id ? (
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => handleDeleteProcess(p.id)}
-                              className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
-                            >
-                              Confirmar
-                            </button>
-                            <button
-                              onClick={() => setConfirmDeleteProcessId(null)}
-                              className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmDeleteProcessId(p.id)}
-                            className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            title="Eliminar proceso"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
