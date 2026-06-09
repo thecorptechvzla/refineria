@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteProcess, useRemoveBarsFromLot } from '@/lib/hooks/useProcesses';
@@ -272,7 +272,6 @@ function ProcessDetailView({
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
   const [savedG, setSavedG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
-  const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const [actaRecepcion, setActaRecepcion] = useState<File | null>(null);
   const [actaFundicion, setActaFundicion] = useState<File | null>(null);
@@ -329,23 +328,15 @@ function ProcessDetailView({
     setSelectedBarIds([]);
   };
 
-  const handleMarkCompleteClick = async () => {
-    setIsSaving(true);
-    try {
-      await onMarkComplete();
-    } catch {
-      alert('Error al finalizar la asignación');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleSaveLotG = async (lotId: string) => {
     const gVal = getLotG(lotId);
     if (gVal === null) return;
     setSavingG((prev) => ({ ...prev, [lotId]: true }));
     try {
       await saveLotRecovered(processDetail.id, lotId, gVal);
+      if (isOpen) {
+        await onMarkComplete();
+      }
       setSavedG((prev) => ({ ...prev, [lotId]: true }));
       setTimeout(() => {
         setSavedG((prev) => ({ ...prev, [lotId]: false }));
@@ -428,22 +419,7 @@ function ProcessDetailView({
             </p>
           </div>
         </div>
-        {isOpen && (
-            <button
-              onClick={handleMarkCompleteClick}
-              disabled={!hasBars || isSaving}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-                hasBars && !isSaving
-                  ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
-                  : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5" />
-                {isSaving ? 'Guardando...' : 'Finalizar Asignación'}
-              </span>
-            </button>
-          )}
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
@@ -601,7 +577,7 @@ function ProcessDetailView({
                             value={lotG[lot.id] ?? ''}
                             onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && isInProgress) {
+                              if (e.key === 'Enter' && (isOpen || isInProgress)) {
                                 e.preventDefault();
                                 handleSaveLotG(lot.id);
                               }
@@ -609,7 +585,7 @@ function ProcessDetailView({
                             placeholder="0,00"
                             className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
                           />
-                        {isInProgress && (
+        {(isOpen || isInProgress) && (
                           <button
                             onClick={() => handleSaveLotG(lot.id)}
                             disabled={savingG[lot.id] || getLotG(lot.id) === null}
@@ -625,7 +601,7 @@ function ProcessDetailView({
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Save className="w-3 h-3" />
-                                Guardar G
+                                {isOpen ? 'Guardar' : 'Guardar G'}
                               </span>
                             )}
                           </button>
@@ -759,7 +735,7 @@ function ProcessDetailView({
         )}
       </div>
 
-        {(isOpen || isInProgress) && (
+        {isInProgress && (
           <div className="glass-panel">
             <div className="p-4 sm:p-5 border-b border-blue-500/10">
               <div className="flex items-center gap-2">
@@ -859,9 +835,80 @@ export default function ProcesosPage() {
   const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const openProcesses = useMemo(() => processes.filter((p) => p.status === 'open'), [processes]);
-  const inProgressProcesses = useMemo(() => processes.filter((p) => p.status === 'in_progress'), [processes]);
-  const closedProcesses = useMemo(() => processes.filter((p) => p.status === 'closed'), [processes]);
+  const [activeTab, setActiveTab] = useState<'open' | 'in_progress' | 'closed'>('open');
+
+  const [filterSupplierId, setFilterSupplierId] = useState('all');
+  const [filterSelectOpen, setFilterSelectOpen] = useState(false);
+  const filterSelectRef = useRef<HTMLDivElement>(null);
+
+  const [filterPeriod, setFilterPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('last_two');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterPeriodOpen, setFilterPeriodOpen] = useState(false);
+  const filterPeriodRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterSelectOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (filterSelectRef.current && !filterSelectRef.current.contains(e.target as Node)) {
+        setFilterSelectOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filterSelectOpen]);
+
+  useEffect(() => {
+    if (!filterPeriodOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (filterPeriodRef.current && !filterPeriodRef.current.contains(e.target as Node)) {
+        setFilterPeriodOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filterPeriodOpen]);
+
+  const monthRange = useMemo(() => {
+    const now = new Date();
+    const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfCurrent = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { startOfCurrent, startOfPrevious, endOfCurrent };
+  }, []);
+
+  const dateFilterFn = useMemo(() => {
+    const { startOfCurrent, startOfPrevious, endOfCurrent } = monthRange;
+    return (dateStr: string) => {
+      const d = new Date(dateStr);
+      switch (filterPeriod) {
+        case 'current':
+          return d >= startOfCurrent && d <= endOfCurrent;
+        case 'previous':
+          return d >= startOfPrevious && d < startOfCurrent;
+        case 'custom':
+          if (!filterStartDate && !filterEndDate) return true;
+          if (filterStartDate && d < new Date(filterStartDate + 'T00:00:00')) return false;
+          if (filterEndDate && d > new Date(filterEndDate + 'T23:59:59.999')) return false;
+          return true;
+        case 'last_two':
+        default:
+          return d >= startOfPrevious;
+      }
+    };
+  }, [monthRange, filterPeriod, filterStartDate, filterEndDate]);
+
+  const filteredProcessesByStatus = useMemo(() => {
+    const filtered = processes.filter((p) => {
+      if (filterSupplierId !== 'all' && p.supplierId !== filterSupplierId) return false;
+      return dateFilterFn(p.createdAt);
+    });
+    return {
+      open: filtered.filter((p) => p.status === 'open'),
+      in_progress: filtered.filter((p) => p.status === 'in_progress'),
+      closed: filtered.filter((p) => p.status === 'closed'),
+    };
+  }, [processes, filterSupplierId, dateFilterFn]);
 
   const managingProcess = useMemo(
     () => (managingProcessId ? processes.find((p) => p.id === managingProcessId) ?? null : null),
@@ -1052,200 +1099,247 @@ export default function ProcesosPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-gold-500 rounded-sm" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Procesos Activos
-            </h2>
-            <span className="text-[10px] font-mono text-slate-500 bg-gold-500/10 px-2 py-0.5 border border-gold-500/20">
-              {String(openProcesses.length).padStart(2, '0')}
-            </span>
+      {/* Filtros */}
+      <div className="glass-panel">
+        <div className="p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Proveedor custom dropdown */}
+            <div ref={filterSelectRef} className="relative w-full sm:w-auto">
+              <button
+                onClick={() => setFilterSelectOpen(!filterSelectOpen)}
+                className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
+              >
+                <span className="truncate">{filterSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === filterSupplierId)?.name}</span>
+                <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${filterSelectOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {filterSelectOpen && (
+                <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
+                  <li
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setFilterSupplierId('all'); setFilterSelectOpen(false); }}
+                  >Todos los clientes</li>
+                  {suppliers?.map((s) => (
+                    <li
+                      key={s.id}
+                      className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterSupplierId === s.id ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                      onClick={() => { setFilterSupplierId(s.id); setFilterSelectOpen(false); }}
+                    >{s.name}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Periodo custom dropdown */}
+            <div ref={filterPeriodRef} className="relative w-full sm:w-auto">
+              <button
+                onClick={() => setFilterPeriodOpen(!filterPeriodOpen)}
+                className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
+              >
+                <span className="truncate">
+                  {filterPeriod === 'current' ? 'Mes actual' : filterPeriod === 'previous' ? 'Mes anterior' : filterPeriod === 'custom' ? 'Personalizado' : 'Últimos 2 meses'}
+                </span>
+                <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${filterPeriodOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {filterPeriodOpen && (
+                <ul className="absolute z-50 right-0 mt-1 w-full min-w-[200px] bg-[#0f172a] border border-blue-500/20 shadow-xl">
+                  <li
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterPeriod === 'last_two' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setFilterPeriod('last_two'); setFilterPeriodOpen(false); }}
+                  >Últimos 2 meses</li>
+                  <li
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterPeriod === 'current' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setFilterPeriod('current'); setFilterPeriodOpen(false); }}
+                  >Mes actual</li>
+                  <li
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterPeriod === 'previous' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setFilterPeriod('previous'); setFilterPeriodOpen(false); }}
+                  >Mes anterior</li>
+                  <li
+                    className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterPeriod === 'custom' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
+                    onClick={() => { setFilterPeriod('custom'); setFilterPeriodOpen(false); }}
+                  >Personalizado</li>
+                </ul>
+              )}
+            </div>
+
+            {/* Fechas personalizadas */}
+            {filterPeriod === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="w-full sm:w-auto px-3 py-[7px] text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 focus:outline-none focus:border-blue-500/50 [color-scheme:dark]"
+                />
+                <span className="text-slate-600 text-[10px] shrink-0">—</span>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="w-full sm:w-auto px-3 py-[7px] text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 focus:outline-none focus:border-blue-500/50 [color-scheme:dark]"
+                />
+              </div>
+            )}
           </div>
-
-          {openProcesses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {openProcesses.map((p) => {
-                const lotCount = p.lots.length;
-                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
-                return (
-                  <div key={p.id} className="glass-panel p-4 hover:border-gold-500/30 transition-all">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-lg font-bold text-gold-500 font-mono">#{p.number}</p>
-                        <p className="text-sm text-slate-300 mt-0.5">
-                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gold-500/10 border border-gold-500/20 text-gold-400">
-                        ACTIVO
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
-                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
-                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
-                      <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
-                        className="flex-1 py-2 bg-gold-500/10 border border-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wider hover:bg-gold-500/20 transition-all"
-                      >
-                        <span className="flex items-center justify-center gap-1.5">
-                          <Settings className="w-3 h-3" />
-                          Gestionar
-                        </span>
-                      </button>
-                      {confirmDeleteProcessId === p.id ? (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleDeleteProcess(p.id)}
-                            className="px-2 py-2 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
-                          >
-                            Confirmar
-                          </button>
-                          <button
-                            onClick={() => setConfirmDeleteProcessId(null)}
-                            className="px-2 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmDeleteProcessId(p.id)}
-                          className="px-3 py-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
-                          title="Eliminar proceso"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="glass-panel p-8 text-center">
-              <p className="text-sm text-slate-500">No hay procesos activos.</p>
-              <p className="text-[10px] text-slate-600 mt-1">Selecciona un proveedor y abre un nuevo proceso.</p>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-orange-500 rounded-sm" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Procesos Terminados
-            </h2>
-            <span className="text-[10px] font-mono text-slate-500 bg-orange-500/10 px-2 py-0.5 border border-orange-500/20">
-              {String(inProgressProcesses.length).padStart(2, '0')}
-            </span>
-          </div>
-
-          {inProgressProcesses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {inProgressProcesses.map((p) => {
-                const lotCount = p.lots.length;
-                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
-                const gCount = p.lots.filter((l) => l.recovered !== null).length;
-                return (
-                  <div key={p.id} className="glass-panel p-4 hover:border-orange-500/30 transition-all">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-lg font-bold text-orange-400 font-mono">#{p.number}</p>
-                        <p className="text-sm text-slate-300 mt-0.5">
-                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                        TERMINADO
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
-                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
-                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
-                      <span>G: {gCount}/{lotCount} guardado{gCount !== 1 ? 's' : ''}</span>
-                      <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
-                    </div>
-                    <button
-                      onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
-                      className="w-full py-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition-all"
-                    >
-                      <span className="flex items-center justify-center gap-1.5">
-                        <Settings className="w-3 h-3" />
-                        Ingresar G
-                      </span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="glass-panel p-8 text-center">
-              <p className="text-sm text-slate-500">No hay procesos en esta etapa.</p>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-slate-500 rounded-sm" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Procesos Cerrados
-            </h2>
-            <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
-              {String(closedProcesses.length).padStart(2, '0')}
-            </span>
-          </div>
-
-          {closedProcesses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {closedProcesses.map((p) => {
-                const lotCount = p.lots.length;
-                const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
-                return (
-                  <div key={p.id} className="glass-panel p-4 hover:border-blue-500/30 transition-all">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-lg font-bold text-slate-400 font-mono">#{p.number}</p>
-                        <p className="text-sm text-slate-300 mt-0.5">
-                          {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                          CERRADO
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
-                      <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
-                      <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
-                      {p.closedAt && <span>Cerrado {new Date(p.closedAt).toLocaleDateString('es-PE')}</span>}
-                    </div>
-                    <button
-                      onClick={() => setViewingProcessId(p.id)}
-                      className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
-                    >
-                      <span className="flex items-center justify-center gap-1.5">
-                        <Eye className="w-3 h-3" />
-                        Ver Detalle
-                      </span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="glass-panel p-8 text-center">
-              <p className="text-sm text-slate-500">No hay procesos cerrados.</p>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Tab Bar */}
+      <div className="flex border-b border-blue-500/10">
+        {([
+          { key: 'open', label: `Procesos Abiertos (${filteredProcessesByStatus.open.length})` },
+          { key: 'in_progress', label: `Terminados (${filteredProcessesByStatus.in_progress.length})` },
+          { key: 'closed', label: `Cerrados (${filteredProcessesByStatus.closed.length})` },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+              activeTab === key
+                ? 'text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-blue-500/5'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid de tarjetas */}
+      {(() => {
+        const cfg = {
+          open: {
+            processes: filteredProcessesByStatus.open,
+            borderHover: 'hover:border-gold-500/30',
+            numberColor: 'text-gold-500',
+            badgeBg: 'bg-gold-500/10 border-gold-500/20 text-gold-400',
+            badgeText: 'ACTIVO',
+            emptyTitle: 'No hay procesos abiertos.',
+            renderActions: (p: Process) => (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
+                  className="flex-1 py-2 bg-gold-500/10 border border-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wider hover:bg-gold-500/20 transition-all"
+                >
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Settings className="w-3 h-3" />
+                    Gestionar
+                  </span>
+                </button>
+                {confirmDeleteProcessId === p.id ? (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleDeleteProcess(p.id)}
+                      className="px-2 py-2 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteProcessId(null)}
+                      className="px-2 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteProcessId(p.id)}
+                    className="px-3 py-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
+                    title="Eliminar proceso"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ),
+          },
+          in_progress: {
+            processes: filteredProcessesByStatus.in_progress,
+            borderHover: 'hover:border-orange-500/30',
+            numberColor: 'text-orange-400',
+            badgeBg: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+            badgeText: 'TERMINADO',
+            emptyTitle: 'No hay procesos terminados.',
+            renderActions: (p: Process) => (
+              <button
+                onClick={() => { setManagingProcessId(p.id); setView('detail'); }}
+                className="w-full py-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider hover:bg-orange-500/20 transition-all"
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <Settings className="w-3 h-3" />
+                  Ingresar G
+                </span>
+              </button>
+            ),
+          },
+          closed: {
+            processes: filteredProcessesByStatus.closed,
+            borderHover: 'hover:border-blue-500/30',
+            numberColor: 'text-slate-400',
+            badgeBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+            badgeText: 'CERRADO',
+            emptyTitle: 'No hay procesos cerrados.',
+            renderActions: (p: Process) => (
+              <button
+                onClick={() => setViewingProcessId(p.id)}
+                className="w-full py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <Eye className="w-3 h-3" />
+                  Ver Detalle
+                </span>
+              </button>
+            ),
+          },
+        } as const;
+
+        const list = cfg[activeTab].processes;
+
+        return list.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {list.map((p) => {
+              const lotCount = p.lots.length;
+              const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
+              const gCount = p.lots.filter((l) => l.recovered !== null).length;
+              return (
+                <div key={p.id} className={`glass-panel p-4 transition-all ${cfg[activeTab].borderHover}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className={`text-lg font-bold font-mono ${cfg[activeTab].numberColor}`}>#{p.number}</p>
+                      <p className="text-sm text-slate-300 mt-0.5">
+                        {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${cfg[activeTab].badgeBg}`}>
+                      {cfg[activeTab].badgeText}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono mb-3">
+                    <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
+                    <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
+                    {activeTab === 'in_progress' && (
+                      <span>G: {gCount}/{lotCount} guardado{gCount !== 1 ? 's' : ''}</span>
+                    )}
+                    {activeTab === 'closed' && p.closedAt ? (
+                      <span>Cerrado {new Date(p.closedAt).toLocaleDateString('es-PE')}</span>
+                    ) : (
+                      <span>Creado {new Date(p.createdAt).toLocaleDateString('es-PE')}</span>
+                    )}
+                  </div>
+                  {cfg[activeTab].renderActions(p)}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="glass-panel p-8 text-center">
+            <p className="text-sm text-slate-500">{cfg[activeTab].emptyTitle}</p>
+            {activeTab === 'open' && (
+              <p className="text-[10px] text-slate-600 mt-1">Selecciona un proveedor y abre un nuevo proceso.</p>
+            )}
+          </div>
+        );
+      })()}
 
       {viewingProcess && (
         <ProcessModal
