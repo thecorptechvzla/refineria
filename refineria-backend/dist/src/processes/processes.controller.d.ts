@@ -12,8 +12,8 @@ export declare class ProcessesController {
             number: number;
             id: string;
             recovered: number | null;
-            processId: string;
             barIds: string[];
+            processId: string;
             creationDate: Date;
         }[];
     } & {
@@ -33,8 +33,8 @@ export declare class ProcessesController {
             number: number;
             id: string;
             recovered: number | null;
-            processId: string;
             barIds: string[];
+            processId: string;
             creationDate: Date;
         }[];
     } & {
@@ -54,8 +54,8 @@ export declare class ProcessesController {
             number: number;
             id: string;
             recovered: number | null;
-            processId: string;
             barIds: string[];
+            processId: string;
             creationDate: Date;
         }[];
     } & {
@@ -75,8 +75,8 @@ export declare class ProcessesController {
             number: number;
             id: string;
             recovered: number | null;
-            processId: string;
             barIds: string[];
+            processId: string;
             creationDate: Date;
         }[];
     } & {
@@ -95,8 +95,8 @@ export declare class ProcessesController {
         number: number;
         id: string;
         recovered: number | null;
-        processId: string;
         barIds: string[];
+        processId: string;
         creationDate: Date;
     }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
@@ -107,8 +107,8 @@ export declare class ProcessesController {
         number: number;
         id: string;
         recovered: number | null;
-        processId: string;
         barIds: string[];
+        processId: string;
         creationDate: Date;
     }>;
     remove(id: string): Promise<{
