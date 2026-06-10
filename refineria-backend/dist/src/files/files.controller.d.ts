@@ -8,26 +8,5 @@ export declare class FilesController {
         actaRecepcion?: Express.Multer.File[];
         actaFundicion?: Express.Multer.File[];
         actaConformidad?: Express.Multer.File[];
-    }): Promise<{
-        lots: {
-            number: number;
-            id: string;
-            recovered: number | null;
-            processId: string;
-            barIds: string[];
-            egresadoG: number;
-            creationDate: Date;
-        }[];
-    } & {
-        number: string;
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        supplierId: string;
-        status: import("../generated/prisma/enums").ProcessStatus;
-        closedAt: Date | null;
-        actaRecepcion: string | null;
-        actaFundicion: string | null;
-        actaConformidad: string | null;
-    }>;
+    }): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$ProcessPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
 }

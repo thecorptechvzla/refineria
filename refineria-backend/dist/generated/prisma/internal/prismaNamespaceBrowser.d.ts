@@ -1,15 +1,15 @@
 import * as runtime from "@prisma/client/runtime/index-browser";
 export type * from '../models.js';
 export type * from './prismaNamespace.js';
-export declare const Decimal: typeof runtime.Decimal;
+export declare const Decimal: any;
 export declare const NullTypes: {
     DbNull: (new (secret: never) => typeof runtime.DbNull);
     JsonNull: (new (secret: never) => typeof runtime.JsonNull);
     AnyNull: (new (secret: never) => typeof runtime.AnyNull);
 };
-export declare const DbNull: import("@prisma/client/runtime/client.js").DbNullClass;
-export declare const JsonNull: import("@prisma/client/runtime/client.js").JsonNullClass;
-export declare const AnyNull: import("@prisma/client/runtime/client.js").AnyNullClass;
+export declare const DbNull: any;
+export declare const JsonNull: any;
+export declare const AnyNull: any;
 export declare const ModelName: {
     readonly User: "User";
     readonly Supplier: "Supplier";
@@ -17,12 +17,7 @@ export declare const ModelName: {
     readonly Worker: "Worker";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
-export declare const TransactionIsolationLevel: {
-    readonly ReadUncommitted: "ReadUncommitted";
-    readonly ReadCommitted: "ReadCommitted";
-    readonly RepeatableRead: "RepeatableRead";
-    readonly Serializable: "Serializable";
-};
+export declare const TransactionIsolationLevel: any;
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
 export declare const UserScalarFieldEnum: {
     readonly id: "id";

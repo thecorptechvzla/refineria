@@ -4,53 +4,9 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 export declare class SuppliersController {
     private readonly suppliersService;
     constructor(suppliersService: SuppliersService);
-    findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }[]>;
-    create(dto: CreateSupplierDto): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    findById(id: string): Promise<{
-        _count: {
-            transactions: number;
-        };
-    } & {
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    update(id: string, dto: UpdateSupplierDto): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    remove(id: string): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
+    findAll(): runtime.Types.Public.PrismaPromise<T>;
+    create(dto: CreateSupplierDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$SupplierPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
+    findById(id: string): Promise<any>;
+    update(id: string, dto: UpdateSupplierDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$SupplierPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
+    remove(id: string): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$SupplierPayload<ExtArgs>, T, "delete", GlobalOmitOptions>>;
 }

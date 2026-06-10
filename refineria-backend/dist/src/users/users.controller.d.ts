@@ -3,33 +3,12 @@ import { Role } from '../common/enums/role.enum';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
-    findAll(): Promise<{
-        id: string;
-        name: string;
-        email: string;
-        role: Role;
-        createdAt: Date;
-        updatedAt: Date;
-    }[]>;
-    findById(id: string): Promise<{
-        id: string;
-        name: string;
-        email: string;
-        role: Role;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
+    findAll(): Promise<runtime.Types.Public.PrismaPromise<T>>;
+    findById(id: string): Promise<any>;
     update(id: string, data: {
         name?: string;
         email?: string;
         role?: Role;
-    }): Promise<{
-        id: string;
-        name: string;
-        email: string;
-        role: Role;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
+    }): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
     remove(id: string, user: any): Promise<void>;
 }

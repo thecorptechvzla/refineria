@@ -5,53 +5,9 @@ import { Prisma } from '../generated/prisma/client';
 export declare class SuppliersService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    findAll(): Prisma.PrismaPromise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }[]>;
-    findById(id: string): Promise<{
-        _count: {
-            transactions: number;
-        };
-    } & {
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    create(dto: CreateSupplierDto): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    update(id: string, dto: UpdateSupplierDto): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
-    remove(id: string): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactInfo: string;
-        registrationDate: Date;
-        rif: string;
-    }>;
+    findAll(): runtime.Types.Public.PrismaPromise<T>;
+    findById(id: string): Promise<any>;
+    create(dto: CreateSupplierDto): Promise<runtime.Types.Result.GetResult<Prisma.$SupplierPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
+    update(id: string, dto: UpdateSupplierDto): Promise<runtime.Types.Result.GetResult<Prisma.$SupplierPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
+    remove(id: string): Promise<runtime.Types.Result.GetResult<Prisma.$SupplierPayload<ExtArgs>, T, "delete", GlobalOmitOptions>>;
 }
