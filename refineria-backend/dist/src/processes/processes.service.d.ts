@@ -12,12 +12,12 @@ export declare class ProcessesService {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -33,12 +33,12 @@ export declare class ProcessesService {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -54,12 +54,12 @@ export declare class ProcessesService {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -75,12 +75,12 @@ export declare class ProcessesService {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -95,16 +95,16 @@ export declare class ProcessesService {
         number: number;
         id: string;
         recovered: number | null;
-        barIds: string[];
         processId: string;
+        barIds: string[];
         creationDate: Date;
     }>;
     addLot(processId: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;
         recovered: number | null;
-        barIds: string[];
         processId: string;
+        barIds: string[];
         creationDate: Date;
     }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
@@ -123,12 +123,12 @@ export declare class ProcessesService {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;

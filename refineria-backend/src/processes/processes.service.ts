@@ -18,7 +18,7 @@ export class ProcessesService {
     const count = await this.prisma.process.count();
     return this.prisma.process.create({
       data: {
-        number: count + 1,
+        number: String(count + 1).padStart(7, '0'),
         supplierId: dto.supplierId,
       },
       include: { lots: true },

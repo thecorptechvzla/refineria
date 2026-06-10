@@ -91,7 +91,7 @@ model GoldBar {
 
 model Process {
   id              String        @id @default(uuid())
-  number          Int           @map("number")
+  number          String        @map("number")
   supplierId      String        @map("supplier_id")
   status          ProcessStatus @default(open)
   closedAt        DateTime?     @map("closed_at")

@@ -24,7 +24,7 @@ export interface ProcessLot {
 
 export interface Process {
   id: string;
-  number: number;
+  number: string;
   supplierId: string;
   status: ProcessStatus;
   lots: ProcessLot[];

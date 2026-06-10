@@ -13,12 +13,12 @@ export declare class FilesController {
             number: number;
             id: string;
             recovered: number | null;
-            barIds: string[];
             processId: string;
+            barIds: string[];
             creationDate: Date;
         }[];
     } & {
-        number: number;
+        number: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
