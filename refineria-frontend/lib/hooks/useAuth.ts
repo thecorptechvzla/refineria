@@ -18,6 +18,7 @@ export function useLogin() {
       }),
     onSuccess: (res) => {
       setAuthToken(res.token);
+      document.cookie = `goldtrack_session=${res.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       queryClient.setQueryData(['profile'], res.user);
     },
   });
@@ -37,6 +38,7 @@ export function useLogout() {
 
   return async () => {
     setAuthToken(null);
+    document.cookie = 'goldtrack_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
     try { await api('/auth/logout', { method: 'POST' }); } catch {}
     queryClient.clear();
     window.location.href = '/login';
