@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { FilesService } from './files.service';
 import { ProcessesService } from '../processes/processes.service';
 export declare class FilesController {
@@ -30,4 +31,5 @@ export declare class FilesController {
         actaFundicion: string | null;
         actaConformidad: string | null;
     }>;
+    getActa(id: string, type: string, res: Response): Promise<void>;
 }

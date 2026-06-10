@@ -48,6 +48,23 @@ let FilesController = class FilesController {
             actaConformidad: pathConformidad,
         });
     }
+    async getActa(id, type, res) {
+        const process = await this.processesService.findById(id);
+        const fieldMap = {
+            recepcion: 'actaRecepcion',
+            fundicion: 'actaFundicion',
+            conformidad: 'actaConformidad',
+        };
+        const field = fieldMap[type];
+        if (!field) {
+            throw new common_1.NotFoundException('Tipo de acta inválido');
+        }
+        const url = process[field];
+        if (!url) {
+            throw new common_1.NotFoundException('Acta no encontrada');
+        }
+        await this.filesService.streamActa(url, res);
+    }
 };
 exports.FilesController = FilesController;
 __decorate([
@@ -63,6 +80,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "uploadActas", null);
+__decorate([
+    (0, common_1.Get)(':id/actas/:type'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)('type')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], FilesController.prototype, "getActa", null);
 exports.FilesController = FilesController = __decorate([
     (0, common_1.Controller)('processes'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

@@ -1,6 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { writeFile, mkdir } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { Readable } from 'stream';
 import { join } from 'path';
+import type { Response } from 'express';
 
 @Injectable()
 export class FilesService {
@@ -14,7 +17,7 @@ export class FilesService {
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       const { put } = await import('@vercel/blob');
       const blob = await put(filename, file.buffer, {
-        access: 'public',
+        access: 'private',
         addRandomSuffix: false,
         allowOverwrite: true,
       });
@@ -26,5 +29,20 @@ export class FilesService {
     const filepath = join(uploadDir, filename);
     await writeFile(filepath, file.buffer);
     return `uploads/actas/${filename}`;
+  }
+
+  async streamActa(url: string, res: Response): Promise<void> {
+    res.setHeader('Content-Type', 'application/pdf');
+
+    if (url.startsWith('http')) {
+      const { get } = await import('@vercel/blob');
+      const blob = await get(url, { access: 'private' });
+      if (!blob) throw new NotFoundException('Acta no encontrada en el almacenamiento');
+      const nodeStream = Readable.fromWeb(blob.stream as any);
+      nodeStream.pipe(res);
+    } else {
+      const filePath = join(process.cwd(), url);
+      createReadStream(filePath).pipe(res);
+    }
   }
 }

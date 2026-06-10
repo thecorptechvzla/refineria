@@ -42,6 +42,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FilesService = void 0;
 const common_1 = require("@nestjs/common");
 const promises_1 = require("fs/promises");
+const fs_1 = require("fs");
+const stream_1 = require("stream");
 const path_1 = require("path");
 let FilesService = class FilesService {
     async saveActa(processId, type, file) {
@@ -49,7 +51,7 @@ let FilesService = class FilesService {
         if (process.env.BLOB_READ_WRITE_TOKEN) {
             const { put } = await Promise.resolve().then(() => __importStar(require('@vercel/blob')));
             const blob = await put(filename, file.buffer, {
-                access: 'public',
+                access: 'private',
                 addRandomSuffix: false,
                 allowOverwrite: true,
             });
@@ -60,6 +62,21 @@ let FilesService = class FilesService {
         const filepath = (0, path_1.join)(uploadDir, filename);
         await (0, promises_1.writeFile)(filepath, file.buffer);
         return `uploads/actas/${filename}`;
+    }
+    async streamActa(url, res) {
+        res.setHeader('Content-Type', 'application/pdf');
+        if (url.startsWith('http')) {
+            const { get } = await Promise.resolve().then(() => __importStar(require('@vercel/blob')));
+            const blob = await get(url, { access: 'private' });
+            if (!blob)
+                throw new common_1.NotFoundException('Acta no encontrada en el almacenamiento');
+            const nodeStream = stream_1.Readable.fromWeb(blob.stream);
+            nodeStream.pipe(res);
+        }
+        else {
+            const filePath = (0, path_1.join)(process.cwd(), url);
+            (0, fs_1.createReadStream)(filePath).pipe(res);
+        }
     }
 };
 exports.FilesService = FilesService;

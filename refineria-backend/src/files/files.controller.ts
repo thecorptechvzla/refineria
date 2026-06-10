@@ -1,14 +1,18 @@
 import {
   Controller,
   Post,
+  Get,
   Param,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  NotFoundException,
+  Res,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 import { FilesService } from './files.service';
 import { ProcessesService } from '../processes/processes.service';
 
@@ -69,5 +73,30 @@ export class FilesController {
       actaFundicion: pathFundicion,
       actaConformidad: pathConformidad,
     });
+  }
+
+  @Get(':id/actas/:type')
+  async getActa(
+    @Param('id') id: string,
+    @Param('type') type: string,
+    @Res() res: Response,
+  ) {
+    const process = await this.processesService.findById(id);
+    const fieldMap: Record<string, string> = {
+      recepcion: 'actaRecepcion',
+      fundicion: 'actaFundicion',
+      conformidad: 'actaConformidad',
+    };
+    const field = fieldMap[type];
+    if (!field) {
+      throw new NotFoundException('Tipo de acta inválido');
+    }
+
+    const url = (process as Record<string, any>)[field];
+    if (!url) {
+      throw new NotFoundException('Acta no encontrada');
+    }
+
+    await this.filesService.streamActa(url, res);
   }
 }

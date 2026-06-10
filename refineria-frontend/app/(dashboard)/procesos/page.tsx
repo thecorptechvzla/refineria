@@ -210,14 +210,14 @@ function ProcessModal({
             {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
               <div className="flex flex-wrap gap-3">
                 {[
-                  { label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
-                  { label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
-                  { label: 'Acta de Conformidad', url: detail.actaConformidad },
+                  { type: 'recepcion', label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
+                  { type: 'fundicion', label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
+                  { type: 'conformidad', label: 'Acta de Conformidad', url: detail.actaConformidad },
                 ].map((acta) => (
                   acta.url ? (
                     <a
                       key={acta.label}
-                      href={acta.url?.startsWith('http') ? acta.url : `${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${detail.id}/actas/${acta.type}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
@@ -714,14 +714,14 @@ function ProcessDetailView({
               {processDetail.actaRecepcion || processDetail.actaFundicion || processDetail.actaConformidad ? (
                 <div className="flex flex-wrap gap-3">
                   {[
-                    { label: 'Acta de Recepción', url: processDetail.actaRecepcion },
-                    { label: 'Acta de Fundición', url: processDetail.actaFundicion },
-                    { label: 'Acta de Conformidad', url: processDetail.actaConformidad },
+                    { type: 'recepcion', label: 'Acta de Recepción', url: processDetail.actaRecepcion },
+                    { type: 'fundicion', label: 'Acta de Fundición', url: processDetail.actaFundicion },
+                    { type: 'conformidad', label: 'Acta de Conformidad', url: processDetail.actaConformidad },
                   ].map((acta) => (
                     acta.url ? (
                       <a
                         key={acta.label}
-                        href={acta.url?.startsWith('http') ? acta.url : `${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                        href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${processDetail.id}/actas/${acta.type}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
