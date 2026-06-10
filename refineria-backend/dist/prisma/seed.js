@@ -3,12 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 const adapter_pg_1 = require("@prisma/adapter-pg");
-const client_js_1 = require("../src/generated/prisma/client.js");
+const client_1 = require("../src/generated/prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const connectionString = process.env['DATABASE_URL'] || 'postgresql://postgres:postgres@localhost:5432/goldtrack?schema=public';
 const adapter = new adapter_pg_1.PrismaPg({ connectionString });
-const prisma = new client_js_1.PrismaClient({ adapter });
+const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('Seeding database...');
     const hashedPassword = await bcrypt_1.default.hash('123', 10);
