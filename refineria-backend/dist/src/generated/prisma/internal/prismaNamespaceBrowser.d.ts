@@ -93,6 +93,7 @@ export declare const ProcessLotScalarFieldEnum: {
     readonly number: "number";
     readonly barIds: "barIds";
     readonly recovered: "recovered";
+    readonly egresadoG: "egresadoG";
     readonly creationDate: "creationDate";
 };
 export type ProcessLotScalarFieldEnum = (typeof ProcessLotScalarFieldEnum)[keyof typeof ProcessLotScalarFieldEnum];

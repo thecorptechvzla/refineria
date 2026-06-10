@@ -7,6 +7,7 @@ import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2 } from 'lucide-react';
+import ShakeAlert from '@/components/ShakeAlert';
 
 export default function IngresoPage() {
   const { data: suppliers } = useSuppliers();
@@ -20,6 +21,8 @@ export default function IngresoPage() {
   const [analitico, setAnalitico] = useState('');
   const [esperado, setEsperado] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
 
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
@@ -67,7 +70,8 @@ export default function IngresoPage() {
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al registrar';
-      alert(msg);
+      setErrorMessage(msg);
+      setShakeKey((k) => k + 1);
       return;
     }
 
@@ -89,7 +93,8 @@ export default function IngresoPage() {
       await deleteGoldBar.mutateAsync(barId);
       setConfirmDeleteId(null);
     } catch {
-      alert('Error al eliminar la barra');
+      setErrorMessage('Error al eliminar la barra');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -107,6 +112,9 @@ export default function IngresoPage() {
         </div>
       </div>
 
+      {errorMessage && (
+        <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
+      )}
       {successMessage && (
         <div className="glass-panel-gold p-4 flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />

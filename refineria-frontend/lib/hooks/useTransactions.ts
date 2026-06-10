@@ -4,10 +4,11 @@ import type { Transaction } from '@/types';
 
 type CreateTransactionData = {
   type: 'IN' | 'OUT';
-  weight: number;
-  weightUnit: 'g' | 'kg';
-  purity: number;
+  weight?: number;
+  weightUnit?: 'g' | 'kg';
+  purity?: number;
   supplierId?: string;
+  lotId?: string;
 };
 
 type MetricsResponse = {
@@ -55,6 +56,24 @@ export function useCreateTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['transactions', 'metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+    },
+  });
+}
+
+export function useCreateEgresoLot() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (lotId: string) =>
+      api<Transaction>('/transactions', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'OUT', lotId }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', 'metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
     },
   });
 }

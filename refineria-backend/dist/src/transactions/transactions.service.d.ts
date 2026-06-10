@@ -31,9 +31,9 @@ export declare class TransactionsService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            rif: string;
             contactInfo: string;
             registrationDate: Date;
+            rif: string;
         } | null;
     } & {
         id: string;
@@ -46,7 +46,7 @@ export declare class TransactionsService {
         supplierId: string | null;
         date: Date;
     }>;
-    create(dto: CreateTransactionDto, userId?: string): import("../generated/prisma/models").Prisma__TransactionClient<{
+    create(dto: CreateTransactionDto, userId?: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -56,9 +56,8 @@ export declare class TransactionsService {
         purity: number;
         supplierId: string | null;
         date: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, {
-        omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
+    private createLotEgreso;
     getMetrics(): Promise<{
         totalIngresos: number;
         totalEgresos: number;

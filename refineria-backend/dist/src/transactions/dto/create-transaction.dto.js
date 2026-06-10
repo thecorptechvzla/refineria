@@ -18,6 +18,7 @@ class CreateTransactionDto {
     weightUnit;
     purity;
     supplierId;
+    lotId;
 }
 exports.CreateTransactionDto = CreateTransactionDto;
 __decorate([
@@ -25,15 +26,18 @@ __decorate([
     __metadata("design:type", String)
 ], CreateTransactionDto.prototype, "type", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateTransactionDto.prototype, "weight", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.WeightUnit),
     __metadata("design:type", String)
 ], CreateTransactionDto.prototype, "weightUnit", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
@@ -43,4 +47,9 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateTransactionDto.prototype, "supplierId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateTransactionDto.prototype, "lotId", void 0);
 //# sourceMappingURL=create-transaction.dto.js.map

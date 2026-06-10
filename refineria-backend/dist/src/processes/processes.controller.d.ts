@@ -14,6 +14,7 @@ export declare class ProcessesController {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -35,6 +36,7 @@ export declare class ProcessesController {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -56,6 +58,7 @@ export declare class ProcessesController {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -77,6 +80,7 @@ export declare class ProcessesController {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -97,6 +101,7 @@ export declare class ProcessesController {
         recovered: number | null;
         processId: string;
         barIds: string[];
+        egresadoG: number;
         creationDate: Date;
     }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
@@ -109,8 +114,31 @@ export declare class ProcessesController {
         recovered: number | null;
         processId: string;
         barIds: string[];
+        egresadoG: number;
         creationDate: Date;
     }>;
+    findClosedBySupplier(supplierId: string): Promise<({
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    })[]>;
     remove(id: string): Promise<{
         deleted: boolean;
     }>;

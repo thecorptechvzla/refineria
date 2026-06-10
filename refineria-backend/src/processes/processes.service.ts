@@ -173,6 +173,18 @@ export class ProcessesService {
     return { deleted: true };
   }
 
+  async findClosedBySupplier(supplierId: string) {
+    return this.prisma.process.findMany({
+      where: { supplierId, status: 'closed' },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        lots: {
+          orderBy: { number: 'asc' },
+        },
+      },
+    });
+  }
+
   async closeWithActas(
     id: string,
     actas: {

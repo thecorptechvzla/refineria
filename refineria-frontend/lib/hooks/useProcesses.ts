@@ -168,3 +168,12 @@ export function useCloseProcessWithActas() {
     },
   });
 }
+
+export function useClosedProcessesBySupplier(supplierId: string | null) {
+  return useQuery({
+    queryKey: ['processes', 'closed', supplierId],
+    queryFn: () => api<Process[]>(`/processes/closed-by-supplier/${supplierId}`),
+    enabled: !!supplierId,
+    staleTime: 15_000,
+  });
+}

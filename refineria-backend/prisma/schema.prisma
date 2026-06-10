@@ -112,6 +112,7 @@ model ProcessLot {
   number       Int      @map("number")
   barIds       String[] @map("bar_ids")
   recovered    Float?
+  egresadoG    Float    @default(0) @map("egresado_g")
   creationDate DateTime @default(now()) @map("creation_date")
   process      Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
 

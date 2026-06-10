@@ -25,7 +25,7 @@ export declare class TransactionsController {
         limit: number;
         totalPages: number;
     }>;
-    create(dto: CreateTransactionDto): import("../generated/prisma/models").Prisma__TransactionClient<{
+    create(dto: CreateTransactionDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -35,8 +35,6 @@ export declare class TransactionsController {
         purity: number;
         supplierId: string | null;
         date: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, {
-        omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
     getMetrics(): Promise<{
         totalIngresos: number;
@@ -52,9 +50,9 @@ export declare class TransactionsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            rif: string;
             contactInfo: string;
             registrationDate: Date;
+            rif: string;
         } | null;
     } & {
         id: string;

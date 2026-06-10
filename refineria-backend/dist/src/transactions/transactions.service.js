@@ -60,7 +60,10 @@ let TransactionsService = class TransactionsService {
         }
         return transaction;
     }
-    create(dto, userId) {
+    async create(dto, userId) {
+        if (dto.lotId && dto.type === 'OUT') {
+            return this.createLotEgreso(dto.lotId);
+        }
         return this.prisma.transaction.create({
             data: {
                 type: dto.type,
@@ -70,6 +73,52 @@ let TransactionsService = class TransactionsService {
                 supplierId: dto.type === 'OUT' ? undefined : dto.supplierId,
             },
         });
+    }
+    async createLotEgreso(lotId) {
+        const lot = await this.prisma.processLot.findUnique({
+            where: { id: lotId },
+            include: {
+                process: { select: { supplierId: true, status: true, number: true } },
+            },
+        });
+        if (!lot) {
+            throw new common_1.NotFoundException(`Lote con id ${lotId} no encontrado`);
+        }
+        if (lot.process.status !== 'closed') {
+            throw new common_1.BadRequestException('Solo lotes de procesos cerrados pueden egresarse');
+        }
+        if (!lot.recovered) {
+            throw new common_1.BadRequestException('El lote no tiene peso recuperado');
+        }
+        const available = lot.recovered - lot.egresadoG;
+        if (available <= 0) {
+            throw new common_1.BadRequestException('El lote ya fue egresado completamente');
+        }
+        const bars = await this.prisma.goldBar.findMany({
+            where: { id: { in: lot.barIds } },
+        });
+        const avgPurity = bars.length > 0
+            ? bars.reduce((sum, b) => {
+                const p = b.grossWeight > 0 ? b.analytical / b.grossWeight : 0;
+                return sum + p;
+            }, 0) / bars.length
+            : 0;
+        const [transaction] = await this.prisma.$transaction([
+            this.prisma.transaction.create({
+                data: {
+                    type: 'OUT',
+                    weight: lot.recovered,
+                    weightUnit: 'g',
+                    purity: avgPurity,
+                    supplierId: lot.process.supplierId,
+                },
+            }),
+            this.prisma.processLot.update({
+                where: { id: lotId },
+                data: { egresadoG: lot.recovered },
+            }),
+        ]);
+        return transaction;
     }
     async getMetrics() {
         const inTransactions = await this.prisma.transaction.findMany({

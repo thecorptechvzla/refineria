@@ -7,20 +7,20 @@ export declare class SuppliersController {
     findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<{
         id: string;
         name: string;
-        rif: string;
-        contactInfo: string;
-        registrationDate: Date;
         createdAt: Date;
         updatedAt: Date;
+        contactInfo: string;
+        registrationDate: Date;
+        rif: string;
     }[]>;
     create(dto: CreateSupplierDto): Promise<{
         id: string;
         name: string;
-        rif: string;
-        contactInfo: string;
-        registrationDate: Date;
         createdAt: Date;
         updatedAt: Date;
+        contactInfo: string;
+        registrationDate: Date;
+        rif: string;
     }>;
     findById(id: string): Promise<{
         _count: {
@@ -29,28 +29,28 @@ export declare class SuppliersController {
     } & {
         id: string;
         name: string;
-        rif: string;
-        contactInfo: string;
-        registrationDate: Date;
         createdAt: Date;
         updatedAt: Date;
+        contactInfo: string;
+        registrationDate: Date;
+        rif: string;
     }>;
     update(id: string, dto: UpdateSupplierDto): Promise<{
         id: string;
         name: string;
-        rif: string;
-        contactInfo: string;
-        registrationDate: Date;
         createdAt: Date;
         updatedAt: Date;
+        contactInfo: string;
+        registrationDate: Date;
+        rif: string;
     }>;
     remove(id: string): Promise<{
         id: string;
         name: string;
-        rif: string;
-        contactInfo: string;
-        registrationDate: Date;
         createdAt: Date;
         updatedAt: Date;
+        contactInfo: string;
+        registrationDate: Date;
+        rif: string;
     }>;
 }

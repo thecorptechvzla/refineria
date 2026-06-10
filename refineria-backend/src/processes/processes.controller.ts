@@ -62,6 +62,11 @@ export class ProcessesController {
     return this.processesService.updateLot(lotId, dto);
   }
 
+  @Get('closed-by-supplier/:supplierId')
+  findClosedBySupplier(@Param('supplierId') supplierId: string) {
+    return this.processesService.findClosedBySupplier(supplierId);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.processesService.remove(id);

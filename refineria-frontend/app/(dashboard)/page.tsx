@@ -163,20 +163,21 @@ const processBySupplier = useMemo(() => {
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
-    const map: Record<string, { id: string; name: string; in: number; out: number }> = {};
+    const map: Record<string, { id: string; name: string; grossIn: number; fineIn: number; fineOut: number }> = {};
     suppliers.forEach((s) => {
-      map[s.id] = { id: s.id, name: s.name.split(' ').slice(0, 2).join(' '), in: 0, out: 0 };
+      map[s.id] = { id: s.id, name: s.name.split(' ').slice(0, 2).join(' '), grossIn: 0, fineIn: 0, fineOut: 0 };
     });
     transactions.forEach((tx) => {
       const grams = toGrams(tx.weight, tx.weightUnit);
       if (tx.type === 'IN' && tx.supplierId && map[tx.supplierId]) {
-        map[tx.supplierId].in += grams;
+        map[tx.supplierId].grossIn += grams;
+        map[tx.supplierId].fineIn += grams * tx.purity;
       }
       if (tx.type === 'OUT' && tx.supplierId && map[tx.supplierId]) {
-        map[tx.supplierId].out += grams;
+        map[tx.supplierId].fineOut += grams;
       }
     });
-    const result = Object.values(map).filter((d) => d.in > 0 || d.out > 0);
+    const result = Object.values(map).filter((d) => d.grossIn > 0 || d.fineOut > 0);
     return selectedSupplierId === 'all'
       ? result
       : result.filter((d) => d.id === selectedSupplierId);
@@ -345,8 +346,8 @@ const processBySupplier = useMemo(() => {
                     contentStyle={{ background: '#111827', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 0, fontSize: '12px', color: '#e2e8f0' }}
                     cursor={{ fill: 'rgba(59,130,246,0.05)' }}
                   />
-                  <Bar dataKey="in" name="Ingresos" fill="#F59E0B" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="out" name="Egresos" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="fineIn" name="Oro Fino" fill="#F59E0B" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="fineOut" name="Egresos Finos" fill="#3B82F6" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -357,8 +358,9 @@ const processBySupplier = useMemo(() => {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingresos (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
                     <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
                   </tr>
                 </thead>
@@ -367,16 +369,17 @@ const processBySupplier = useMemo(() => {
                     supplierChartData.map((row) => (
                       <tr key={row.id} className="terminal-row">
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.in)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.out)}</td>
-                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.in - row.out) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(row.in - row.out) >= 0 ? '+' : ''}{formatLocaleNumber(row.in - row.out)}
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
+                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.fineIn - row.fineOut) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(row.fineIn - row.fineOut) >= 0 ? '+' : ''}{formatLocaleNumber(row.fineIn - row.fineOut)}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-500">
+                      <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-500">
                         No hay datos de proveedores.
                       </td>
                     </tr>

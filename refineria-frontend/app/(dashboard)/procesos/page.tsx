@@ -11,6 +11,7 @@ import {
   Lock, X, Eye, Save, ChevronDown, ChevronRight, Trash2,
   FileText, Upload,
 } from 'lucide-react';
+import ShakeAlert from '@/components/ShakeAlert';
 
 type PageView = 'list' | 'detail';
 
@@ -216,7 +217,7 @@ function ProcessModal({
                   acta.url ? (
                     <a
                       key={acta.label}
-                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                      href={acta.url?.startsWith('http') ? acta.url : `${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
@@ -268,6 +269,8 @@ function ProcessDetailView({
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [closeWarning, setCloseWarning] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
   const [savedG, setSavedG] = useState<Record<string, boolean>>({});
@@ -303,7 +306,8 @@ function ProcessDetailView({
       });
       setConfirmDeleteBarId(null);
     } catch {
-      alert('Error al eliminar la barra del lote');
+      setErrorMessage('Error al eliminar la barra del lote');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -342,7 +346,8 @@ function ProcessDetailView({
         setSavedG((prev) => ({ ...prev, [lotId]: false }));
       }, 3000);
     } catch {
-      alert('Error al guardar el peso recuperado');
+      setErrorMessage('Error al guardar el peso recuperado');
+      setShakeKey((k) => k + 1);
     } finally {
       setSavingG((prev) => ({ ...prev, [lotId]: false }));
     }
@@ -716,7 +721,7 @@ function ProcessDetailView({
                     acta.url ? (
                       <a
                         key={acta.label}
-                        href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
+                        href={acta.url?.startsWith('http') ? acta.url : `${process.env.NEXT_PUBLIC_API_URL || '/api'}/${acta.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
@@ -797,6 +802,9 @@ function ProcessDetailView({
                 <span>Conformidad</span>
               </div>
 
+              {errorMessage && (
+                <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
+              )}
               {closeWarning && (
                 <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
                   <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
@@ -834,6 +842,8 @@ export default function ProcesosPage() {
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
   const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
 
   const [activeTab, setActiveTab] = useState<'open' | 'in_progress' | 'closed'>('open');
 
@@ -944,7 +954,8 @@ export default function ProcesosPage() {
       setSuccessMessage('Proceso eliminado correctamente');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      alert('Error al eliminar el proceso');
+      setErrorMessage('Error al eliminar el proceso');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -958,7 +969,8 @@ export default function ProcesosPage() {
       setSuccessMessage(`Proceso #${newProc.number} abierto correctamente`);
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      // error handled by react query
+      setErrorMessage('Error al abrir el proceso');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -972,7 +984,8 @@ export default function ProcesosPage() {
       setView('list');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      // error handled by react query
+      setErrorMessage('Error al cerrar el proceso');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -988,7 +1001,9 @@ export default function ProcesosPage() {
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Error cerrando proceso con actas:', err);
-      alert(`Error al cerrar el proceso: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      setErrorMessage(`Error al cerrar el proceso: ${msg}`);
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -999,7 +1014,8 @@ export default function ProcesosPage() {
       setSuccessMessage('Asignaci&oacute;n finalizada. Ahora puede ingresar el Peso Fino Recuperado (G) por lote.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch {
-      // error handled by react query
+      setErrorMessage('Error al finalizar la asignación');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -1010,13 +1026,17 @@ export default function ProcesosPage() {
       setSuccessMessage(`${barIds.length} barra${barIds.length !== 1 ? 's' : ''} asignada${barIds.length !== 1 ? 's' : ''} a lote nuevo`);
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      // error handled by react query
+      setErrorMessage('Error al asignar barras al lote');
+      setShakeKey((k) => k + 1);
     }
   };
 
   if (view === 'detail' && managingDetail) {
     return (
       <div className="space-y-5">
+        {errorMessage && (
+          <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
+        )}
         {successMessage && (
           <div className="glass-panel-gold p-4 flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
@@ -1055,6 +1075,9 @@ export default function ProcesosPage() {
         </div>
       </div>
 
+      {errorMessage && (
+        <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
+      )}
       {successMessage && (
         <div className="glass-panel-gold p-4 flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />

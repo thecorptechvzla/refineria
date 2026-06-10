@@ -26,6 +26,7 @@ export interface Transaction {
   weightUnit: WeightUnit;
   purity: number;
   supplierId?: string;
+  supplier?: { name: string };
   date: string;
 }
 

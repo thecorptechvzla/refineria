@@ -1,0 +1,1 @@
+﻿ALTER TABLE "process_lots" ADD COLUMN "egresado_g" DOUBLE PRECISION NOT NULL DEFAULT 0;

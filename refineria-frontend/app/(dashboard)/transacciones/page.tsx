@@ -1,43 +1,67 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useGold } from '@/lib/GoldContext';
-import { useTransactions, useCreateTransaction } from '@/lib/hooks/useTransactions';
-import { WeightUnit } from '@/types';
-import { calculateFineWeight, formatDate, parseLocaleNumber, formatInputNumber } from '@/lib/utils';
-import { ArrowLeftRight, CheckCircle, Crosshair, Weight, Thermometer } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useSuppliers } from '@/lib/hooks/useSuppliers';
+import { useClosedProcessesBySupplier } from '@/lib/hooks/useProcesses';
+import { useCreateEgresoLot } from '@/lib/hooks/useTransactions';
+import { useTransactions } from '@/lib/hooks/useTransactions';
+import { formatLocaleNumber, formatDate } from '@/lib/utils';
+import { ArrowLeftRight, CheckCircle, Crosshair, Package, ChevronDown } from 'lucide-react';
+import ShakeAlert from '@/components/ShakeAlert';
+import type { ProcessLot, Process } from '@/types/refinery';
 
 export default function TransaccionesPage() {
+  const { data: suppliers } = useSuppliers();
   const { data: transactions } = useTransactions();
-  const createTx = useCreateTransaction();
+  const createEgreso = useCreateEgresoLot();
 
-  const [weight, setWeight] = useState('');
-  const [unit, setUnit] = useState<WeightUnit>('g');
-  const [purity, setPurity] = useState('');
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [supplierSelectOpen, setSupplierSelectOpen] = useState(false);
+  const { data: closedProcesses } = useClosedProcessesBySupplier(selectedSupplierId || null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
+  const [confirmLotId, setConfirmLotId] = useState<string | null>(null);
+  const [expandedProcess, setExpandedProcess] = useState<string | null>(null);
 
-  const parsedWeight = parseLocaleNumber(weight);
-  const parsedPurity = parseLocaleNumber(purity);
-  const fineWeight = calculateFineWeight(parsedWeight, parsedPurity / 100);
+  const supplierRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (parsedWeight <= 0 || parsedPurity <= 0 || parsedPurity > 100) return;
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (supplierRef.current && !supplierRef.current.contains(e.target as Node)) {
+        setSupplierSelectOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
+  const selectedSupplier = suppliers?.find((s) => s.id === selectedSupplierId);
+
+  const availableLots = useMemo(() => {
+    if (!closedProcesses) return [];
+    const lots: { lot: ProcessLot; process: Process }[] = [];
+    for (const p of closedProcesses) {
+      for (const lot of p.lots) {
+        const available = (lot.recovered ?? 0) - lot.egresadoG;
+        if (available > 0) {
+          lots.push({ lot, process: p });
+        }
+      }
+    }
+    return lots;
+  }, [closedProcesses]);
+
+  const handleEgresar = async (lotId: string) => {
+    setConfirmLotId(null);
+    setErrorMessage('');
     try {
-      await createTx.mutateAsync({
-        type: 'OUT',
-        weight: parsedWeight,
-        weightUnit: unit,
-        purity: parsedPurity / 100,
-      });
-
-      setSuccessMessage('Egreso Confirmado');
-      setWeight('');
-      setPurity('');
+      await createEgreso.mutateAsync(lotId);
+      setSuccessMessage('Egreso registrado correctamente');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      // Silently handle
+      setErrorMessage('Error al registrar el egreso');
+      setShakeKey((k) => k + 1);
     }
   };
 
@@ -49,12 +73,16 @@ export default function TransaccionesPage() {
             <ArrowLeftRight className="w-5 h-5 text-gold-500" />
             Salida de Material
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Registro de Egresos / Salidas</p>
+          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Egreso de Oro por Lote — Proveedores</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
+        {/* LEFT PANEL — Egreso por lote */}
         <div className="lg:col-span-2 space-y-4">
+          {errorMessage && (
+            <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
+          )}
           {successMessage && (
             <div className="glass-panel-gold p-4 flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
@@ -67,85 +95,152 @@ export default function TransaccionesPage() {
 
           <div className="glass-panel">
             <div className="p-4 border-b border-blue-500/10">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider tracking-wider">Nueva Salida</h2>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Egresar por Lote</h2>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-4">
+              {/* Supplier Select */}
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  <Weight className="w-3 h-3 inline mr-1" />
-                  Peso Bruto (g)
+                  <Package className="w-3 h-3 inline mr-1" />
+                  Proveedor
                 </label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    required
-                    value={weight}
-                    onChange={(e) => setWeight(formatInputNumber(e.target.value))}
-                    className="flex-1 min-w-0 px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                    placeholder="Ej. 1.500,00"
-                  />
-                  <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value as WeightUnit)}
-                    className="px-3 py-2.5 bg-midnight-800 border border-l-0 border-blue-500/20 text-slate-400 text-xs outline-none"
+                <div className="relative" ref={supplierRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSupplierSelectOpen(!supplierSelectOpen)}
+                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-sm text-left flex items-center justify-between text-slate-200"
                   >
-                    <option value="g">g</option>
-                    <option value="kg">kg</option>
-                  </select>
+                    <span className={selectedSupplier ? 'text-slate-200' : 'text-slate-600'}>
+                      {selectedSupplier ? selectedSupplier.name : 'Seleccionar proveedor...'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${supplierSelectOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {supplierSelectOpen && (
+                    <div className="absolute z-20 mt-1 w-full bg-midnight-800 border border-blue-500/20 max-h-48 overflow-y-auto">
+                      {suppliers && suppliers.length > 0 ? (
+                        suppliers.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSupplierId(s.id);
+                              setSupplierSelectOpen(false);
+                              setExpandedProcess(null);
+                            }}
+                            className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                              selectedSupplierId === s.id ? 'bg-blue-500/10 text-gold-400' : 'text-slate-300 hover:bg-midnight-700'
+                            }`}
+                          >
+                            <Package className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                            {s.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-slate-500">No hay proveedores registrados</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  <Thermometer className="w-3 h-3 inline mr-1" />
-                  Pureza (%)
-                </label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  required
-                  value={purity}
-                  onChange={(e) => setPurity(formatInputNumber(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 99,95"
-                />
-              </div>
+              {/* Available Lots */}
+              {selectedSupplierId && (
+                <div>
+                  {createEgreso.isPending && (
+                    <div className="text-xs text-slate-500 py-4 text-center">Procesando egreso...</div>
+                  )}
 
-              {parsedWeight > 0 && parsedPurity > 0 && (
-                <div className="bg-gold-500/5 border border-gold-500/20 p-4">
-                  <p className="text-[10px] font-semibold text-gold-400/80 uppercase tracking-widest">Peso Fino Calculado</p>
-                  <p className="hud-number text-2xl text-gold-500 mt-1">
-                    {fineWeight >= 1 ? `${fineWeight.toFixed(2)} g` : `${(fineWeight * 1000).toFixed(1)} mg`}
-                  </p>
-                  <div className="h-[2px] w-full bg-gold-500/20 mt-2" />
-                  <p className="text-[10px] text-slate-600 mt-1.5 font-mono">
-                    {parsedWeight} {unit} × {parsedPurity}% pureza
-                  </p>
+                  {!createEgreso.isPending && closedProcesses && closedProcesses.length === 0 && (
+                    <div className="text-xs text-slate-500 py-4 text-center">
+                      No hay procesos cerrados para este proveedor.
+                    </div>
+                  )}
+
+                  {!createEgreso.isPending && availableLots.length === 0 && closedProcesses && closedProcesses.length > 0 && (
+                    <div className="text-xs text-slate-500 py-4 text-center">
+                      Todos los lotes de este proveedor ya fueron egresados.
+                    </div>
+                  )}
+
+                  {!createEgreso.isPending && availableLots.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+                        Lotes disponibles para egresar
+                      </p>
+                      {closedProcesses?.map((proc) => {
+                        const procLots = availableLots.filter((l) => l.process.id === proc.id);
+                        if (procLots.length === 0) return null;
+                        return (
+                          <div key={proc.id} className="border border-blue-500/10">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedProcess(expandedProcess === proc.id ? null : proc.id)}
+                              className="w-full px-3 py-2 bg-midnight-800/50 flex items-center justify-between text-left"
+                            >
+                              <span className="text-xs font-semibold text-slate-300">
+                                Proceso #{proc.number} — {procLots.length} lote{procLots.length !== 1 ? 's' : ''}
+                              </span>
+                              <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${expandedProcess === proc.id ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedProcess === proc.id && (
+                              <div className="divide-y divide-blue-500/5">
+                                {procLots.map(({ lot }) => {
+                                  const available = (lot.recovered ?? 0) - lot.egresadoG;
+                                  return (
+                                    <div key={lot.id} className="px-3 py-2.5 flex items-center justify-between">
+                                      <div className="space-y-0.5">
+                                        <p className="text-xs font-mono text-gold-500 font-bold">
+                                          Lote #{lot.number}
+                                        </p>
+                                        <div className="flex gap-3 text-[10px] text-slate-500">
+                                          <span>G: <span className="text-slate-300 font-mono">{formatLocaleNumber(lot.recovered ?? 0)}</span></span>
+                                          <span>Egresado: <span className="text-slate-300 font-mono">{formatLocaleNumber(lot.egresadoG)}</span></span>
+                                          <span>Disponible: <span className="text-green-400 font-mono">{formatLocaleNumber(available)}</span></span>
+                                        </div>
+                                      </div>
+                                      {confirmLotId === lot.id ? (
+                                        <div className="flex gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEgresar(lot.id)}
+                                            className="px-2.5 py-1.5 bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-bold uppercase tracking-wider hover:bg-green-500/30 transition-all"
+                                          >
+                                            Confirmar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setConfirmLotId(null)}
+                                            className="px-2.5 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/20 transition-all"
+                                          >
+                                            Cancelar
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setConfirmLotId(lot.id)}
+                                          className="px-2.5 py-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/30 transition-all"
+                                        >
+                                          Egresar
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
-
-              <button
-                type="submit"
-                disabled={createTx.isPending || parsedWeight <= 0 || parsedPurity <= 0}
-                className="w-full py-2.5 bg-blue-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {createTx.isPending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin" />
-                    Procesando
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    Confirmar Salida
-                  </span>
-                )}
-              </button>
-            </form>
+            </div>
           </div>
         </div>
 
+        {/* RIGHT PANEL — Transaction History */}
         <div className="lg:col-span-3">
           <div className="glass-panel h-full flex flex-col">
             <div className="p-4 sm:p-5 border-b border-blue-500/10">
@@ -160,7 +255,7 @@ export default function TransaccionesPage() {
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Pureza</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
                   </tr>
@@ -177,10 +272,10 @@ export default function TransaccionesPage() {
                           </span>
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
-                          {tx.supplierId || '—'}
+                          {tx.supplier?.name || tx.supplierId || '—'}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">
-                          {tx.weight} {tx.weightUnit}
+                          {formatLocaleNumber(tx.weight)} {tx.weightUnit}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">
                           {(tx.purity * 100).toFixed(0)}%

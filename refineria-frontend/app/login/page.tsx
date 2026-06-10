@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useLogin } from '@/lib/hooks/useAuth';
 import { ShieldCheck, Eye, EyeOff, ChevronRight, UserCog, Shield } from 'lucide-react';
+import ShakeAlert from '@/components/ShakeAlert';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
   const [showPass, setShowPass] = useState(false);
   const { setUser } = useGold();
   const loginMutation = useLogin();
@@ -25,6 +27,7 @@ export default function LoginPage() {
       router.push(res.user.role === 'SUPERADMIN' ? '/' : '/transacciones');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Credenciales incorrectas. Intenta de nuevo.';
+      setShakeKey((k) => k + 1);
       setError(msg);
     }
   };
@@ -44,6 +47,7 @@ export default function LoginPage() {
       router.push(role === 'SUPERADMIN' ? '/' : '/transacciones');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al iniciar sesión.';
+      setShakeKey((k) => k + 1);
       setError(msg);
     }
   };
@@ -67,9 +71,7 @@ export default function LoginPage() {
         <div className="glass-panel rounded-sm p-8">
           <form className="space-y-5" onSubmit={handleLogin}>
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 p-3 text-sm text-red-400 font-medium">
-                {error}
-              </div>
+              <ShakeAlert message={error} shakeKey={shakeKey} type="error" />
             )}
 
             <div>

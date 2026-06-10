@@ -15,6 +15,7 @@ export declare class FilesController {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {

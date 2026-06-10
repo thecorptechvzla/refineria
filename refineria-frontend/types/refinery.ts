@@ -19,6 +19,7 @@ export interface ProcessLot {
   number: number;
   barIds: string[];
   recovered?: number | null;
+  egresadoG: number;
   creationDate: string;
 }
 

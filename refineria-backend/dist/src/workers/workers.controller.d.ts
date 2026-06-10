@@ -9,8 +9,8 @@ export declare class WorkersController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("../generated/prisma/enums").WorkerStatus;
         position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
         startDate: Date;
     }[]>;
     create(dto: CreateWorkerDto): import("../generated/prisma/models").Prisma__WorkerClient<{
@@ -18,8 +18,8 @@ export declare class WorkersController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("../generated/prisma/enums").WorkerStatus;
         position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
         startDate: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, {
         omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
@@ -29,8 +29,8 @@ export declare class WorkersController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("../generated/prisma/enums").WorkerStatus;
         position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
         startDate: Date;
     }>;
     update(id: string, dto: UpdateWorkerDto): Promise<{
@@ -38,8 +38,8 @@ export declare class WorkersController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("../generated/prisma/enums").WorkerStatus;
         position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
         startDate: Date;
     }>;
     remove(id: string): Promise<{
@@ -47,8 +47,8 @@ export declare class WorkersController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import("../generated/prisma/enums").WorkerStatus;
         position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
         startDate: Date;
     }>;
 }

@@ -14,6 +14,7 @@ export declare class ProcessesService {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -35,6 +36,7 @@ export declare class ProcessesService {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -56,6 +58,7 @@ export declare class ProcessesService {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -77,6 +80,7 @@ export declare class ProcessesService {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {
@@ -97,6 +101,7 @@ export declare class ProcessesService {
         recovered: number | null;
         processId: string;
         barIds: string[];
+        egresadoG: number;
         creationDate: Date;
     }>;
     addLot(processId: string, dto: CreateLotDto): Promise<{
@@ -105,6 +110,7 @@ export declare class ProcessesService {
         recovered: number | null;
         processId: string;
         barIds: string[];
+        egresadoG: number;
         creationDate: Date;
     }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
@@ -114,6 +120,28 @@ export declare class ProcessesService {
     remove(id: string): Promise<{
         deleted: boolean;
     }>;
+    findClosedBySupplier(supplierId: string): Promise<({
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    })[]>;
     closeWithActas(id: string, actas: {
         actaRecepcion: string;
         actaFundicion: string;
@@ -125,6 +153,7 @@ export declare class ProcessesService {
             recovered: number | null;
             processId: string;
             barIds: string[];
+            egresadoG: number;
             creationDate: Date;
         }[];
     } & {

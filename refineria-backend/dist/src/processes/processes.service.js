@@ -147,6 +147,17 @@ let ProcessesService = class ProcessesService {
         await this.prisma.process.delete({ where: { id } });
         return { deleted: true };
     }
+    async findClosedBySupplier(supplierId) {
+        return this.prisma.process.findMany({
+            where: { supplierId, status: 'closed' },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                lots: {
+                    orderBy: { number: 'asc' },
+                },
+            },
+        });
+    }
     async closeWithActas(id, actas) {
         const process = await this.findById(id);
         if (process.status !== 'in_progress' && process.status !== 'open') {

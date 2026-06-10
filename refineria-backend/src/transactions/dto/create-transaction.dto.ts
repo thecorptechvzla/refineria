@@ -5,18 +5,25 @@ export class CreateTransactionDto {
   @IsEnum(TransactionType)
   type: TransactionType;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  weight: number;
+  weight?: number;
 
+  @IsOptional()
   @IsEnum(WeightUnit)
-  weightUnit: WeightUnit;
+  weightUnit?: WeightUnit;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  purity: number;
+  purity?: number;
 
   @IsOptional()
   @IsString()
   supplierId?: string;
+
+  @IsOptional()
+  @IsString()
+  lotId?: string;
 }
