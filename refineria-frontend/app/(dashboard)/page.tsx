@@ -52,6 +52,8 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [periodOpen]);
 
+  const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
+
   const monthRange = useMemo(() => {
     const now = new Date();
     const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -153,6 +155,11 @@ const processBySupplier = useMemo(() => {
     })
     .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
 }, [filteredProcesses, suppliers]);
+
+  const supplierProcessMap = useMemo(() => {
+    if (!expandedSupplierId) return [];
+    return filteredProcesses.filter((p) => p.supplierId === expandedSupplierId);
+  }, [expandedSupplierId, filteredProcesses]);
 
   const supplierChartData = useMemo(() => {
     if (!suppliers || !transactions) return [];
@@ -387,30 +394,69 @@ const processBySupplier = useMemo(() => {
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">Estado de los Procesos</h2>
             </div>
           </div>
-          <div className="p-4 sm:p-5 max-h-[360px] overflow-y-auto space-y-2">
+          <div className="p-4 sm:p-5 max-h-[600px] overflow-y-auto space-y-2">
             {processBySupplier.length > 0 ? (
-              processBySupplier.map((s) => (
-                <div key={s.id} className="terminal-row flex items-center justify-between py-2.5 px-3">
-                  <span className="text-sm font-medium text-slate-300 truncate min-w-0">{s.name}</span>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {s.open > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                        {s.open} A
-                      </span>
-                    )}
-                    {s.inProgress > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                        {s.inProgress} T
-                      </span>
-                    )}
-                    {s.closed > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-400">
-                        {s.closed} C
-                      </span>
+              processBySupplier.map((s) => {
+                const isSupplierExpanded = expandedSupplierId === s.id;
+                return (
+                  <div key={s.id}>
+                    <div
+                      onClick={() => setExpandedSupplierId(isSupplierExpanded ? null : s.id)}
+                      className="terminal-row flex items-center justify-between py-2.5 px-3 cursor-pointer select-none"
+                    >
+                      <span className="text-sm font-medium text-slate-300 truncate min-w-0">{s.name}</span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {s.open > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                            {s.open} A
+                          </span>
+                        )}
+                        {s.inProgress > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
+                            {s.inProgress} T
+                          </span>
+                        )}
+                        {s.closed > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-400">
+                            {s.closed} C
+                          </span>
+                        )}
+                        <ChevronDown className={`w-3 h-3 text-slate-600 transition-transform ${isSupplierExpanded ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                    {isSupplierExpanded && (
+                      <div className="border-t border-blue-500/10 pt-2 pb-1 px-3 space-y-1.5">
+                        {supplierProcessMap.length > 0 ? (
+                          supplierProcessMap.map((p) => {
+                            const lotCount = p.lots.length;
+                            const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
+                            const gCount = p.lots.filter((l) => l.recovered !== null).length;
+                            return (
+                              <div key={p.id} className="text-[10px] font-mono bg-midnight-900/50 px-2.5 py-1.5 border border-blue-500/10 flex items-center justify-between">
+                                <span className="text-slate-300">#{p.number}</span>
+                                <div className="flex items-center gap-2 text-slate-500">
+                                  <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
+                                  <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
+                                  {p.status === 'in_progress' && <span>G: {gCount}/{lotCount}</span>}
+                                  <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                                    p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
+                                    p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
+                                    'bg-gray-500/10 text-gray-400'
+                                  }`}>
+                                    {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-[10px] text-slate-500 py-1">Sin procesos para este proveedor.</p>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-center text-sm text-slate-500 py-6">No hay procesos activos.</p>
             )}
