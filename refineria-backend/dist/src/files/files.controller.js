@@ -16,6 +16,7 @@ exports.FilesController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const passport_1 = require("@nestjs/passport");
+const public_decorator_1 = require("../common/decorators/public.decorator");
 const files_service_1 = require("./files.service");
 const processes_service_1 = require("../processes/processes.service");
 let FilesController = class FilesController {
@@ -81,6 +82,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "uploadActas", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id/actas/:type'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Param)('type')),

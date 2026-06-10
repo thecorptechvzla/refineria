@@ -13,6 +13,7 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
+import { Public } from '../common/decorators/public.decorator';
 import { FilesService } from './files.service';
 import { ProcessesService } from '../processes/processes.service';
 
@@ -75,6 +76,7 @@ export class FilesController {
     });
   }
 
+  @Public()
   @Get(':id/actas/:type')
   async getActa(
     @Param('id') id: string,
