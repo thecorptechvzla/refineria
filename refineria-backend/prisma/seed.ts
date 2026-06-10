@@ -36,12 +36,12 @@ async function main() {
   console.log('Users created:', admin.email, superadmin.email);
 
   const suppliers = await Promise.all([
-    prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),
-    prisma.supplier.create({ data: { name: 'Cooperativa Aurífera del Sur', contactInfo: 'ventas@coopaurifera.com | +51 976 543 210', registrationDate: new Date('2023-03-22T14:30:00Z') } }),
-    prisma.supplier.create({ data: { name: 'Corporación Minera Dorado', contactInfo: 'info@doradocorp.pe | +51 965 432 109', registrationDate: new Date('2023-06-10T09:00:00Z') } }),
-    prisma.supplier.create({ data: { name: 'Inversiones El Dorado EIRL', contactInfo: 'operaciones@eldorado.pe | +51 954 321 098', registrationDate: new Date('2023-08-05T11:45:00Z') } }),
-    prisma.supplier.create({ data: { name: 'Compañía Minera del Centro', contactInfo: 'logistica@cmcentro.pe | +51 943 210 987', registrationDate: new Date('2024-01-20T08:30:00Z') } }),
-    prisma.supplier.create({ data: { name: 'Sociedad Minera Río Seco', contactInfo: 'admin@rioseco.pe | +51 932 109 876', registrationDate: new Date('2024-04-12T16:00:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', rif: 'J-12345678-9', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Cooperativa Aurífera del Sur', rif: 'J-23456789-0', contactInfo: 'ventas@coopaurifera.com | +51 976 543 210', registrationDate: new Date('2023-03-22T14:30:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Corporación Minera Dorado', rif: 'J-34567890-1', contactInfo: 'info@doradocorp.pe | +51 965 432 109', registrationDate: new Date('2023-06-10T09:00:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Inversiones El Dorado EIRL', rif: 'J-45678901-2', contactInfo: 'operaciones@eldorado.pe | +51 954 321 098', registrationDate: new Date('2023-08-05T11:45:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Compañía Minera del Centro', rif: 'J-56789012-3', contactInfo: 'logistica@cmcentro.pe | +51 943 210 987', registrationDate: new Date('2024-01-20T08:30:00Z') } }),
+    prisma.supplier.create({ data: { name: 'Sociedad Minera Río Seco', rif: 'J-67890123-4', contactInfo: 'admin@rioseco.pe | +51 932 109 876', registrationDate: new Date('2024-04-12T16:00:00Z') } }),
   ]);
 
   console.log('Suppliers created:', suppliers.length);

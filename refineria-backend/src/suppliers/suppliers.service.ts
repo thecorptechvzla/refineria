@@ -4,10 +4,10 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { Prisma } from '../generated/prisma/client';
 
 @Injectable()
 export class SuppliersService {
@@ -36,7 +36,7 @@ export class SuppliersService {
     try {
       return await this.prisma.supplier.create({ data: dto });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new BadRequestException('El RIF ya está registrado por otro proveedor');
       }
       throw error;

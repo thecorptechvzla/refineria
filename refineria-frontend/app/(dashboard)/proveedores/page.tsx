@@ -13,6 +13,7 @@ export default function ProveedoresPage() {
   const [contactInfo, setContactInfo] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [shakeKey, setShakeKey] = useState(0);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ export default function ProveedoresPage() {
     setErrorMessage('');
 
     if (!/^[JVEGP]-\d{8,9}-\d$/.test(rif)) {
+      setShakeKey((k) => k + 1);
       setErrorMessage('El RIF debe tener el formato J-12345678-9');
       return;
     }
@@ -38,6 +40,14 @@ export default function ProveedoresPage() {
 
   return (
     <div className="space-y-5">
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+          20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+      `}</style>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -65,7 +75,7 @@ export default function ProveedoresPage() {
               )}
 
               {errorMessage && (
-                <div className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2">
+                <div key={shakeKey} className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2 animate-shake">
                   <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
                   <p className="text-xs text-red-400 font-medium">{errorMessage}</p>
                 </div>

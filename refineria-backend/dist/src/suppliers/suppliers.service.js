@@ -11,8 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuppliersService = void 0;
 const common_1 = require("@nestjs/common");
-const library_1 = require("@prisma/client/runtime/library");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("../generated/prisma/client");
 let SuppliersService = class SuppliersService {
     prisma;
     constructor(prisma) {
@@ -38,7 +38,7 @@ let SuppliersService = class SuppliersService {
             return await this.prisma.supplier.create({ data: dto });
         }
         catch (error) {
-            if (error instanceof library_1.PrismaClientKnownRequestError && error.code === 'P2002') {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                 throw new common_1.BadRequestException('El RIF ya está registrado por otro proveedor');
             }
             throw error;
