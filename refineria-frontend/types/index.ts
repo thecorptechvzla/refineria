@@ -10,6 +10,7 @@ export interface User {
 export interface Supplier {
   id: string;
   name: string;
+  rif: string;
   contactInfo: string;
   registrationDate: string;
 }

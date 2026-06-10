@@ -40,6 +40,7 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export declare const SupplierScalarFieldEnum: {
     readonly id: "id";
     readonly name: "name";
+    readonly rif: "rif";
     readonly contactInfo: "contactInfo";
     readonly registrationDate: "registrationDate";
     readonly createdAt: "createdAt";

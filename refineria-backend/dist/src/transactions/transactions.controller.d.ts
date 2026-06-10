@@ -52,6 +52,7 @@ export declare class TransactionsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            rif: string;
             contactInfo: string;
             registrationDate: Date;
         } | null;

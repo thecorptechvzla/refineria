@@ -42,6 +42,7 @@ model User {
 model Supplier {
   id               String        @id @default(uuid())
   name             String
+  rif              String        @unique @map("rif")
   contactInfo      String        @map("contact_info")
   registrationDate DateTime      @default(now()) @map("registration_date")
   createdAt        DateTime      @default(now()) @map("created_at")

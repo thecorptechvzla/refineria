@@ -3,27 +3,36 @@
 import { useState, FormEvent } from 'react';
 import { useSuppliers, useCreateSupplier } from '@/lib/hooks/useSuppliers';
 import { formatDate } from '@/lib/utils';
-import { Building2, Building, CheckCircle, Phone, Calendar } from 'lucide-react';
+import { Building2, Building, CheckCircle, Phone, Calendar, FileText, AlertCircle } from 'lucide-react';
 
 export default function ProveedoresPage() {
   const { data: suppliers } = useSuppliers();
   const createSupplier = useCreateSupplier();
   const [name, setName] = useState('');
+  const [rif, setRif] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSuccessMessage('');
+    setErrorMessage('');
+
+    if (!/^[JVEGP]-\d{8,9}-\d$/.test(rif)) {
+      setErrorMessage('El RIF debe tener el formato J-12345678-9');
+      return;
+    }
 
     try {
-      await createSupplier.mutateAsync({ name, contactInfo });
+      await createSupplier.mutateAsync({ name, rif, contactInfo });
       setSuccessMessage('Proveedor registrado con éxito.');
       setName('');
+      setRif('');
       setContactInfo('');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
-      // Silently handle
+      setErrorMessage('Error al registrar. Verifica que el RIF no esté duplicado.');
     }
   };
 
@@ -55,6 +64,13 @@ export default function ProveedoresPage() {
                 </div>
               )}
 
+              {errorMessage && (
+                <div className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <p className="text-xs text-red-400 font-medium">{errorMessage}</p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Building className="w-3 h-3 inline mr-1" />
@@ -67,6 +83,21 @@ export default function ProveedoresPage() {
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. Inversiones El Dorado"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  <FileText className="w-3 h-3 inline mr-1" />
+                  RIF
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={rif}
+                  onChange={(e) => setRif(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all font-mono tracking-wider"
+                  placeholder="J-12345678-9"
                 />
               </div>
 
@@ -113,6 +144,7 @@ export default function ProveedoresPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Nombre</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">RIF</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Contacto</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Registro</th>
                   </tr>
@@ -123,6 +155,12 @@ export default function ProveedoresPage() {
                       <tr key={supplier.id} className="terminal-row">
                         <td className="px-4 sm:px-5 py-3.5 whitespace-nowrap text-sm font-medium text-slate-200">
                           {supplier.name}
+                        </td>
+                        <td className="px-4 sm:px-5 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-300">
+                            <FileText className="w-3 h-3 text-blue-400" />
+                            {supplier.rif}
+                          </span>
                         </td>
                         <td className="px-4 sm:px-5 py-3.5 text-sm text-slate-400 max-w-[200px] truncate">
                           {supplier.contactInfo}
@@ -137,7 +175,7 @@ export default function ProveedoresPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={3} className="px-5 py-8 text-center text-sm text-slate-500">
+                      <td colSpan={4} className="px-5 py-8 text-center text-sm text-slate-500">
                         No hay proveedores registrados aún.
                       </td>
                     </tr>

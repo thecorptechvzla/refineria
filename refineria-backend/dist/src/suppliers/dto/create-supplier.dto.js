@@ -13,6 +13,7 @@ exports.CreateSupplierDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateSupplierDto {
     name;
+    rif;
     contactInfo;
 }
 exports.CreateSupplierDto = CreateSupplierDto;
@@ -21,6 +22,13 @@ __decorate([
     (0, class_validator_1.MinLength)(2),
     __metadata("design:type", String)
 ], CreateSupplierDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^[JVEGP]-\d{8,9}-\d$/, {
+        message: 'El RIF debe tener el formato J-12345678-9 (letra, 8-9 dígitos, dígito verificador)',
+    }),
+    __metadata("design:type", String)
+], CreateSupplierDto.prototype, "rif", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

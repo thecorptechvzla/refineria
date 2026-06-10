@@ -14,7 +14,7 @@ export function useCreateSupplier() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { name: string; contactInfo: string }) =>
+    mutationFn: (data: { name: string; contactInfo: string; rif: string }) =>
       api<Supplier>('/suppliers', {
         method: 'POST',
         body: JSON.stringify(data),

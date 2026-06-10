@@ -86,6 +86,7 @@ exports.UserScalarFieldEnum = {
 exports.SupplierScalarFieldEnum = {
     id: 'id',
     name: 'name',
+    rif: 'rif',
     contactInfo: 'contactInfo',
     registrationDate: 'registrationDate',
     createdAt: 'createdAt',

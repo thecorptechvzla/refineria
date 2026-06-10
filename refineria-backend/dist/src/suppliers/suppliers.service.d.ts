@@ -9,6 +9,7 @@ export declare class SuppliersService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        rif: string;
         contactInfo: string;
         registrationDate: Date;
     }[]>;
@@ -21,24 +22,25 @@ export declare class SuppliersService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        rif: string;
         contactInfo: string;
         registrationDate: Date;
     }>;
-    create(dto: CreateSupplierDto): import("../generated/prisma/models").Prisma__SupplierClient<{
+    create(dto: CreateSupplierDto): Promise<{
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        rif: string;
         contactInfo: string;
         registrationDate: Date;
-    }, never, import("@prisma/client/runtime/client").DefaultArgs, {
-        omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
     update(id: string, dto: UpdateSupplierDto): Promise<{
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        rif: string;
         contactInfo: string;
         registrationDate: Date;
     }>;
@@ -47,6 +49,7 @@ export declare class SuppliersService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        rif: string;
         contactInfo: string;
         registrationDate: Date;
     }>;
