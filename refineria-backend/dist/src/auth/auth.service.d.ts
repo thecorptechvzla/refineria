@@ -6,10 +6,31 @@ export declare class AuthService {
     private prisma;
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
-    register(dto: RegisterDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
-    login(dto: LoginDto): Promise<{
-        token: any;
-        user: any;
+    register(dto: RegisterDto): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import("../generated/prisma/enums").Role;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
-    getProfile(userId: string): Promise<any>;
+    login(dto: LoginDto): Promise<{
+        token: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: import("../generated/prisma/enums").Role;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+    }>;
+    getProfile(userId: string): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import("../generated/prisma/enums").Role;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
 }

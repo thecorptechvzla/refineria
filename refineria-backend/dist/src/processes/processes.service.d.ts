@@ -7,12 +7,112 @@ import { RemoveBarsFromLotDto } from './dto/remove-bars-from-lot.dto';
 export declare class ProcessesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    create(dto: CreateProcessDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$ProcessPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
-    findAll(): runtime.Types.Public.PrismaPromise<T>;
-    findById(id: string): Promise<any>;
-    update(id: string, dto: UpdateProcessDto): Promise<any>;
-    updateLot(lotId: string, dto: UpdateLotDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$ProcessLotPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
-    addLot(processId: string, dto: CreateLotDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$ProcessLotPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
+    create(dto: CreateProcessDto): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    }>;
+    findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<({
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    })[]>;
+    findById(id: string): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    }>;
+    update(id: string, dto: UpdateProcessDto): Promise<({
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    }) | null>;
+    updateLot(lotId: string, dto: UpdateLotDto): Promise<{
+        number: number;
+        id: string;
+        recovered: number | null;
+        processId: string;
+        barIds: string[];
+        egresadoG: number;
+        creationDate: Date;
+    }>;
+    addLot(processId: string, dto: CreateLotDto): Promise<{
+        number: number;
+        id: string;
+        recovered: number | null;
+        processId: string;
+        barIds: string[];
+        egresadoG: number;
+        creationDate: Date;
+    }>;
     removeBarsFromLot(lotId: string, dto: RemoveBarsFromLotDto): Promise<{
         deleted: boolean;
         lotId: string;
@@ -20,10 +120,52 @@ export declare class ProcessesService {
     remove(id: string): Promise<{
         deleted: boolean;
     }>;
-    findClosedBySupplier(supplierId: string): Promise<runtime.Types.Public.PrismaPromise<T>>;
+    findClosedBySupplier(supplierId: string): Promise<({
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    })[]>;
     closeWithActas(id: string, actas: {
         actaRecepcion: string;
         actaFundicion: string;
         actaConformidad: string;
-    }): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$ProcessPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
+    }): Promise<{
+        lots: {
+            number: number;
+            id: string;
+            recovered: number | null;
+            processId: string;
+            barIds: string[];
+            egresadoG: number;
+            creationDate: Date;
+        }[];
+    } & {
+        number: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        supplierId: string;
+        status: import("../generated/prisma/enums").ProcessStatus;
+        closedAt: Date | null;
+        actaRecepcion: string | null;
+        actaFundicion: string | null;
+        actaConformidad: string | null;
+    }>;
 }

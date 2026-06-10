@@ -4,11 +4,51 @@ import { UpdateWorkerDto } from './dto/update-worker.dto';
 export declare class WorkersService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    findAll(): runtime.Types.Public.PrismaPromise<T>;
-    findById(id: string): Promise<any>;
-    create(dto: CreateWorkerDto): import("../generated/prisma/models").Prisma__WorkerClient<runtime.Types.Result.GetResult<import("../generated/prisma/models").$WorkerPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, runtime.Types.Extensions.DefaultArgs, {
+    findAll(): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
+        startDate: Date;
+    }[]>;
+    findById(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
+        startDate: Date;
+    }>;
+    create(dto: CreateWorkerDto): import("../generated/prisma/models").Prisma__WorkerClient<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
+        startDate: Date;
+    }, never, import("@prisma/client/runtime/client").DefaultArgs, {
         omit: import("../generated/prisma/internal/prismaNamespace").GlobalOmitConfig | undefined;
     }>;
-    update(id: string, dto: UpdateWorkerDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$WorkerPayload<ExtArgs>, T, "update", GlobalOmitOptions>>;
-    remove(id: string): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$WorkerPayload<ExtArgs>, T, "delete", GlobalOmitOptions>>;
+    update(id: string, dto: UpdateWorkerDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
+        startDate: Date;
+    }>;
+    remove(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        position: string;
+        status: import("../generated/prisma/enums").WorkerStatus;
+        startDate: Date;
+    }>;
 }

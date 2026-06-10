@@ -5,13 +5,34 @@ import { RegisterDto } from './dto/register.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
-    register(dto: RegisterDto): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>>;
+    register(dto: RegisterDto): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import("../generated/prisma/enums").Role;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     login(dto: LoginDto, res: Response): Promise<{
-        token: any;
-        user: any;
+        token: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: import("../generated/prisma/enums").Role;
+            createdAt: Date;
+            updatedAt: Date;
+        };
     }>;
     logout(res: Response): {
         message: string;
     };
-    getProfile(user: any): Promise<any>;
+    getProfile(user: any): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: import("../generated/prisma/enums").Role;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
 }

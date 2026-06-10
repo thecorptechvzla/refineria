@@ -5,22 +5,76 @@ export declare class TransactionsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     findAll(query: QueryTransactionDto): Promise<{
-        data: any;
-        total: any;
+        data: ({
+            supplier: {
+                name: string;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            type: import("../generated/prisma/enums").TransactionType;
+            weight: number;
+            weightUnit: import("../generated/prisma/enums").WeightUnit;
+            purity: number;
+            supplierId: string | null;
+            date: Date;
+        })[];
+        total: number;
         page: number;
         limit: number;
         totalPages: number;
     }>;
-    findById(id: string): Promise<any>;
-    create(dto: CreateTransactionDto, userId?: string): Promise<any>;
+    findById(id: string): Promise<{
+        supplier: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            contactInfo: string;
+            registrationDate: Date;
+            rif: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import("../generated/prisma/enums").TransactionType;
+        weight: number;
+        weightUnit: import("../generated/prisma/enums").WeightUnit;
+        purity: number;
+        supplierId: string | null;
+        date: Date;
+    }>;
+    create(dto: CreateTransactionDto, userId?: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import("../generated/prisma/enums").TransactionType;
+        weight: number;
+        weightUnit: import("../generated/prisma/enums").WeightUnit;
+        purity: number;
+        supplierId: string | null;
+        date: Date;
+    }>;
     private createLotEgreso;
     getMetrics(): Promise<{
-        totalIngresos: any;
-        totalEgresos: any;
+        totalIngresos: number;
+        totalEgresos: number;
         balance: number;
-        workersActivos: any;
+        workersActivos: number;
         workersInactivos: number;
-        workersTotal: any;
+        workersTotal: number;
     }>;
-    remove(id: string): Promise<runtime.Types.Result.GetResult<import("../generated/prisma/models").$TransactionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>>;
+    remove(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import("../generated/prisma/enums").TransactionType;
+        weight: number;
+        weightUnit: import("../generated/prisma/enums").WeightUnit;
+        purity: number;
+        supplierId: string | null;
+        date: Date;
+    }>;
 }
