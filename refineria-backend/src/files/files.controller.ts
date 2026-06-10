@@ -11,14 +11,14 @@ import {
   Res,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FilesService } from './files.service';
 import { ProcessesService } from '../processes/processes.service';
 
 @Controller('processes')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class FilesController {
   constructor(
     private readonly filesService: FilesService,

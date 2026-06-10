@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FilesController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
-const passport_1 = require("@nestjs/passport");
 const public_decorator_1 = require("../common/decorators/public.decorator");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const files_service_1 = require("./files.service");
 const processes_service_1 = require("../processes/processes.service");
 let FilesController = class FilesController {
@@ -93,7 +93,7 @@ __decorate([
 ], FilesController.prototype, "getActa", null);
 exports.FilesController = FilesController = __decorate([
     (0, common_1.Controller)('processes'),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [files_service_1.FilesService,
         processes_service_1.ProcessesService])
 ], FilesController);
