@@ -10,12 +10,12 @@ export declare class GoldBarsService {
         updatedAt: Date;
         registrationDate: Date;
         supplierId: string;
+        recovered: number;
         code: string;
         grossWeight: number;
         ley: number | null;
         analytical: number;
         expected: number;
-        recovered: number;
         available: boolean;
     }>;
     findAll(available?: string): import("../generated/prisma/internal/prismaNamespace").PrismaPromise<{
@@ -24,12 +24,12 @@ export declare class GoldBarsService {
         updatedAt: Date;
         registrationDate: Date;
         supplierId: string;
+        recovered: number;
         code: string;
         grossWeight: number;
         ley: number | null;
         analytical: number;
         expected: number;
-        recovered: number;
         available: boolean;
     }[]>;
     findById(id: string): Promise<{
@@ -38,12 +38,12 @@ export declare class GoldBarsService {
         updatedAt: Date;
         registrationDate: Date;
         supplierId: string;
+        recovered: number;
         code: string;
         grossWeight: number;
         ley: number | null;
         analytical: number;
         expected: number;
-        recovered: number;
         available: boolean;
     }>;
     update(id: string, dto: UpdateGoldBarDto): Promise<{
@@ -52,12 +52,12 @@ export declare class GoldBarsService {
         updatedAt: Date;
         registrationDate: Date;
         supplierId: string;
+        recovered: number;
         code: string;
         grossWeight: number;
         ley: number | null;
         analytical: number;
         expected: number;
-        recovered: number;
         available: boolean;
     }>;
     remove(id: string): Promise<{
@@ -66,12 +66,12 @@ export declare class GoldBarsService {
         updatedAt: Date;
         registrationDate: Date;
         supplierId: string;
+        recovered: number;
         code: string;
         grossWeight: number;
         ley: number | null;
         analytical: number;
         expected: number;
-        recovered: number;
         available: boolean;
     }>;
 }

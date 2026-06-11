@@ -7,8 +7,8 @@ export declare class AuthController {
     constructor(authService: AuthService);
     register(dto: RegisterDto): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import("../generated/prisma/enums").Role;
         createdAt: Date;
         updatedAt: Date;
@@ -17,8 +17,8 @@ export declare class AuthController {
         token: string;
         user: {
             id: string;
-            name: string;
             email: string;
+            name: string;
             role: import("../generated/prisma/enums").Role;
             createdAt: Date;
             updatedAt: Date;
@@ -29,8 +29,8 @@ export declare class AuthController {
     };
     getProfile(user: any): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import("../generated/prisma/enums").Role;
         createdAt: Date;
         updatedAt: Date;

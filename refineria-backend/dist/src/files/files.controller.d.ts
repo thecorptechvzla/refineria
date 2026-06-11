@@ -13,9 +13,9 @@ export declare class FilesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];

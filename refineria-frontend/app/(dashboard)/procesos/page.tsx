@@ -269,6 +269,7 @@ function ProcessDetailView({
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [closeWarning, setCloseWarning] = useState('');
+  const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
@@ -296,6 +297,13 @@ function ProcessDetailView({
 
   const isOpen = processDetail.status === 'open';
   const isInProgress = processDetail.status === 'in_progress';
+
+  const anyLotBlocked = processDetail.lotDetails.some((lot) => {
+    const totalWeight = lot.grossWeight;
+    const totalWeightedLey = lot.bars.reduce((s, b) => s + (b.ley ?? 0) * b.grossWeight, 0);
+    const avgLey = totalWeight > 0 ? totalWeightedLey / totalWeight : 0;
+    return totalWeight < 2000 || avgLey < 900;
+  });
 
   const handleRemoveBar = async (lotId: string, barId: string) => {
     try {
@@ -328,6 +336,21 @@ function ProcessDetailView({
 
   const handleAssign = () => {
     if (selectedBarIds.length === 0) return;
+
+    const selectedBars = availableBars.filter((b) => selectedBarIds.includes(b.id));
+    const totalWeight = selectedBars.reduce((s, b) => s + b.grossWeight, 0);
+    const totalWeightedLey = selectedBars.reduce((s, b) => s + (b.ley ?? 0) * b.grossWeight, 0);
+    const avgLey = totalWeight > 0 ? totalWeightedLey / totalWeight : 0;
+
+    if (totalWeight < 2000 || avgLey < 900) {
+      const reasons: string[] = [];
+      if (totalWeight < 2000) reasons.push(`peso mínimo de 2.000 g (faltan ${(2000 - totalWeight).toFixed(2)} g)`);
+      if (avgLey < 900) reasons.push(`ley promedio de 900 (actual: ${avgLey.toFixed(2)})`);
+      setAssignWarning(`Las barras seleccionadas no cumplen: ${reasons.join(' y ')}.`);
+      setTimeout(() => setAssignWarning(''), 5000);
+      return;
+    }
+
     onAssign(selectedBarIds);
     setSelectedBarIds([]);
   };
@@ -357,6 +380,12 @@ function ProcessDetailView({
     if (!hasBars) {
       setCloseWarning('No se puede cerrar el proceso porque no contiene barras asignadas.');
       setTimeout(() => setCloseWarning(''), 4000);
+      return;
+    }
+
+    if (anyLotBlocked) {
+      setCloseWarning('No se puede cerrar el proceso: hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900.');
+      setTimeout(() => setCloseWarning(''), 5000);
       return;
     }
 
@@ -473,6 +502,26 @@ function ProcessDetailView({
                   </p>
                 )}
 
+                {selectedBarIds.length > 0 && (() => {
+                  const selBars = availableBars.filter((b) => selectedBarIds.includes(b.id));
+                  const selWeight = selBars.reduce((s, b) => s + b.grossWeight, 0);
+                  const selWeightedLey = selBars.reduce((s, b) => s + (b.ley ?? 0) * b.grossWeight, 0);
+                  const selAvgLey = selWeight > 0 ? selWeightedLey / selWeight : 0;
+                  const selValid = selWeight >= 2000 && selAvgLey >= 900;
+                  return (
+                    <div className={`px-3 py-2 text-[10px] font-mono border ${selValid ? 'border-emerald-500/20 text-emerald-400' : 'border-red-500/20 text-red-400'}`}>
+                      Σ Peso: {formatLocaleNumber(selWeight)} g &middot; Ley prom: {selAvgLey.toFixed(1)} &permil;
+                      {!selValid && <span className="ml-1">→ No cumple</span>}
+                    </div>
+                  );
+                })()}
+
+                {assignWarning && (
+                  <div className="bg-red-500/10 border border-red-500/30 p-2">
+                    <p className="text-xs text-red-400">{assignWarning}</p>
+                  </div>
+                )}
+
                 <button
                   onClick={handleAssign}
                   disabled={selectedBarIds.length === 0}
@@ -560,6 +609,10 @@ function ProcessDetailView({
             const pct = gVal !== null && sumE > 0 ? (gVal / sumE) * 100 : null;
             const dif = gVal !== null ? gVal - sumF : null;
             const isExpanded = expandedLots[lot.id] ?? false;
+            const totalWeight = lot.grossWeight;
+            const totalWeightedLey = lot.bars.reduce((s, b) => s + (b.ley ?? 0) * b.grossWeight, 0);
+            const avgLey = totalWeight > 0 ? totalWeightedLey / totalWeight : 0;
+            const lotBlocked = totalWeight < 2000 || avgLey < 900;
 
             return (
               <div key={lot.id} className="glass-panel">
@@ -568,8 +621,15 @@ function ProcessDetailView({
                     <div>
                       <p className="text-base font-bold text-gold-500 font-mono">Lote #{lot.number}</p>
                       <p className="text-xs text-slate-500 mt-0.5 font-mono">
-                        Σ E: {formatLocaleNumber(sumE)} g &middot; Σ F: {formatLocaleNumber(sumF)} g
+                        Σ E: {formatLocaleNumber(sumE)} g · Σ F: {formatLocaleNumber(sumF)} g
                       </p>
+                      {lotBlocked && (
+                        <div className="bg-red-500/10 border border-red-500/30 p-2 mt-2">
+                          <p className="text-xs text-red-400">
+                            ⚠️ Bloqueado: El lote debe sumar un mínimo de 2.000 g y tener una ley promedio de 900 o superior para ser procesado.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="flex items-center gap-2">
@@ -582,7 +642,7 @@ function ProcessDetailView({
                             value={lotG[lot.id] ?? ''}
                             onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && (isOpen || isInProgress)) {
+                              if (e.key === 'Enter' && (isOpen || isInProgress) && !lotBlocked) {
                                 e.preventDefault();
                                 handleSaveLotG(lot.id);
                               }
@@ -593,7 +653,7 @@ function ProcessDetailView({
         {(isOpen || isInProgress) && (
                           <button
                             onClick={() => handleSaveLotG(lot.id)}
-                            disabled={savingG[lot.id] || getLotG(lot.id) === null}
+                            disabled={savingG[lot.id] || getLotG(lot.id) === null || lotBlocked}
                             className="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
                           >
                             {savingG[lot.id] ? (
@@ -814,9 +874,9 @@ function ProcessDetailView({
               <div className="flex items-center gap-2 pt-2 border-t border-blue-500/10">
                 <button
                   onClick={handleCloseClick}
-                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas}
+                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas || anyLotBlocked}
                   className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
-                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas
+                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas && !anyLotBlocked
                       ? 'bg-red-600 text-white hover:bg-red-500'
                       : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
                   }`}

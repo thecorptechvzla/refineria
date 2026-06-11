@@ -17,8 +17,8 @@ export declare class TransactionsController {
             weight: number;
             weightUnit: import("../generated/prisma/enums").WeightUnit;
             purity: number;
-            supplierId: string | null;
             date: Date;
+            supplierId: string | null;
         })[];
         total: number;
         page: number;
@@ -33,8 +33,8 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        supplierId: string | null;
         date: Date;
+        supplierId: string | null;
     }>;
     getMetrics(): Promise<{
         totalIngresos: number;
@@ -50,9 +50,9 @@ export declare class TransactionsController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            rif: string;
             contactInfo: string;
             registrationDate: Date;
-            rif: string;
         } | null;
     } & {
         id: string;
@@ -62,8 +62,8 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        supplierId: string | null;
         date: Date;
+        supplierId: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -73,7 +73,7 @@ export declare class TransactionsController {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        supplierId: string | null;
         date: Date;
+        supplierId: string | null;
     }>;
 }

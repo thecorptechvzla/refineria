@@ -11,9 +11,9 @@ export declare class ProcessesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -33,9 +33,9 @@ export declare class ProcessesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -55,9 +55,9 @@ export declare class ProcessesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -77,9 +77,9 @@ export declare class ProcessesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -98,9 +98,9 @@ export declare class ProcessesController {
     addLot(id: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;
-        recovered: number | null;
         processId: string;
         barIds: string[];
+        recovered: number | null;
         egresadoG: number;
         creationDate: Date;
     }>;
@@ -111,9 +111,9 @@ export declare class ProcessesController {
     updateLot(lotId: string, dto: UpdateLotDto): Promise<{
         number: number;
         id: string;
-        recovered: number | null;
         processId: string;
         barIds: string[];
+        recovered: number | null;
         egresadoG: number;
         creationDate: Date;
     }>;
@@ -121,9 +121,9 @@ export declare class ProcessesController {
         lots: {
             number: number;
             id: string;
-            recovered: number | null;
             processId: string;
             barIds: string[];
+            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
