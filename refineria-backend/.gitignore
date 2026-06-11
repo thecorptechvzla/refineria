@@ -6,3 +6,5 @@ node_modules
 
 # Local uploaded files (actas, etc.)
 /uploads/
+
+seed.ts

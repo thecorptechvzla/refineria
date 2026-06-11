@@ -12,28 +12,40 @@ const adapter = new adapter_pg_1.PrismaPg({ connectionString });
 const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('Seeding database...');
-    const hashedPassword = await bcrypt_1.default.hash('123', 10);
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@goldtrack.com' },
-        update: {},
-        create: {
-            name: 'César Mendoza',
-            email: 'admin@goldtrack.com',
-            password: hashedPassword,
-            role: 'ADMIN',
-        },
-    });
+    const hashedPassword = await bcrypt_1.default.hash('JuanDavila*ñ', 10);
+    const hashedPassword1 = await bcrypt_1.default.hash('AngelEspinosa*ñ', 10);
+    const hashedPassword2 = await bcrypt_1.default.hash('RodrigoRojas*ñ', 10);
     const superadmin = await prisma.user.upsert({
-        where: { email: 'dueno@goldtrack.com' },
+        where: { email: 'juandavila@goldtrack.com' },
         update: {},
         create: {
-            name: 'Alejandro Vargas',
-            email: 'dueno@goldtrack.com',
+            name: 'Juan Davila',
+            email: 'juandavila@goldtrack.com',
             password: hashedPassword,
             role: 'SUPERADMIN',
         },
     });
-    console.log('Users created:', admin.email, superadmin.email);
+    const admin = await prisma.user.upsert({
+        where: { email: 'angelespinosa@goldtrack.com' },
+        update: {},
+        create: {
+            name: 'Angel Espinosa',
+            email: 'angelespinosa@goldtrack.com',
+            password: hashedPassword1,
+            role: 'ADMIN',
+        },
+    });
+    const admin1 = await prisma.user.upsert({
+        where: { email: 'rodrigorojas@goldtrack.com' },
+        update: {},
+        create: {
+            name: 'Rodrigo Rojas',
+            email: 'rodrigorojas@goldtrack.com',
+            password: hashedPassword2,
+            role: 'ADMIN',
+        },
+    });
+    console.log('Users created:', superadmin.email, admin.email, admin1.email);
     const suppliers = await Promise.all([
         prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', rif: 'J-12345678-9', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),
         prisma.supplier.create({ data: { name: 'Cooperativa Aurífera del Sur', rif: 'J-23456789-0', contactInfo: 'ventas@coopaurifera.com | +51 976 543 210', registrationDate: new Date('2023-03-22T14:30:00Z') } }),
