@@ -8,7 +8,7 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('Seeding database...');
+  console.log('Seeding database....');
 
   const hashedPassword = await bcrypt.hash('JuanDavila*ñ', 10);
   const hashedPassword1 = await bcrypt.hash('AngelEspinosa*ñ', 10);
