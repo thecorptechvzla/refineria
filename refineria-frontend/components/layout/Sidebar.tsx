@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useLogout } from '@/lib/hooks/useAuth';
-import { LayoutDashboard, ArrowLeftRight, Building2, LogOut, X, ShieldCheck, ClipboardList, Settings } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Building2, LogOut, X, ShieldCheck, ClipboardList, Settings, FileDown } from 'lucide-react';
 
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
@@ -21,6 +21,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
     { name: 'Proveedores', href: '/proveedores', icon: Building2, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
     { name: 'Ingreso de Material', href: '/ingreso', icon: ClipboardList, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
     { name: 'Configuración de procesos', href: '/procesos', icon: Settings, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
+    { name: 'Exportar', href: '/exportar', icon: FileDown, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
   ];
 
   return (
