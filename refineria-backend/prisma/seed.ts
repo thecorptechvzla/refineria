@@ -7,6 +7,8 @@ const connectionString = process.env['DATABASE_URL'] || 'postgresql://postgres:p
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
+// #refineria
+
 async function main() {
   console.log('Seeding database....');
 
