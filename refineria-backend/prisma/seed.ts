@@ -18,7 +18,7 @@ async function main() {
 
   const superadmin = await prisma.user.upsert({
     where: { email: 'juandavila@goldtrack.com' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       name: 'Juan Davila',
       email: 'juandavila@goldtrack.com',
@@ -29,7 +29,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'angelespinosa@goldtrack.com' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       name: 'Angel Espinosa',
       email: 'angelespinosa@goldtrack.com',
@@ -40,7 +40,7 @@ async function main() {
 
   const admin1 = await prisma.user.upsert({
     where: { email: 'rodrigorojas@goldtrack.com' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       name: 'Rodrigo Rojas',
       email: 'rodrigorojas@goldtrack.com',
@@ -48,7 +48,6 @@ async function main() {
       role: 'ADMIN',
     },
   });
-
 
   console.log('Users created:', superadmin.email, admin.email, admin1.email);
 
