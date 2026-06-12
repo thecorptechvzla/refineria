@@ -27,7 +27,7 @@ async function main() {
     });
     const admin = await prisma.user.upsert({
         where: { email: 'angelespinosa@goldtrack.com' },
-        update: { password: hashedPassword },
+        update: { password: hashedPassword1 },
         create: {
             name: 'Angel Espinosa',
             email: 'angelespinosa@goldtrack.com',
@@ -37,7 +37,7 @@ async function main() {
     });
     const admin1 = await prisma.user.upsert({
         where: { email: 'rodrigorojas@goldtrack.com' },
-        update: { password: hashedPassword },
+        update: { password: hashedPassword2 },
         create: {
             name: 'Rodrigo Rojas',
             email: 'rodrigorojas@goldtrack.com',
