@@ -12,9 +12,9 @@ const adapter = new adapter_pg_1.PrismaPg({ connectionString });
 const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     console.log('Seeding database....');
-    const hashedPassword = await bcrypt_1.default.hash('JuanDavila*ñ', 10);
-    const hashedPassword1 = await bcrypt_1.default.hash('AngelEspinosa*ñ', 10);
-    const hashedPassword2 = await bcrypt_1.default.hash('RodrigoRojas*ñ', 10);
+    const hashedPassword = await bcrypt_1.default.hash('JuanDavila*', 10);
+    const hashedPassword1 = await bcrypt_1.default.hash('AngelEspinosa*', 10);
+    const hashedPassword2 = await bcrypt_1.default.hash('RodrigoRojas*', 10);
     const superadmin = await prisma.user.upsert({
         where: { email: 'juandavila@goldtrack.com' },
         update: {},

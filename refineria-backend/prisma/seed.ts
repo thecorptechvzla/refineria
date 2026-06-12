@@ -10,9 +10,9 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding database....');
 
-  const hashedPassword = await bcrypt.hash('JuanDavila*ñ', 10);
-  const hashedPassword1 = await bcrypt.hash('AngelEspinosa*ñ', 10);
-  const hashedPassword2 = await bcrypt.hash('RodrigoRojas*ñ', 10);
+  const hashedPassword = await bcrypt.hash('JuanDavila*', 10);
+  const hashedPassword1 = await bcrypt.hash('AngelEspinosa*', 10);
+  const hashedPassword2 = await bcrypt.hash('RodrigoRojas*', 10);
 
   const superadmin = await prisma.user.upsert({
     where: { email: 'juandavila@goldtrack.com' },
