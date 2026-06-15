@@ -228,6 +228,26 @@ export default function IngresoPage() {
 
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  <FlaskConical className="w-3 h-3 inline mr-1" />
+                  Ley Ag (‰)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={leyAg}
+                  onChange={(e) => setLeyAg(formatInputNumber(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
+                  placeholder="Ej. 58,10"
+                />
+                {pBruto > 0 && pLeyAg > 0 && (
+                  <p className="text-[10px] text-slate-500/70 mt-1 font-mono">
+                    Ag = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLeyAg)} ÷ 1000 = <span className="text-slate-300">{formatLocaleNumber(pBruto * pLeyAg / 1000)}</span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Ruler className="w-3 h-3 inline mr-1" />
                   Peso Fino Analítico — E (g)
                 </label>
@@ -256,28 +276,6 @@ export default function IngresoPage() {
                   placeholder="Se calcula automáticamente"
                   tabIndex={-1}
                 />
-              </div>
-
-              <div className="border-t border-blue-500/10 my-2" />
-
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  <FlaskConical className="w-3 h-3 inline mr-1" />
-                  Ley Ag (‰)
-                </label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={leyAg}
-                  onChange={(e) => setLeyAg(formatInputNumber(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
-                  placeholder="Ej. 58,10"
-                />
-                {pBruto > 0 && pLeyAg > 0 && (
-                  <p className="text-[10px] text-slate-500/70 mt-1 font-mono">
-                    Ag = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLeyAg)} ÷ 1000 = <span className="text-slate-300">{formatLocaleNumber(pBruto * pLeyAg / 1000)}</span>
-                  </p>
-                )}
               </div>
 
               <div>

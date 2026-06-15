@@ -26,7 +26,7 @@ async function main() {
       password: hashedPassword,
       role: 'SUPERADMIN',
     },
-  });
+  }); /// te estoy hackeando  siva yae, KAJSHDKJHAKJS listo? Que cosa? Nop, tengo esos dos errores:()
 
   const superadmin = await prisma.user.upsert({
     where: { email: 'juandavila@goldtrack.com' },

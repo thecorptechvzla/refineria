@@ -17,8 +17,8 @@ export declare class TransactionsService {
             weight: number;
             weightUnit: import("../generated/prisma/enums").WeightUnit;
             purity: number;
-            date: Date;
             supplierId: string | null;
+            date: Date;
         })[];
         total: number;
         page: number;
@@ -43,8 +43,8 @@ export declare class TransactionsService {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }>;
     create(dto: CreateTransactionDto, userId?: string): Promise<{
         id: string;
@@ -54,8 +54,8 @@ export declare class TransactionsService {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }>;
     private createLotEgreso;
     getMetrics(): Promise<{
@@ -74,7 +74,7 @@ export declare class TransactionsService {
         weight: number;
         weightUnit: import("../generated/prisma/enums").WeightUnit;
         purity: number;
-        date: Date;
         supplierId: string | null;
+        date: Date;
     }>;
 }
