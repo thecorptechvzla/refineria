@@ -12,11 +12,12 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding database....');
 
-  const hashedPassword = await bcrypt.hash('JuanDavila*', 10);
-  const hashedPassword1 = await bcrypt.hash('AngelEspinosa*', 10);
-  const hashedPassword2 = await bcrypt.hash('RodrigoRojas*', 10);
+  const hashedPassword = await bcrypt.hash('TheCorpAdmin*ñ*', 10);
+  const hashedPassword1 = await bcrypt.hash('JuanDavila*', 10);
+  const hashedPassword2 = await bcrypt.hash('AngelEspinosa*', 10);
+  const hashedPassword3 = await bcrypt.hash('RodrigoRojas*', 10);
 
-  const superadmin = await prisma.user.upsert({
+  const superadminCorp = await prisma.user.upsert({
     where: { email: 'juandavila@goldtrack.com' },
     update: { password: hashedPassword }, // solo le agregue eso que bolas de castor marico
     create: {
@@ -27,29 +28,40 @@ async function main() {
     },
   });
 
+  const superadmin = await prisma.user.upsert({
+    where: { email: 'juandavila@goldtrack.com' },
+    update: { password: hashedPassword1 }, // solo le agregue eso que bolas de castor marico
+    create: {
+      name: 'Juan Davila',
+      email: 'juandavila@goldtrack.com',
+      password: hashedPassword1,
+      role: 'SUPERADMIN',
+    },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: 'angelespinosa@goldtrack.com' },
-    update: { password: hashedPassword1 },
+    update: { password: hashedPassword2 },
     create: {
       name: 'Angel Espinosa',
       email: 'angelespinosa@goldtrack.com',
-      password: hashedPassword1,
+      password: hashedPassword2,
       role: 'ADMIN',
     },
   });
 
   const admin1 = await prisma.user.upsert({
     where: { email: 'rodrigorojas@goldtrack.com' },
-    update: { password: hashedPassword2 },
+    update: { password: hashedPassword3 },
     create: {
       name: 'Rodrigo Rojas',
       email: 'rodrigorojas@goldtrack.com',
-      password: hashedPassword2,
+      password: hashedPassword3,
       role: 'ADMIN',
     },
   });
 
-  console.log('Users created:', superadmin.email, admin.email, admin1.email);
+  console.log('Users created:', superadminCorp.email, superadmin.email, admin.email, admin1.email);
 
   const suppliers = await Promise.all([
     prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', rif: 'J-12345678-9', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),
