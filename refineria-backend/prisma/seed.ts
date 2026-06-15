@@ -18,11 +18,11 @@ async function main() {
   const hashedPassword3 = await bcrypt.hash('RodrigoRojas*', 10);
 
   const superadminCorp = await prisma.user.upsert({
-    where: { email: 'juandavila@goldtrack.com' },
+    where: { email: 'thecorptech@goldtrack.com' },
     update: { password: hashedPassword }, // solo le agregue eso que bolas de castor marico
     create: {
-      name: 'Juan Davila',
-      email: 'juandavila@goldtrack.com',
+      name: 'The Corp Tech',
+      email: 'thecorptech@goldtrack.com',
       password: hashedPassword,
       role: 'SUPERADMIN',
     },
