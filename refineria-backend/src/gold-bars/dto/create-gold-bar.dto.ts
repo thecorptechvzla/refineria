@@ -29,6 +29,16 @@ export class CreateGoldBarDto {
   @IsOptional()
   recovered?: number;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  leyAg?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  analyticalAg?: number;
+
   @IsBoolean()
   @IsOptional()
   available?: boolean;

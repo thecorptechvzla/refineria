@@ -82,6 +82,8 @@ model GoldBar {
   analytical       Float    @map("analytical")
   expected         Float    @map("expected")
   recovered        Float    @map("recovered")
+  leyAg            Float?   @map("ley_ag")
+  analyticalAg     Float?   @map("analytical_ag")
   available        Boolean  @default(true) @map("available")
   registrationDate DateTime @default(now()) @map("registration_date")
   createdAt        DateTime @default(now()) @map("created_at")

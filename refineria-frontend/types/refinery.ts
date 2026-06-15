@@ -9,6 +9,8 @@ export interface GoldBar {
   analytical: number;
   expected: number;
   recovered: number;
+  leyAg?: number | null;
+  analyticalAg?: number | null;
   available: boolean;
   registrationDate: string;
 }

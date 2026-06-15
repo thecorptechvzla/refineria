@@ -19,6 +19,8 @@ class CreateGoldBarDto {
     analytical;
     expected;
     recovered;
+    leyAg;
+    analyticalAg;
     available;
 }
 exports.CreateGoldBarDto = CreateGoldBarDto;
@@ -57,6 +59,18 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateGoldBarDto.prototype, "recovered", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateGoldBarDto.prototype, "leyAg", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateGoldBarDto.prototype, "analyticalAg", void 0);
 __decorate([
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),

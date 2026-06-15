@@ -6,5 +6,7 @@ export declare class CreateGoldBarDto {
     analytical: number;
     expected: number;
     recovered?: number;
+    leyAg?: number;
+    analyticalAg?: number;
     available?: boolean;
 }

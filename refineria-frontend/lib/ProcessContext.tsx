@@ -35,7 +35,8 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
 
   const addBar = useCallback(
     async (data: Omit<GoldBar, 'id' | 'available' | 'registrationDate'>) => {
-      return createGoldBar.mutateAsync(data);
+      const cleaned = { ...data, ley: data.ley ?? undefined, leyAg: data.leyAg ?? undefined, analyticalAg: data.analyticalAg ?? undefined };
+      return createGoldBar.mutateAsync(cleaned);
     },
     [createGoldBar]
   );

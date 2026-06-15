@@ -20,6 +20,8 @@ export default function IngresoPage() {
   const [ley, setLey] = useState('');
   const [analitico, setAnalitico] = useState('');
   const [esperado, setEsperado] = useState('');
+  const [leyAg, setLeyAg] = useState('');
+  const [analiticoAg, setAnaliticoAg] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
@@ -27,6 +29,7 @@ export default function IngresoPage() {
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
   const pLey = parseNum(ley);
+  const pLeyAg = parseNum(leyAg);
   const pesoExceeds = pBruto > 24900;
   const leyRestriction = pLey > 0 && pLey < 850 && pBruto > 1000;
 
@@ -42,7 +45,12 @@ export default function IngresoPage() {
       setAnalitico('');
       setEsperado('');
     }
-  }, [pBruto, pLey]);
+    if (pBruto > 0 && pLeyAg > 0) {
+      setAnaliticoAg(formatLocaleNumber(pBruto * pLeyAg / 1000));
+    } else {
+      setAnaliticoAg('');
+    }
+  }, [pBruto, pLey, pLeyAg]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -50,6 +58,7 @@ export default function IngresoPage() {
 
     const rawE = pBruto * pLey / 1000;
     const rawF = rawE * 0.99;
+    const rawAg = pLeyAg > 0 ? pBruto * pLeyAg / 1000 : undefined;
 
     try {
       await addBar({
@@ -60,6 +69,8 @@ export default function IngresoPage() {
         analytical: rawE,
         expected: rawF,
         recovered: 0,
+        leyAg: pLeyAg > 0 ? pLeyAg : undefined,
+        analyticalAg: rawAg,
       });
 
       await createTx.mutateAsync({
@@ -82,6 +93,8 @@ export default function IngresoPage() {
     setLey('');
     setAnalitico('');
     setEsperado('');
+    setLeyAg('');
+    setAnaliticoAg('');
     setSupplierId('');
     setTimeout(() => setSuccessMessage(''), 4000);
   };
@@ -245,6 +258,44 @@ export default function IngresoPage() {
                 />
               </div>
 
+              <div className="border-t border-blue-500/10 my-2" />
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  <FlaskConical className="w-3 h-3 inline mr-1" />
+                  Ley Ag (‰)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={leyAg}
+                  onChange={(e) => setLeyAg(formatInputNumber(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
+                  placeholder="Ej. 58,10"
+                />
+                {pBruto > 0 && pLeyAg > 0 && (
+                  <p className="text-[10px] text-slate-500/70 mt-1 font-mono">
+                    Ag = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLeyAg)} ÷ 1000 = <span className="text-slate-300">{formatLocaleNumber(pBruto * pLeyAg / 1000)}</span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  <Ruler className="w-3 h-3 inline mr-1" />
+                  Peso Fino Ag (g)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  readOnly
+                  value={analiticoAg}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all opacity-70 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                  tabIndex={-1}
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={!canSubmit}
@@ -290,10 +341,12 @@ export default function IngresoPage() {
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley (‰)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Ag (‰)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>
                     <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest"></th>
                   </tr>
@@ -311,6 +364,8 @@ export default function IngresoPage() {
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
                             bar.available
@@ -350,7 +405,7 @@ export default function IngresoPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className="px-5 py-8 text-center text-sm text-slate-500">
+                      <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
                         No hay barras registradas para este proveedor.
                       </td>
                     </tr>

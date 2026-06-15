@@ -9,6 +9,8 @@ type CreateGoldBarData = {
   analytical: number;
   expected: number;
   recovered?: number;
+  leyAg?: number;
+  analyticalAg?: number;
 };
 
 export function useGoldBars(available?: boolean) {
