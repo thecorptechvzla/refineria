@@ -68,6 +68,8 @@ export declare const GoldBarScalarFieldEnum: {
     readonly analytical: "analytical";
     readonly expected: "expected";
     readonly recovered: "recovered";
+    readonly leyAg: "leyAg";
+    readonly analyticalAg: "analyticalAg";
     readonly available: "available";
     readonly registrationDate: "registrationDate";
     readonly createdAt: "createdAt";

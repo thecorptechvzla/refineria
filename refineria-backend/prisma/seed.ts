@@ -19,7 +19,7 @@ async function main() {
 
   const superadminCorp = await prisma.user.upsert({
     where: { email: 'thecorptech@goldtrack.com' },
-    update: { password: hashedPassword }, // solo le agregue eso que bolas de castor marico
+    update: {}, // solo le agregue eso que bolas de castor marico
     create: {
       name: 'The Corp Tech',
       email: 'thecorptech@goldtrack.com',

@@ -112,6 +112,8 @@ exports.GoldBarScalarFieldEnum = {
     analytical: 'analytical',
     expected: 'expected',
     recovered: 'recovered',
+    leyAg: 'leyAg',
+    analyticalAg: 'analyticalAg',
     available: 'available',
     registrationDate: 'registrationDate',
     createdAt: 'createdAt',

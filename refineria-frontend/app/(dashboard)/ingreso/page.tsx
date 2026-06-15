@@ -209,7 +209,7 @@ export default function IngresoPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <FlaskConical className="w-3 h-3 inline mr-1" />
-                  Ley — Pureza (‰)
+                  LEY Au (‰)
                 </label>
                 <input
                   type="text"
@@ -229,7 +229,7 @@ export default function IngresoPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <FlaskConical className="w-3 h-3 inline mr-1" />
-                  Ley Ag (‰)
+                  LEY Ag (‰)
                 </label>
                 <input
                   type="text"

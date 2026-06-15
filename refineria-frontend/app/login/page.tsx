@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useLogin } from '@/lib/hooks/useAuth';
-import { ShieldCheck, Eye, EyeOff, ChevronRight, UserCog, Shield } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
 export default function LoginPage() {
@@ -27,26 +27,6 @@ export default function LoginPage() {
       router.push(res.user.role === 'SUPERADMIN' ? '/' : '/transacciones');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Credenciales incorrectas. Intenta de nuevo.';
-      setShakeKey((k) => k + 1);
-      setError(msg);
-    }
-  };
-
-  const quickLogin = async (role: 'ADMIN' | 'SUPERADMIN') => {
-    const creds = role === 'ADMIN'
-      ? { email: 'admin@goldtrack.com', password: '123' }
-      : { email: 'dueno@goldtrack.com', password: '123' };
-
-    setEmail(creds.email);
-    setPassword(creds.password);
-    setError('');
-
-    try {
-      const res = await loginMutation.mutateAsync(creds);
-      setUser(res.user);
-      router.push(role === 'SUPERADMIN' ? '/' : '/transacciones');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error al iniciar sesión.';
       setShakeKey((k) => k + 1);
       setError(msg);
     }
@@ -125,27 +105,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-blue-500/10">
-            <p className="text-xs text-slate-500 text-center uppercase tracking-wider mb-3">Acceso Rápido — Demo</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => quickLogin('SUPERADMIN')}
-                className="flex flex-col items-center gap-1.5 p-3 bg-midnight-800/50 border border-blue-500/15 hover:border-gold-500/40 hover:bg-midnight-700/50 transition-all"
-              >
-                <Shield className="w-5 h-5 text-gold-500" />
-                <span className="text-xs font-semibold text-slate-300">Dueño</span>
-                <span className="text-[10px] text-slate-500">Super Admin</span>
-              </button>
-              <button
-                onClick={() => quickLogin('ADMIN')}
-                className="flex flex-col items-center gap-1.5 p-3 bg-midnight-800/50 border border-blue-500/15 hover:border-blue-400/40 hover:bg-midnight-700/50 transition-all"
-              >
-                <UserCog className="w-5 h-5 text-blue-400" />
-                <span className="text-xs font-semibold text-slate-300">Operador</span>
-                <span className="text-[10px] text-slate-500">Administrador</span>
-              </button>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

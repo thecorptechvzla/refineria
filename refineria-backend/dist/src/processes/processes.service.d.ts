@@ -11,9 +11,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -33,9 +33,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -55,9 +55,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -77,9 +77,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -98,18 +98,18 @@ export declare class ProcessesService {
     updateLot(lotId: string, dto: UpdateLotDto): Promise<{
         number: number;
         id: string;
+        recovered: number | null;
         processId: string;
         barIds: string[];
-        recovered: number | null;
         egresadoG: number;
         creationDate: Date;
     }>;
     addLot(processId: string, dto: CreateLotDto): Promise<{
         number: number;
         id: string;
+        recovered: number | null;
         processId: string;
         barIds: string[];
-        recovered: number | null;
         egresadoG: number;
         creationDate: Date;
     }>;
@@ -124,9 +124,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
@@ -150,9 +150,9 @@ export declare class ProcessesService {
         lots: {
             number: number;
             id: string;
+            recovered: number | null;
             processId: string;
             barIds: string[];
-            recovered: number | null;
             egresadoG: number;
             creationDate: Date;
         }[];
