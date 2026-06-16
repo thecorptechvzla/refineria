@@ -11,7 +11,7 @@ function decodeJwtPayload(token: string) {
   }
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('goldtrack_session')?.value;
   const path = request.nextUrl.pathname;
 
@@ -30,7 +30,7 @@ export function proxy(request: NextRequest) {
 
     if (path === '/login') {
       return NextResponse.redirect(
-        new URL(payload.role === 'SUPERADMIN' ? '/' : '/transacciones', request.url)
+        new URL(payload.role === 'SUPERADMIN' || payload.role === 'OWNER' ? '/' : '/transacciones', request.url)
       );
     }
 

@@ -19,23 +19,24 @@ No test framework or typecheck script exists. TypeScript strict mode is on (`noE
 
 ## Auth
 
-Cookie-based mock auth. Session is stored in `goldtrack_session` cookie read by `proxy.ts` middleware. No real auth. Quick-login buttons on `/login` bypass the form.
+Cookie-based mock auth. Session is stored in `goldtrack_session` cookie read by `middleware.ts`. No real auth. Quick-login buttons on `/login` bypass the form.
 
 Credentials for manual login:
 - Admin: `admin@goldtrack.com` / `123` → role `ADMIN`
-- Owner: `dueno@goldtrack.com` / `123` → role `SUPERADMIN`
+- Owner: `dueno@goldtrack.com` / `123` → role `OWNER`
 
 Role switching at runtime via Header buttons calls `switchRole()` which rewrites the cookie.
 
 ## Routing & RBAC
 
-| Route | SUPERADMIN | ADMIN |
-|---|---|---|
-| `/` (dashboard) | Access | Redirected to `/transacciones` |
-| `/transacciones` | Access | Access |
-| `/proveedores` | Access | Access |
+| Route | SUPERADMIN | OWNER | ADMIN |
+|---|---|---|---|
+| `/` (dashboard) | Access | Access | Redirected to `/transacciones` |
+| `/admin/*` | Access | — | — |
+| `/transacciones` | Access | Access | Access |
+| `/proveedores` | Access | — | Access |
 
-Middleware (`proxy.ts`) enforces auth + role-based redirects. Sidebar hides the Dashboard link for ADMIN.
+Middleware (`middleware.ts`) enforces auth + role-based redirects. Sidebar hides links by role.
 
 ## Architecture
 
