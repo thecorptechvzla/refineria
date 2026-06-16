@@ -17,11 +17,11 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
   const links = [
     { name: 'Panel de Mando', href: '/', icon: LayoutDashboard, allowedRoles: ['SUPERADMIN', 'OWNER'] as const },
-    { name: 'Operaciones', href: '/transacciones', icon: ArrowLeftRight, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
-    { name: 'Proveedores', href: '/proveedores', icon: Building2, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
-    { name: 'Ingreso de Material', href: '/ingreso', icon: ClipboardList, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
-    { name: 'Configuración de procesos', href: '/procesos', icon: Settings, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
-    { name: 'Exportar', href: '/exportar', icon: FileDown, allowedRoles: ['ADMIN', 'SUPERADMIN'] as const },
+    { name: 'Operaciones', href: '/transacciones', icon: ArrowLeftRight, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Proveedores', href: '/proveedores', icon: Building2, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Ingreso de Material', href: '/ingreso', icon: ClipboardList, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Configuración de procesos', href: '/procesos', icon: Settings, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Exportar', href: '/exportar', icon: FileDown, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Administración', href: '/admin/usuarios', icon: Shield, allowedRoles: ['SUPERADMIN'] as const },
   ];
 
