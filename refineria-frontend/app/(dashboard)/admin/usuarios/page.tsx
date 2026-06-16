@@ -17,7 +17,7 @@ export default function AdminUsuariosPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'SUPERADMIN'>('ADMIN');
+  const [role, setRole] = useState<'ADMIN' | 'SUPERADMIN' | 'OWNER'>('ADMIN');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
@@ -56,7 +56,7 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  const handleEdit = (u: { id: string; name: string; email: string; role: 'ADMIN' | 'SUPERADMIN' }) => {
+  const handleEdit = (u: { id: string; name: string; email: string; role: 'ADMIN' | 'SUPERADMIN' | 'OWNER' }) => {
     setFormMode('edit');
     setEditId(u.id);
     setName(u.name);
