@@ -17,7 +17,7 @@ export default function AdminUsuariosPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'SUPERADMIN' | 'OWNER'>('ADMIN');
+  const [role, setRole] = useState<'ADMIN' | 'SUPERADMIN' | 'OWNER'>('ADMIN'); //por ejemplo esto lo puedes sacar de index.ts
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);

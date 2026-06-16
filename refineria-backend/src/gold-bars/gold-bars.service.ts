@@ -24,7 +24,7 @@ export class GoldBarsService {
       : {};
     return this.prisma.goldBar.findMany({
       where,
-      orderBy: { registrationDate: 'desc' },
+      orderBy: { code: 'asc' },
     });
   }
 

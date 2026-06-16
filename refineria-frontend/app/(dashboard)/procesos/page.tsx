@@ -999,7 +999,6 @@ export default function ProcesosPage() {
     () => (managingProcess
       ? goldBars
           .filter((b) => b.available && b.supplierId === managingProcess.supplierId)
-          .sort((a, b) => b.grossWeight - a.grossWeight)
       : []),
     [managingProcess, goldBars]
   );
