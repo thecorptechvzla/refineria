@@ -52,3 +52,13 @@ export type ProcessLot = Prisma.ProcessLotModel
  * 
  */
 export type Worker = Prisma.WorkerModel
+/**
+ * Model CustomFieldDefinition
+ * 
+ */
+export type CustomFieldDefinition = Prisma.CustomFieldDefinitionModel
+/**
+ * Model CustomFieldValue
+ * 
+ */
+export type CustomFieldValue = Prisma.CustomFieldValueModel

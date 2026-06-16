@@ -16,7 +16,7 @@ export default function Header() {
     <header className="h-14 bg-midnight-800/90 border-b border-blue-500/10 flex items-center justify-between px-4 sm:px-6">
       <div className="flex items-center gap-3 ml-10 lg:ml-0">
         <span className="text-xs text-slate-500 uppercase tracking-widest hidden sm:block">
-          {user?.role === 'SUPERADMIN' ? 'Centro de Comando' : 'Estación de Operaciones'}
+          {user?.role === 'SUPERADMIN' || user?.role === 'OWNER' ? 'Centro de Comando' : 'Estación de Operaciones'}
         </span>
         <span className="text-blue-500/30 hidden sm:block">|</span>
         <span className="text-[10px] text-slate-600 uppercase tracking-wider">
@@ -30,9 +30,9 @@ export default function Header() {
             <span className="text-slate-600">|</span>
             <span className="font-medium text-slate-300">{user.name}</span>
             <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 ${
-              user.role === 'SUPERADMIN' ? 'text-gold-500' : 'text-blue-400'
+               user.role === 'SUPERADMIN' || user.role === 'OWNER' ? 'text-gold-500' : 'text-blue-400'
             }`}>
-              {user.role === 'SUPERADMIN' ? 'CMD' : 'OP'}
+               {user.role === 'SUPERADMIN' || user.role === 'OWNER' ? 'CMD' : 'OP'}
             </span>
           </div>
         )}

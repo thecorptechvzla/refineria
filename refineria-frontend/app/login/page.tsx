@@ -24,7 +24,7 @@ export default function LoginPage() {
     try {
       const res = await loginMutation.mutateAsync({ email, password });
       setUser(res.user);
-      router.push(res.user.role === 'SUPERADMIN' ? '/' : '/transacciones');
+      router.push(res.user.role === 'SUPERADMIN' || res.user.role === 'OWNER' ? '/' : '/transacciones');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Credenciales incorrectas. Intenta de nuevo.';
       setShakeKey((k) => k + 1);

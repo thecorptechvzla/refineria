@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'SUPERADMIN';
+export type Role = 'ADMIN' | 'OWNER' | 'SUPERADMIN';
 
 export interface User {
   id: string;
@@ -38,4 +38,23 @@ export interface Worker {
   position: string;
   status: WorkerStatus;
   startDate: string;
+}
+
+export interface CustomFieldDefinition {
+  id: string;
+  tableName: string;
+  fieldName: string;
+  fieldType: 'text' | 'number' | 'date' | 'select';
+  options: string | null;
+  required: boolean;
+  order: number;
+}
+
+export interface CustomFieldValue {
+  id: string;
+  tableName: string;
+  recordId: string;
+  fieldId: string;
+  value: string | null;
+  field: CustomFieldDefinition;
 }

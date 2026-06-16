@@ -9,6 +9,7 @@ import { WorkersModule } from './workers/workers.module';
 import { GoldBarsModule } from './gold-bars/gold-bars.module';
 import { ProcessesModule } from './processes/processes.module';
 import { FilesModule } from './files/files.module';
+import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FilesModule } from './files/files.module';
     GoldBarsModule,
     ProcessesModule,
     FilesModule,
+    CustomFieldsModule,
   ],
 })
 export class AppModule {}

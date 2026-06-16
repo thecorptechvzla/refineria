@@ -27,8 +27,11 @@ export class SuppliersController {
   }
 
   @Post()
-  create(@Body() dto: CreateSupplierDto) {
-    return this.suppliersService.create(dto);
+  create(
+    @Body() dto: CreateSupplierDto,
+    @Body('_customFields') _customFields?: Record<string, string>,
+  ) {
+    return this.suppliersService.create(dto, _customFields);
   }
 
   @Get(':id')
@@ -37,12 +40,16 @@ export class SuppliersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
-    return this.suppliersService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateSupplierDto,
+    @Body('_customFields') _customFields?: Record<string, string>,
+  ) {
+    return this.suppliersService.update(id, dto, _customFields);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.OWNER)
   remove(@Param('id') id: string) {
     return this.suppliersService.remove(id);
   }

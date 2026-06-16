@@ -30,12 +30,12 @@ async function main() {
 
   const superadmin = await prisma.user.upsert({
     where: { email: 'juandavila@goldtrack.com' },
-    update: { password: hashedPassword1 }, // solo le agregue eso que bolas de castor marico
+    update: { password: hashedPassword1, role: 'OWNER' },
     create: {
       name: 'Juan Davila',
       email: 'juandavila@goldtrack.com',
       password: hashedPassword1,
-      role: 'SUPERADMIN',
+      role: 'OWNER',
     },
   });
 

@@ -1085,8 +1085,9 @@ export default function ProcesosPage() {
       await assignToLot(managingProcessId, barIds);
       setSuccessMessage(`${barIds.length} barra${barIds.length !== 1 ? 's' : ''} asignada${barIds.length !== 1 ? 's' : ''} a lote nuevo`);
       setTimeout(() => setSuccessMessage(''), 4000);
-    } catch {
-      setErrorMessage('Error al asignar barras al lote');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al asignar barras al lote';
+      setErrorMessage(msg);
       setShakeKey((k) => k + 1);
     }
   };

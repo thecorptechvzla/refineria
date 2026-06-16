@@ -42,7 +42,7 @@ export class WorkersController {
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.OWNER)
   remove(@Param('id') id: string) {
     return this.workersService.remove(id);
   }

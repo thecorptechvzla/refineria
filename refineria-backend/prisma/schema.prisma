@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  OWNER
   SUPERADMIN
 }
 
@@ -131,4 +132,35 @@ model Worker {
   updatedAt DateTime     @updatedAt @map("updated_at")
 
   @@map("workers")
+}
+
+model CustomFieldDefinition {
+  id        String   @id @default(uuid())
+  tableName String   @map("table_name")
+  fieldName String   @map("field_name")
+  fieldType String   @map("field_type")
+  options   String?
+  required  Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  values CustomFieldValue[]
+
+  @@unique([tableName, fieldName])
+  @@map("custom_field_definitions")
+}
+
+model CustomFieldValue {
+  id        String                @id @default(uuid())
+  tableName String                @map("table_name")
+  recordId  String                @map("record_id")
+  fieldId   String                @map("field_id")
+  value     String?
+
+  field     CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([tableName, recordId, fieldId])
+  @@index([tableName, recordId])
+  @@map("custom_field_values")
 }

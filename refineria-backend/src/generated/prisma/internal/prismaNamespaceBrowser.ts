@@ -57,7 +57,9 @@ export const ModelName = {
   GoldBar: 'GoldBar',
   Process: 'Process',
   ProcessLot: 'ProcessLot',
-  Worker: 'Worker'
+  Worker: 'Worker',
+  CustomFieldDefinition: 'CustomFieldDefinition',
+  CustomFieldValue: 'CustomFieldValue'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -177,6 +179,32 @@ export const WorkerScalarFieldEnum = {
 } as const
 
 export type WorkerScalarFieldEnum = (typeof WorkerScalarFieldEnum)[keyof typeof WorkerScalarFieldEnum]
+
+
+export const CustomFieldDefinitionScalarFieldEnum = {
+  id: 'id',
+  tableName: 'tableName',
+  fieldName: 'fieldName',
+  fieldType: 'fieldType',
+  options: 'options',
+  required: 'required',
+  order: 'order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomFieldDefinitionScalarFieldEnum = (typeof CustomFieldDefinitionScalarFieldEnum)[keyof typeof CustomFieldDefinitionScalarFieldEnum]
+
+
+export const CustomFieldValueScalarFieldEnum = {
+  id: 'id',
+  tableName: 'tableName',
+  recordId: 'recordId',
+  fieldId: 'fieldId',
+  value: 'value'
+} as const
+
+export type CustomFieldValueScalarFieldEnum = (typeof CustomFieldValueScalarFieldEnum)[keyof typeof CustomFieldValueScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
@@ -9,6 +10,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,6 +29,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Post()
+  @Roles(Role.SUPERADMIN)
+  async create(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
+  }
+
   @Get(':id')
   @Roles(Role.SUPERADMIN)
   async findById(@Param('id') id: string) {
@@ -34,18 +43,15 @@ export class UsersController {
 
   @Patch(':id')
   @Roles(Role.SUPERADMIN)
-  async update(
-    @Param('id') id: string,
-    @Body() data: { name?: string; email?: string; role?: Role },
-  ) {
-    return this.usersService.update(id, data);
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles(Role.SUPERADMIN)
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
     if (user.id === id) {
-      throw new ForbiddenException('You cannot delete your own account');
+      throw new ForbiddenException('No puedes eliminar tu propia cuenta');
     }
     return this.usersService.remove(id);
   }
