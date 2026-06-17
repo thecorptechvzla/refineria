@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GoldTrack — Gestión de Refinería",
   description: "Sistema de gestión para refinería de oro",
+  icons: {
+    icon: "/goldtrack.png?v=2",
+  }
 };
 
 export default function RootLayout({
