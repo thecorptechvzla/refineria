@@ -102,5 +102,5 @@ types/
 ## Autenticación
 
 - Login via `POST /auth/login` → backend setea cookie `goldtrack_session` (JWT httpOnly).
-- El middleware `middleware.ts` decodifica el JWT para redirección por rol (SUPERADMIN/OWNER/ADMIN).
+- El middleware/proxy `proxy.ts` decodifica el JWT para redirección por rol (SUPERADMIN/OWNER/ADMIN).
 - Token también puede enviarse vía header `Authorization: Bearer <token>`.

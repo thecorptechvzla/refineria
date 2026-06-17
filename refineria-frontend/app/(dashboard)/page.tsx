@@ -10,6 +10,7 @@ import { toGrams, getSupplierName, formatDate, formatLocaleWeight, formatLocaleN
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import { ProcessModal } from '@/components/shared/ProcessModal';
 import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield,
 } from 'lucide-react';
@@ -53,6 +54,7 @@ export default function DashboardPage() {
   }, [periodOpen]);
 
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
+  const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -435,7 +437,7 @@ const processBySupplier = useMemo(() => {
                             const barCount = p.lots.reduce((s, l) => s + l.barIds.length, 0);
                             const gCount = p.lots.filter((l) => l.recovered !== null).length;
                             return (
-                              <div key={p.id} className="text-[10px] font-mono bg-midnight-900/50 px-2.5 py-1.5 border border-blue-500/10 flex items-center justify-between">
+                              <div key={p.id} onClick={() => { if (user.role === 'OWNER') setViewingProcessId(p.id); }} className={`text-[10px] font-mono bg-midnight-900/50 px-2.5 py-1.5 border border-blue-500/10 flex items-center justify-between ${user.role === 'OWNER' ? 'cursor-pointer hover:bg-blue-500/10' : ''}`}>
                                 <span className="text-slate-300">#{p.number}</span>
                                 <div className="flex items-center gap-2 text-slate-500">
                                   <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
@@ -513,6 +515,19 @@ const processBySupplier = useMemo(() => {
           </table>
         </div>
       </div>
+
+      {viewingProcessId && (() => {
+        const proc = processes.find((p) => p.id === viewingProcessId);
+        if (!proc) return null;
+        return (
+          <ProcessModal
+            process={proc}
+            allBars={goldBars}
+            suppliers={suppliers}
+            onClose={() => setViewingProcessId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -19,7 +19,7 @@ No test framework or typecheck script exists. TypeScript strict mode is on (`noE
 
 ## Auth
 
-Cookie-based mock auth. Session is stored in `goldtrack_session` cookie read by `middleware.ts`. No real auth. Quick-login buttons on `/login` bypass the form.
+Cookie-based mock auth. Session is stored in `goldtrack_session` cookie read by `proxy.ts`. No real auth. Quick-login buttons on `/login` bypass the form.
 
 Credentials for manual login:
 - Admin: `admin@goldtrack.com` / `123` → role `ADMIN`
@@ -36,7 +36,7 @@ Role switching at runtime via Header buttons calls `switchRole()` which rewrites
 | `/transacciones` | Access | Access | Access |
 | `/proveedores` | Access | — | Access |
 
-Middleware (`middleware.ts`) enforces auth + role-based redirects. Sidebar hides links by role.
+Middleware/proxy (`proxy.ts`) enforces auth + role-based redirects. Sidebar hides links by role.
 
 ## Architecture
 
