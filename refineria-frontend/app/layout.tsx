@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "GoldTrack — Gestión de Refinería",
   description: "Sistema de gestión para refinería de oro",
   icons: {
-    icon: "/goldtrackv1png.png?v=3",
+    icon: "/icon.png?v=3",
   }
 };
 
