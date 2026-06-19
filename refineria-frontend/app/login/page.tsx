@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useLogin } from '@/lib/hooks/useAuth';
-import { ShieldCheck, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, ChevronRight } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
 export default function LoginPage() {
@@ -39,9 +39,8 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-4">
-            <ShieldCheck className="w-8 h-8 text-gold-500" />
-          </div>
+                      <img src="/icon.png" alt="GoldTrack" width={36} height={36} className="rounded-sm" />
+
           <h2 className="text-3xl font-bold text-white tracking-tight">
             Gold<span className="text-gold-500">Track</span>
           </h2>

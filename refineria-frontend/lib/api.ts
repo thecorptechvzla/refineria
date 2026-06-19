@@ -1,26 +1,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
-const STORAGE_KEY = 'goldtrack_token';
-
-function getStoredToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEY);
-}
-
-function setStoredToken(token: string | null) {
-  if (typeof window === 'undefined') return;
-  if (token) localStorage.setItem(STORAGE_KEY, token);
-  else localStorage.removeItem(STORAGE_KEY);
-}
-
-export function setAuthToken(token: string | null) {
-  setStoredToken(token);
-}
-
-export function getAuthToken(): string | null {
-  return getStoredToken();
-}
 
 export class ApiError extends Error {
   status: number;
@@ -35,14 +15,6 @@ const instance = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
-});
-
-instance.interceptors.request.use((config) => {
-  const token = getStoredToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
 });
 
 instance.interceptors.response.use(

@@ -20,16 +20,16 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.login(dto);
+    const { token, ...user } = await this.authService.login(dto);
 
-    res.cookie('goldtrack_session', result.token, {
+    res.cookie('goldtrack_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return result;
+    return user;
   }
 
   @Post('logout')
