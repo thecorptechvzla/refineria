@@ -105,12 +105,6 @@ export class ProcessesService {
       throw new BadRequestException('Cannot add lot to a process that is not open');
     }
 
-    if (process.lots.length > 0) {
-      throw new BadRequestException(
-        'El proceso ya tiene un lote asignado. No se pueden agregar más lotes.',
-      );
-    }
-
     const lotCount = await this.prisma.processLot.count({
       where: { processId },
     });
