@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE = '/api';
 
 export class ApiError extends Error {
   status: number;
@@ -14,6 +14,7 @@ export class ApiError extends Error {
 const instance = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 
