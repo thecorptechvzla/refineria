@@ -39,20 +39,44 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
       duplex: body ? 'half' : undefined,
     });
 
-    const resHeaders = new Headers();
+    const resBody = backendRes.body ? await backendRes.blob() : null;
+    const response = new NextResponse(resBody, {
+      status: backendRes.status,
+      statusText: backendRes.statusText,
+    });
+
     backendRes.headers.forEach((value, key) => {
-      if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key)) {
-        resHeaders.set(key, value);
+      const lower = key.toLowerCase();
+      if (!['set-cookie', 'content-encoding', 'content-length', 'transfer-encoding'].includes(lower)) {
+        response.headers.set(key, value);
       }
     });
 
-    const resBody = backendRes.body ? await backendRes.blob() : null;
+    const setCookieVal = backendRes.headers.get('set-cookie');
+    if (setCookieVal) {
+      const parts = setCookieVal.split(';').map(s => s.trim());
+      const [nv, ...attrs] = parts;
+      const eqIdx = nv.indexOf('=');
+      const cookieName = nv.slice(0, eqIdx);
+      const cookieValue = nv.slice(eqIdx + 1);
 
-    return new NextResponse(resBody, {
-      status: backendRes.status,
-      statusText: backendRes.statusText,
-      headers: resHeaders,
-    });
+      const opts: Record<string, unknown> = {};
+      for (const attr of attrs) {
+        const [k, ...v] = attr.split('=');
+        const key = k.toLowerCase();
+        const val = v.join('=');
+        if (key === 'max-age') opts.maxAge = parseInt(val, 10);
+        else if (key === 'path') opts.path = val;
+        else if (key === 'domain') opts.domain = val;
+        else if (key === 'httponly') opts.httpOnly = true;
+        else if (key === 'secure') opts.secure = true;
+        else if (key === 'samesite') opts.sameSite = val.toLowerCase();
+      }
+
+      response.cookies.set(cookieName, cookieValue, opts);
+    }
+
+    return response;
   } catch {
     return NextResponse.json(
       { message: 'Error al conectar con el servidor', error: 'Service unavailable' },
