@@ -138,6 +138,16 @@ export function useAddLot() {
   });
 }
 
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiUpload<{ url: string }>('/files/upload', formData);
+    },
+  });
+}
+
 export function useCloseProcessWithActas() {
   const queryClient = useQueryClient();
 
@@ -147,21 +157,16 @@ export function useCloseProcessWithActas() {
       actaRecepcion,
       actaFundicion,
       actaConformidad,
-      lots,
     }: {
       processId: string;
-      actaRecepcion: File;
-      actaFundicion: File;
-      actaConformidad: File;
-      lots: { id: string; recovered: number }[];
-    }) => {
-      const formData = new FormData();
-      formData.append('actaRecepcion', actaRecepcion);
-      formData.append('actaFundicion', actaFundicion);
-      formData.append('actaConformidad', actaConformidad);
-      formData.append('lots', JSON.stringify(lots));
-      return apiUpload<Process>(`/processes/${processId}/actas`, formData);
-    },
+      actaRecepcion: string;
+      actaFundicion: string;
+      actaConformidad: string;
+    }) =>
+      api<Process>(`/processes/${processId}/close`, {
+        method: 'PATCH',
+        body: JSON.stringify({ actaRecepcion, actaFundicion, actaConformidad }),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['processes'] });
       queryClient.invalidateQueries({ queryKey: ['gold-bars'] });

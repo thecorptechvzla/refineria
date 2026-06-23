@@ -1,23 +1,26 @@
 import {
   Controller,
   Post,
+  Patch,
   Get,
   Param,
+  Body,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
   BadRequestException,
   NotFoundException,
   Res,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FilesService } from './files.service';
 import { ProcessesService } from '../processes/processes.service';
 
-@Controller('processes')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class FilesController {
   constructor(
@@ -25,7 +28,41 @@ export class FilesController {
     private readonly processesService: ProcessesService,
   ) {}
 
-  @Post(':id/actas')
+  @Post('files/upload')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Debe adjuntar un archivo');
+    }
+
+    const url = await this.filesService.saveFile(file);
+    return { url };
+  }
+
+  @Patch('processes/:id/close')
+  async closeProcess(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      actaRecepcion: string;
+      actaFundicion: string;
+      actaConformidad: string;
+    },
+  ) {
+    if (!body.actaRecepcion || !body.actaFundicion || !body.actaConformidad) {
+      throw new BadRequestException(
+        'Debe proporcionar las 3 actas: Recepción, Fundición y Conformidad',
+      );
+    }
+
+    return this.processesService.closeWithActas(id, {
+      actaRecepcion: body.actaRecepcion,
+      actaFundicion: body.actaFundicion,
+      actaConformidad: body.actaConformidad,
+    });
+  }
+
+  @Post('processes/:id/actas')
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -77,7 +114,7 @@ export class FilesController {
   }
 
   @Public()
-  @Get(':id/actas/:type')
+  @Get('processes/:id/actas/:type')
   async getActa(
     @Param('id') id: string,
     @Param('type') type: string,

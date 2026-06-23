@@ -29,6 +29,7 @@ function ProcessDetailView({
   onAssign,
   onMarkComplete,
   saveLotRecovered,
+  uploadFile,
 }: {
   processDetail: ProcessDetail;
   availableBars: GoldBar[];
@@ -36,10 +37,11 @@ function ProcessDetailView({
   suppliers: { id: string; name: string }[] | undefined;
   onBack: () => void;
   onCloseProcess: (lots?: { id: string; recovered: number }[]) => void;
-  onCloseProcessWithActas: (files: { actaRecepcion: File; actaFundicion: File; actaConformidad: File }, lots: { id: string; recovered: number }[]) => void;
+  onCloseProcessWithActas: (actas: { actaRecepcion: string; actaFundicion: string; actaConformidad: string }, lots: { id: string; recovered: number }[]) => void;
   onAssign: (barIds: string[]) => void;
   onMarkComplete: () => Promise<void>;
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<unknown>;
+  uploadFile: (file: File) => Promise<{ url: string }>;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [closeWarning, setCloseWarning] = useState('');
@@ -192,15 +194,24 @@ function ProcessDetailView({
     }
 
     setUploadingActas(true);
+    setErrorMessage('');
     try {
+      const recepcionUrl = await uploadFile(actaRecepcion!);
+      const fundicionUrl = await uploadFile(actaFundicion!);
+      const conformidadUrl = await uploadFile(actaConformidad!);
+
       const lots = processDetail.lotDetails.map((lot) => ({
         id: lot.id,
         recovered: getLotG(lot.id)!,
       }));
       await onCloseProcessWithActas(
-        { actaRecepcion: actaRecepcion!, actaFundicion: actaFundicion!, actaConformidad: actaConformidad! },
+        { actaRecepcion: recepcionUrl.url, actaFundicion: fundicionUrl.url, actaConformidad: conformidadUrl.url },
         lots,
       );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al subir archivos';
+      setErrorMessage(msg);
+      setShakeKey((k) => k + 1);
     } finally {
       setUploadingActas(false);
     }
@@ -688,7 +699,7 @@ function ProcessDetailView({
 }
 export default function ProcesosPage() {
   const { data: suppliers } = useSuppliers();
-  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
+  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, uploadFile, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
 
   const [view, setView] = useState<PageView>('list');
   const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
@@ -842,14 +853,16 @@ export default function ProcesosPage() {
   };
 
   const handleCloseProcessWithActas = async (
-    files: { actaRecepcion: File; actaFundicion: File; actaConformidad: File },
+    actas: { actaRecepcion: string; actaFundicion: string; actaConformidad: string },
     lots: { id: string; recovered: number }[],
   ) => {
     if (!managingProcessId) return;
     try {
       const proc = processes.find((p) => p.id === managingProcessId);
-      await closeProcessWithActas(managingProcessId, files, lots);
+      await closeProcessWithActas(managingProcessId, actas);
       setSuccessMessage(`Proceso #${proc?.number} cerrado con actas`);
+      setManagingProcessId(null);
+      setView('list');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Error cerrando proceso con actas:', err);
@@ -911,6 +924,7 @@ export default function ProcesosPage() {
           onAssign={handleAssign}
           onMarkComplete={handleMarkComplete}
           saveLotRecovered={saveLotRecovered}
+          uploadFile={uploadFile}
         />
       </div>
     );
