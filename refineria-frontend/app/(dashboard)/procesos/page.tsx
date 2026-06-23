@@ -169,9 +169,8 @@ function ProcessDetailView({
     }
 
     if (anyLotBlocked) {
-      setCloseWarning('No se puede cerrar el proceso: hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900.');
+      setCloseWarning('Advertencia: Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900. Puede cerrar el proceso de todas formas.');
       setTimeout(() => setCloseWarning(''), 5000);
-      return;
     }
 
     if (isInProgress) {
@@ -668,9 +667,9 @@ function ProcessDetailView({
               <div className="flex items-center gap-2 pt-2 border-t border-blue-500/10">
                 <button
                   onClick={handleCloseClick}
-                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas || anyLotBlocked}
+                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas}
                   className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
-                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas && !anyLotBlocked
+                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas
                       ? 'bg-red-600 text-white hover:bg-red-500'
                       : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
                   }`}
