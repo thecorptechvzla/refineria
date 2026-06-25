@@ -8,9 +8,13 @@ import {
   Body,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
-import { GoldBarsService } from './gold-bars.service';
+import { GoldBarsService, BulkResult } from './gold-bars.service';
 import { CreateGoldBarDto } from './dto/create-gold-bar.dto';
 import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
 
@@ -22,6 +26,27 @@ export class GoldBarsController {
   @Post()
   create(@Body() dto: CreateGoldBarDto) {
     return this.goldBarsService.create(dto);
+  }
+
+  @Post('bulk-upload')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async bulkUpload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('supplierId') supplierId: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Debe adjuntar un archivo Excel');
+    }
+    if (!supplierId) {
+      throw new BadRequestException('Debe seleccionar un proveedor');
+    }
+
+    const ext = file.originalname.toLowerCase().split('.').pop() ?? '';
+    if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+      throw new BadRequestException('Formato no soportado. Use archivos .xlsx, .xls o .csv');
+    }
+
+    return this.goldBarsService.bulkCreate(file, supplierId);
   }
 
   @Get()

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, apiUpload } from '@/lib/api';
 import type { GoldBar } from '@/types/refinery';
 
 type CreateGoldBarData = {
@@ -58,6 +58,24 @@ export function useDeleteGoldBar() {
   return useMutation({
     mutationFn: (id: string) =>
       api<void>(`/gold-bars/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
+export type BulkUploadResult = {
+  created: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
+};
+
+export function useBulkUpload() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BulkUploadResult, Error, FormData>({
+    mutationFn: (formData) =>
+      apiUpload<BulkUploadResult>('/gold-bars/bulk-upload', formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
     },

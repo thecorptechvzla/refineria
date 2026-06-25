@@ -4,9 +4,9 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
-import { useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
+import { useDeleteGoldBar, useBulkUpload, type BulkUploadResult } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
-import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2 } from 'lucide-react';
+import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
 export default function IngresoPage() {
@@ -25,6 +25,11 @@ export default function IngresoPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
+
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkSupplierId, setBulkSupplierId] = useState('');
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const bulkUpload = useBulkUpload();
 
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
@@ -110,6 +115,71 @@ export default function IngresoPage() {
       setErrorMessage('Error al eliminar la barra');
       setShakeKey((k) => k + 1);
     }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkSupplierId || !bulkFile) return;
+
+    const formData = new FormData();
+    formData.append('file', bulkFile);
+    formData.append('supplierId', bulkSupplierId);
+
+    try {
+      const result = await bulkUpload.mutateAsync(formData);
+      const msg = result.errors.length > 0
+        ? `Se insertaron ${result.created} barras. Se omitieron ${result.skipped} por código duplicado. ${result.errors.length} error(es) en el archivo.`
+        : `Se insertaron ${result.created} barras correctamente.${result.skipped > 0 ? ` Se omitieron ${result.skipped} por código duplicado.` : ''}`;
+      setSuccessMessage(msg);
+      setBulkFile(null);
+      setBulkSupplierId('');
+      setShowBulk(false);
+      setTimeout(() => setSuccessMessage(''), 6000);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error al procesar la carga masiva';
+      setErrorMessage(msg);
+      setShakeKey((k) => k + 1);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Barras');
+
+    sheet.columns = [
+      { header: 'N', width: 10 },
+      { header: 'PESO BRUTO (g)', width: 18 },
+      { header: 'LEY Au (‰)', width: 14 },
+      { header: 'PESO FINO Au (g)', width: 20 },
+      { header: 'PESO FINO ESP. (-1%)', width: 22 },
+      { header: 'LEY Ag (‰)', width: 14 },
+      { header: 'PESO FINO Ag (g)', width: 18 },
+      { header: 'LOTE N°', width: 12 },
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB8860B' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+    });
+
+    sheet.addRow([]);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla_barras.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const filteredBars = supplierId ? goldBars.filter((b) => b.supplierId === supplierId) : goldBars;
@@ -305,6 +375,76 @@ export default function IngresoPage() {
                 </span>
               </button>
             </form>
+          </div>
+
+          { /* ─── Carga Masiva ─── */ }
+          <div className="glass-panel">
+            <button
+              onClick={() => setShowBulk(!showBulk)}
+              className="w-full p-4 flex items-center justify-between border-b border-blue-500/10"
+            >
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                <Upload className="w-4 h-4 inline mr-2" />
+                Carga Masiva
+              </h2>
+              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showBulk ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showBulk && (
+              <div className="p-4 sm:p-5 space-y-4">
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                    <Package className="w-3 h-3 inline mr-1" />
+                    Proveedor
+                  </label>
+                  <select
+                    value={bulkSupplierId}
+                    onChange={(e) => setBulkSupplierId(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm"
+                  >
+                    <option value="">Seleccionar proveedor...</option>
+                    {suppliers?.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                    <Upload className="w-3 h-3 inline mr-1" />
+                    Archivo Excel
+                  </label>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-gold-500 file:text-midnight-900 file:cursor-pointer cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleBulkUpload}
+                    disabled={!bulkSupplierId || !bulkFile || bulkUpload.isPending}
+                    className="flex-1 py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {bulkUpload.isPending ? 'Subiendo...' : 'Subir Archivo'}
+                  </button>
+                  <button
+                    onClick={downloadTemplate}
+                    className="py-2.5 px-4 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest hover:bg-blue-500/20 transition-all flex items-center gap-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    Plantilla
+                  </button>
+                </div>
+
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  El archivo debe tener las columnas: <span className="text-slate-300 font-mono">N, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g), PESO FINO ESP. (-1%), LEY Ag (‰), PESO FINO Ag (g), LOTE N°</span>.
+                  Descarga la plantilla para ver el formato exacto.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
