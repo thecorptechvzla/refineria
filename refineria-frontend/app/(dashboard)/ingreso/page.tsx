@@ -170,7 +170,12 @@ export default function IngresoPage() {
       };
     });
 
-    sheet.addRow([]);
+    const formulaRow = sheet.addRow([1, 1000, 900, { formula: 'B2*C2/1000' }, { formula: 'D2*0.99' }, 50, { formula: 'B2*F2/1000' }, 'LOTE 1']);
+    [4, 5, 7].forEach((col) => {
+      const cell = formulaRow.getCell(col);
+      cell.font = { italic: true, color: { argb: 'FF666666' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
