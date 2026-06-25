@@ -27,7 +27,7 @@ export default function ProveedoresPage() {
     }
 
     try {
-      await createSupplier.mutateAsync({ name, rif, contactInfo });
+      await createSupplier.mutateAsync({ name: name.toUpperCase().trim(), rif, contactInfo: contactInfo.toUpperCase() });
       setSuccessMessage('Proveedor registrado con éxito.');
       setName('');
       setRif('');
@@ -90,7 +90,7 @@ export default function ProveedoresPage() {
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value.toUpperCase())}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all"
                   placeholder="Ej. Inversiones El Dorado"
                 />
@@ -120,7 +120,7 @@ export default function ProveedoresPage() {
                   required
                   rows={3}
                   value={contactInfo}
-                  onChange={(e) => setContactInfo(e.target.value)}
+                  onChange={(e) => setContactInfo(e.target.value.toUpperCase())}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm placeholder-slate-600 outline-none transition-all resize-none"
                   placeholder="Teléfono, Email o Dirección..."
                 />

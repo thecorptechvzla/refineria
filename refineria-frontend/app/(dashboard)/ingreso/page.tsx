@@ -33,7 +33,7 @@ export default function IngresoPage() {
   const pesoExceeds = pBruto > 24900;
   const leyRestriction = pLey > 0 && pLey < 850 && pBruto > 1000;
 
-  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pLey > 0 && !pesoExceeds && !leyRestriction;
+  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pLey > 0;
 
   useEffect(() => {
     if (pBruto > 0 && pLey > 0) {
@@ -195,13 +195,13 @@ export default function IngresoPage() {
                   placeholder="Ej. 3.500,00"
                 />
                 {pesoExceeds && (
-                  <div className="bg-red-500/10 border border-red-500/30 p-2 mt-1.5">
-                    <p className="text-xs text-red-400">El peso bruto no puede exceder los 24.900 g</p>
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 p-2 mt-1.5">
+                    <p className="text-xs text-yellow-400">El peso bruto excede los 24.900 g</p>
                   </div>
                 )}
                 {leyRestriction && (
-                  <div className="bg-red-500/10 border border-red-500/30 p-2 mt-1.5">
-                    <p className="text-xs text-red-400">Las barras con ley menor a 850 no pueden pesar más de 1.000 g</p>
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 p-2 mt-1.5">
+                    <p className="text-xs text-yellow-400">Las barras con ley menor a 850 no pueden pesar más de 1.000 g</p>
                   </div>
                 )}
               </div>
