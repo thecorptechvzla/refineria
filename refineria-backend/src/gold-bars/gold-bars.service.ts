@@ -123,7 +123,7 @@ export class GoldBarsService {
       : {};
     return this.prisma.goldBar.findMany({
       where,
-      orderBy: { code: 'asc' },
+      orderBy: { registrationDate: 'desc' },
     });
   }
 

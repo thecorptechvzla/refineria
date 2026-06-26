@@ -29,6 +29,7 @@ export default function IngresoPage() {
   const [showBulk, setShowBulk] = useState(false);
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const bulkUpload = useBulkUpload();
 
   const parseNum = (v: string) => parseLocaleNumber(v);
@@ -187,7 +188,12 @@ export default function IngresoPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredBars = supplierId ? goldBars.filter((b) => b.supplierId === supplierId) : goldBars;
+  const filteredBars = goldBars.filter((b) => {
+    if (supplierId && b.supplierId !== supplierId) return false;
+    if (filterAvailable === 'available' && !b.available) return false;
+    if (filterAvailable === 'in_lot' && b.available) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-5">
@@ -461,6 +467,15 @@ export default function IngresoPage() {
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Registradas</h2>
               </div>
               <div className="flex items-center gap-2">
+                <select
+                  value={filterAvailable}
+                  onChange={(e) => setFilterAvailable(e.target.value as 'all' | 'available' | 'in_lot')}
+                  className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
+                >
+                  <option value="all">Todos</option>
+                  <option value="available">Disponibles</option>
+                  <option value="in_lot">En Lote</option>
+                </select>
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
