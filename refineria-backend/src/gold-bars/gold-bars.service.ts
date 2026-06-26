@@ -37,31 +37,31 @@ export class GoldBarsService {
     const result: BulkResult = { created: 0, skipped: 0, errors: [] };
     const barsToCreate: CreateGoldBarDto[] = [];
 
-    for (let rowNumber = 8; rowNumber <= sheet.rowCount; rowNumber++) {
+    for (let rowNumber = 3; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
 
-      const nVal = row.getCell(7).value;
+      const nVal = row.getCell(8).value;
       if (nVal == null || nVal === '') continue;
 
       const code = String(nVal).trim();
       if (!code || /^(TOTAL|RESUMEN|SUBTOTAL|SUM|total|resumen)$/i.test(code)) continue;
 
-      const grossWeight = this.parseNumericCell(row.getCell(8));
+      const grossWeight = this.parseNumericCell(row.getCell(2));
       if (grossWeight == null || grossWeight <= 0) {
         result.errors.push({ row: rowNumber, message: `Peso bruto inválido en fila ${rowNumber}` });
         continue;
       }
 
-      const ley = this.parseNumericCell(row.getCell(9));
+      const ley = this.parseNumericCell(row.getCell(3));
       if (ley == null || ley <= 0) {
         result.errors.push({ row: rowNumber, message: `LEY Au inválida en fila ${rowNumber}` });
         continue;
       }
 
-      const analytical = grossWeight * ley / 1000;
+      const analytical = Number((grossWeight * ley / 1000).toFixed(2));
       const expected = analytical * 0.99;
 
-      const leyAg = this.parseNumericCell(row.getCell(12));
+      const leyAg = this.parseNumericCell(row.getCell(6));
       const analyticalAg = leyAg != null && leyAg > 0 ? grossWeight * leyAg / 1000 : undefined;
 
       barsToCreate.push({
