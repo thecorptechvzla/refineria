@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Injectable()
@@ -168,5 +169,11 @@ export class TransactionsService {
     await this.findById(id);
 
     return this.prisma.transaction.delete({ where: { id } });
+  }
+
+  async update(id: string, dto: UpdateTransactionDto) {
+    await this.findById(id);
+
+    return this.prisma.transaction.update({ where: { id }, data: dto });
   }
 }

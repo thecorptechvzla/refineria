@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -11,6 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -39,6 +41,12 @@ export class TransactionsController {
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.transactionsService.findById(id);
+  }
+
+  @Patch(':id')
+  @Roles(Role.SUPERADMIN, Role.OWNER)
+  update(@Param('id') id: string, @Body() dto: UpdateTransactionDto) {
+    return this.transactionsService.update(id, dto);
   }
 
   @Delete(':id')
