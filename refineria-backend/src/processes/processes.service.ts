@@ -15,10 +15,15 @@ export class ProcessesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateProcessDto) {
-    const count = await this.prisma.process.count();
+    const year = new Date().getFullYear();
+    const counter = await this.prisma.processCounter.upsert({
+      where: { supplierId: dto.supplierId },
+      update: { seq: { increment: 1 } },
+      create: { supplierId: dto.supplierId, seq: 1 },
+    });
     return this.prisma.process.create({
       data: {
-        number: String(count + 1).padStart(7, '0'),
+        number: String(counter.seq).padStart(7, '0'),
         supplierId: dto.supplierId,
       },
       include: { lots: true },

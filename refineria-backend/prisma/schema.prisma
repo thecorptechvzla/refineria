@@ -164,3 +164,10 @@ model CustomFieldValue {
   @@index([tableName, recordId])
   @@map("custom_field_values")
 }
+
+model ProcessCounter {
+  supplierId String @id @map("supplier_id")
+  seq        Int    @default(0)
+
+  @@map("process_counters")
+}

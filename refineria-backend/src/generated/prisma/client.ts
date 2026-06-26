@@ -84,3 +84,8 @@ export type CustomFieldDefinition = Prisma.CustomFieldDefinitionModel
  * 
  */
 export type CustomFieldValue = Prisma.CustomFieldValueModel
+/**
+ * Model ProcessCounter
+ * 
+ */
+export type ProcessCounter = Prisma.ProcessCounterModel

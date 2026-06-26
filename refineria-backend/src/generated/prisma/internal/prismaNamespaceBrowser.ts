@@ -59,7 +59,8 @@ export const ModelName = {
   ProcessLot: 'ProcessLot',
   Worker: 'Worker',
   CustomFieldDefinition: 'CustomFieldDefinition',
-  CustomFieldValue: 'CustomFieldValue'
+  CustomFieldValue: 'CustomFieldValue',
+  ProcessCounter: 'ProcessCounter'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -205,6 +206,14 @@ export const CustomFieldValueScalarFieldEnum = {
 } as const
 
 export type CustomFieldValueScalarFieldEnum = (typeof CustomFieldValueScalarFieldEnum)[keyof typeof CustomFieldValueScalarFieldEnum]
+
+
+export const ProcessCounterScalarFieldEnum = {
+  supplierId: 'supplierId',
+  seq: 'seq'
+} as const
+
+export type ProcessCounterScalarFieldEnum = (typeof ProcessCounterScalarFieldEnum)[keyof typeof ProcessCounterScalarFieldEnum]
 
 
 export const SortOrder = {

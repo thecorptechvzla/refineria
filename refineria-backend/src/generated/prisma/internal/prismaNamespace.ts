@@ -392,7 +392,8 @@ export const ModelName = {
   ProcessLot: 'ProcessLot',
   Worker: 'Worker',
   CustomFieldDefinition: 'CustomFieldDefinition',
-  CustomFieldValue: 'CustomFieldValue'
+  CustomFieldValue: 'CustomFieldValue',
+  ProcessCounter: 'ProcessCounter'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue"
+    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue" | "processCounter"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1078,6 +1079,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ProcessCounter: {
+      payload: Prisma.$ProcessCounterPayload<ExtArgs>
+      fields: Prisma.ProcessCounterFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProcessCounterFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProcessCounterFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        findFirst: {
+          args: Prisma.ProcessCounterFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProcessCounterFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        findMany: {
+          args: Prisma.ProcessCounterFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>[]
+        }
+        create: {
+          args: Prisma.ProcessCounterCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        createMany: {
+          args: Prisma.ProcessCounterCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProcessCounterCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>[]
+        }
+        delete: {
+          args: Prisma.ProcessCounterDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        update: {
+          args: Prisma.ProcessCounterUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProcessCounterDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProcessCounterUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProcessCounterUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProcessCounterUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessCounterPayload>
+        }
+        aggregate: {
+          args: Prisma.ProcessCounterAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProcessCounter>
+        }
+        groupBy: {
+          args: Prisma.ProcessCounterGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProcessCounterGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProcessCounterCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProcessCounterCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1244,6 +1319,14 @@ export const CustomFieldValueScalarFieldEnum = {
 } as const
 
 export type CustomFieldValueScalarFieldEnum = (typeof CustomFieldValueScalarFieldEnum)[keyof typeof CustomFieldValueScalarFieldEnum]
+
+
+export const ProcessCounterScalarFieldEnum = {
+  supplierId: 'supplierId',
+  seq: 'seq'
+} as const
+
+export type ProcessCounterScalarFieldEnum = (typeof ProcessCounterScalarFieldEnum)[keyof typeof ProcessCounterScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1527,6 +1610,7 @@ export type GlobalOmitConfig = {
   worker?: Prisma.WorkerOmit
   customFieldDefinition?: Prisma.CustomFieldDefinitionOmit
   customFieldValue?: Prisma.CustomFieldValueOmit
+  processCounter?: Prisma.ProcessCounterOmit
 }
 
 /* Types for Logging */
