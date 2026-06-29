@@ -42,7 +42,7 @@ export function useCreateSupplyTransaction() {
       itemId: string;
       type: SupplyTransactionType;
       quantity: number;
-      reference?: string;
+      reference: string;
     }) =>
       api<SupplyTransaction>('/supplies/transactions', {
         method: 'POST',
@@ -51,5 +51,48 @@ export function useCreateSupplyTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplies', 'items'] });
     },
+  });
+}
+
+export function useCreateBulkSupplyTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      type: SupplyTransactionType;
+      destination: string;
+      items: (
+        | { itemId: string; quantity: number }
+        | { name: string; category: SupplyCategory; unit?: string; quantity: number }
+      )[];
+    }) =>
+      api<SupplyTransaction[]>('/supplies/transactions/bulk', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supplies', 'items'] });
+    },
+  });
+}
+
+export function useDeleteSupplyItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api(`/supplies/items/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supplies', 'items'] });
+    },
+  });
+}
+
+export function useSupplyHistory(itemId: string | null) {
+  return useQuery({
+    queryKey: ['supplies', 'history', itemId],
+    queryFn: () => api<SupplyTransaction[]>(`/supplies/items/${itemId}/transactions`),
+    enabled: !!itemId,
+    staleTime: 15_000,
   });
 }

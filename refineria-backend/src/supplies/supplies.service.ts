@@ -8,6 +8,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateSupplyItemDto } from './dto/create-supply-item.dto';
 import { UpdateSupplyItemDto } from './dto/update-supply-item.dto';
 import { CreateSupplyTransactionDto } from './dto/create-supply-transaction.dto';
+import { CreateBulkSupplyTransactionDto } from './dto/create-bulk-supply-transaction.dto';
+import { SupplyCategory } from '../generated/prisma/client';
 
 @Injectable()
 export class SuppliesService {
@@ -101,6 +103,119 @@ export class SuppliesService {
     ]);
 
     return transaction;
+  }
+
+  async createBulkTransaction(dto: CreateBulkSupplyTransactionDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const transactions = [];
+
+      for (const item of dto.items) {
+        if (dto.type === 'OUT') {
+          if (!item.itemId) {
+            throw new BadRequestException(
+              'Para descargos (OUT), cada fila debe seleccionar un insumo existente.',
+            );
+          }
+
+          const supply = await tx.supplyItem.findUniqueOrThrow({
+            where: { id: item.itemId },
+          });
+
+          const newStock = supply.currentStock - item.quantity;
+
+          if (newStock < 0) {
+            throw new BadRequestException(
+              `Stock insuficiente para "${supply.name}". Stock actual: ${supply.currentStock}, requerido: ${item.quantity}`,
+            );
+          }
+
+          await tx.supplyItem.update({
+            where: { id: item.itemId },
+            data: { currentStock: newStock },
+          });
+
+          transactions.push(
+            await tx.supplyTransaction.create({
+              data: {
+                itemId: item.itemId,
+                type: 'OUT',
+                quantity: item.quantity,
+                reference: dto.destination,
+              },
+            }),
+          );
+        } else {
+          if (item.itemId) {
+            const supply = await tx.supplyItem.findUniqueOrThrow({
+              where: { id: item.itemId },
+            });
+
+            const newStock = supply.currentStock + item.quantity;
+
+            await tx.supplyItem.update({
+              where: { id: item.itemId },
+              data: { currentStock: newStock },
+            });
+
+            transactions.push(
+              await tx.supplyTransaction.create({
+                data: {
+                  itemId: item.itemId,
+                  type: 'IN',
+                  quantity: item.quantity,
+                  reference: dto.destination,
+                },
+              }),
+            );
+          } else {
+            if (!item.name || !item.category) {
+              throw new BadRequestException(
+                'Para crear un nuevo insumo, se requiere nombre y categoría.',
+              );
+            }
+
+            const code = await this.generateCode(tx, item.category);
+            const unit = item.unit ?? 'UNIDAD';
+            const criticalLevel = item.criticalLevel ?? 1;
+
+            const newItem = await tx.supplyItem.create({
+              data: {
+                code,
+                name: item.name,
+                category: item.category,
+                unit,
+                criticalLevel,
+                currentStock: item.quantity,
+              },
+            });
+
+            transactions.push(
+              await tx.supplyTransaction.create({
+                data: {
+                  itemId: newItem.id,
+                  type: 'IN',
+                  quantity: item.quantity,
+                  reference: dto.destination,
+                },
+              }),
+            );
+          }
+        }
+      }
+
+      return transactions;
+    });
+  }
+
+  private async generateCode(tx: any, category: SupplyCategory): Promise<string> {
+    const prefix = category === 'OPERATIONS' ? 'OP' : 'SG';
+    const lastItem = await tx.supplyItem.findFirst({
+      where: { code: { startsWith: prefix } },
+      orderBy: { code: 'desc' },
+      select: { code: true },
+    });
+    const nextNum = lastItem ? parseInt(lastItem.code.slice(2), 10) + 1 : 1;
+    return `${prefix}${String(nextNum).padStart(3, '0')}`;
   }
 
   async getItemHistory(itemId: string) {

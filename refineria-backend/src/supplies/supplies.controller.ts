@@ -17,6 +17,7 @@ import { SuppliesService } from './supplies.service';
 import { CreateSupplyItemDto } from './dto/create-supply-item.dto';
 import { UpdateSupplyItemDto } from './dto/update-supply-item.dto';
 import { CreateSupplyTransactionDto } from './dto/create-supply-transaction.dto';
+import { CreateBulkSupplyTransactionDto } from './dto/create-bulk-supply-transaction.dto';
 
 @Controller('supplies')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -54,6 +55,12 @@ export class SuppliesController {
   @Post('transactions')
   createTransaction(@Body() dto: CreateSupplyTransactionDto) {
     return this.suppliesService.createTransaction(dto);
+  }
+
+  @Post('transactions/bulk')
+  @Roles(Role.SUPERADMIN, Role.OWNER, Role.ADMIN)
+  createBulk(@Body() dto: CreateBulkSupplyTransactionDto) {
+    return this.suppliesService.createBulkTransaction(dto);
   }
 
   @Get('items/:id/transactions')
