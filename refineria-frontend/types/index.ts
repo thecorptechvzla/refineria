@@ -58,3 +58,25 @@ export interface CustomFieldValue {
   value: string | null;
   field: CustomFieldDefinition;
 }
+
+export type SupplyCategory = 'OPERATIONS' | 'GENERAL_SERVICES';
+export type SupplyTransactionType = 'IN' | 'OUT';
+
+export interface SupplyItem {
+  id: string;
+  code: string;
+  name: string;
+  category: SupplyCategory;
+  unit: string;
+  currentStock: number;
+  criticalLevel: number;
+}
+
+export interface SupplyTransaction {
+  id: string;
+  itemId: string;
+  type: SupplyTransactionType;
+  quantity: number;
+  date: string;
+  reference?: string;
+}

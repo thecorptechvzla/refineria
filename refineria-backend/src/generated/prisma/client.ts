@@ -89,3 +89,13 @@ export type CustomFieldValue = Prisma.CustomFieldValueModel
  * 
  */
 export type ProcessCounter = Prisma.ProcessCounterModel
+/**
+ * Model SupplyItem
+ * 
+ */
+export type SupplyItem = Prisma.SupplyItemModel
+/**
+ * Model SupplyTransaction
+ * 
+ */
+export type SupplyTransaction = Prisma.SupplyTransactionModel

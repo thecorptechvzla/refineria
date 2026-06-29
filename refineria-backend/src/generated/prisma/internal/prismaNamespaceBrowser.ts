@@ -60,7 +60,9 @@ export const ModelName = {
   Worker: 'Worker',
   CustomFieldDefinition: 'CustomFieldDefinition',
   CustomFieldValue: 'CustomFieldValue',
-  ProcessCounter: 'ProcessCounter'
+  ProcessCounter: 'ProcessCounter',
+  SupplyItem: 'SupplyItem',
+  SupplyTransaction: 'SupplyTransaction'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -214,6 +216,33 @@ export const ProcessCounterScalarFieldEnum = {
 } as const
 
 export type ProcessCounterScalarFieldEnum = (typeof ProcessCounterScalarFieldEnum)[keyof typeof ProcessCounterScalarFieldEnum]
+
+
+export const SupplyItemScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  category: 'category',
+  unit: 'unit',
+  currentStock: 'currentStock',
+  criticalLevel: 'criticalLevel',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SupplyItemScalarFieldEnum = (typeof SupplyItemScalarFieldEnum)[keyof typeof SupplyItemScalarFieldEnum]
+
+
+export const SupplyTransactionScalarFieldEnum = {
+  id: 'id',
+  itemId: 'itemId',
+  type: 'type',
+  quantity: 'quantity',
+  date: 'date',
+  reference: 'reference'
+} as const
+
+export type SupplyTransactionScalarFieldEnum = (typeof SupplyTransactionScalarFieldEnum)[keyof typeof SupplyTransactionScalarFieldEnum]
 
 
 export const SortOrder = {

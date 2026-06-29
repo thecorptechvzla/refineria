@@ -393,7 +393,9 @@ export const ModelName = {
   Worker: 'Worker',
   CustomFieldDefinition: 'CustomFieldDefinition',
   CustomFieldValue: 'CustomFieldValue',
-  ProcessCounter: 'ProcessCounter'
+  ProcessCounter: 'ProcessCounter',
+  SupplyItem: 'SupplyItem',
+  SupplyTransaction: 'SupplyTransaction'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -409,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue" | "processCounter"
+    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue" | "processCounter" | "supplyItem" | "supplyTransaction"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1153,6 +1155,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SupplyItem: {
+      payload: Prisma.$SupplyItemPayload<ExtArgs>
+      fields: Prisma.SupplyItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SupplyItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SupplyItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        findFirst: {
+          args: Prisma.SupplyItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SupplyItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        findMany: {
+          args: Prisma.SupplyItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>[]
+        }
+        create: {
+          args: Prisma.SupplyItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        createMany: {
+          args: Prisma.SupplyItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SupplyItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>[]
+        }
+        delete: {
+          args: Prisma.SupplyItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        update: {
+          args: Prisma.SupplyItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.SupplyItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SupplyItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SupplyItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.SupplyItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyItemPayload>
+        }
+        aggregate: {
+          args: Prisma.SupplyItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSupplyItem>
+        }
+        groupBy: {
+          args: Prisma.SupplyItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SupplyItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SupplyItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SupplyItemCountAggregateOutputType> | number
+        }
+      }
+    }
+    SupplyTransaction: {
+      payload: Prisma.$SupplyTransactionPayload<ExtArgs>
+      fields: Prisma.SupplyTransactionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SupplyTransactionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SupplyTransactionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        findFirst: {
+          args: Prisma.SupplyTransactionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SupplyTransactionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        findMany: {
+          args: Prisma.SupplyTransactionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>[]
+        }
+        create: {
+          args: Prisma.SupplyTransactionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        createMany: {
+          args: Prisma.SupplyTransactionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SupplyTransactionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>[]
+        }
+        delete: {
+          args: Prisma.SupplyTransactionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        update: {
+          args: Prisma.SupplyTransactionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        deleteMany: {
+          args: Prisma.SupplyTransactionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SupplyTransactionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SupplyTransactionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>[]
+        }
+        upsert: {
+          args: Prisma.SupplyTransactionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SupplyTransactionPayload>
+        }
+        aggregate: {
+          args: Prisma.SupplyTransactionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSupplyTransaction>
+        }
+        groupBy: {
+          args: Prisma.SupplyTransactionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SupplyTransactionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SupplyTransactionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SupplyTransactionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1329,6 +1479,33 @@ export const ProcessCounterScalarFieldEnum = {
 export type ProcessCounterScalarFieldEnum = (typeof ProcessCounterScalarFieldEnum)[keyof typeof ProcessCounterScalarFieldEnum]
 
 
+export const SupplyItemScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  category: 'category',
+  unit: 'unit',
+  currentStock: 'currentStock',
+  criticalLevel: 'criticalLevel',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SupplyItemScalarFieldEnum = (typeof SupplyItemScalarFieldEnum)[keyof typeof SupplyItemScalarFieldEnum]
+
+
+export const SupplyTransactionScalarFieldEnum = {
+  id: 'id',
+  itemId: 'itemId',
+  type: 'type',
+  quantity: 'quantity',
+  date: 'date',
+  reference: 'reference'
+} as const
+
+export type SupplyTransactionScalarFieldEnum = (typeof SupplyTransactionScalarFieldEnum)[keyof typeof SupplyTransactionScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1491,6 +1668,34 @@ export type EnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 export type ListEnumWorkerStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkerStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'SupplyCategory'
+ */
+export type EnumSupplyCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SupplyCategory'>
+    
+
+
+/**
+ * Reference to a field of type 'SupplyCategory[]'
+ */
+export type ListEnumSupplyCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SupplyCategory[]'>
+    
+
+
+/**
+ * Reference to a field of type 'SupplyTransactionType'
+ */
+export type EnumSupplyTransactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SupplyTransactionType'>
+    
+
+
+/**
+ * Reference to a field of type 'SupplyTransactionType[]'
+ */
+export type ListEnumSupplyTransactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SupplyTransactionType[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1611,6 +1816,8 @@ export type GlobalOmitConfig = {
   customFieldDefinition?: Prisma.CustomFieldDefinitionOmit
   customFieldValue?: Prisma.CustomFieldValueOmit
   processCounter?: Prisma.ProcessCounterOmit
+  supplyItem?: Prisma.SupplyItemOmit
+  supplyTransaction?: Prisma.SupplyTransactionOmit
 }
 
 /* Types for Logging */

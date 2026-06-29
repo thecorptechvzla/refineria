@@ -42,6 +42,22 @@ export const WorkerStatus = {
 export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus]
 
 
+export const SupplyCategory = {
+  OPERATIONS: 'OPERATIONS',
+  GENERAL_SERVICES: 'GENERAL_SERVICES'
+} as const
+
+export type SupplyCategory = (typeof SupplyCategory)[keyof typeof SupplyCategory]
+
+
+export const SupplyTransactionType = {
+  IN: 'IN',
+  OUT: 'OUT'
+} as const
+
+export type SupplyTransactionType = (typeof SupplyTransactionType)[keyof typeof SupplyTransactionType]
+
+
 export const ProcessStatus = {
   open: 'open',
   in_progress: 'in_progress',

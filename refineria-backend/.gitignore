@@ -10,3 +10,6 @@ node_modules
 # Local uploaded files (actas, etc.)
 /uploads/
 
+# Generated Excel files (templates, exports)
+/excel/
+

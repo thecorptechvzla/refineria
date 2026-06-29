@@ -68,6 +68,16 @@ model Transaction {
   @@map("transactions")
 }
 
+enum SupplyCategory {
+  OPERATIONS
+  GENERAL_SERVICES
+}
+
+enum SupplyTransactionType {
+  IN
+  OUT
+}
+
 enum ProcessStatus {
   open
   in_progress
@@ -170,4 +180,33 @@ model ProcessCounter {
   seq        Int    @default(0)
 
   @@map("process_counters")
+}
+
+model SupplyItem {
+  id            String                @id @default(uuid())
+  code          String                @unique
+  name          String
+  category      SupplyCategory
+  unit          String                @default("UNIDAD")
+  currentStock  Int                   @default(0)
+  criticalLevel Int                   @default(1)
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  transactions  SupplyTransaction[]
+
+  @@map("supply_items")
+}
+
+model SupplyTransaction {
+  id        String                 @id @default(uuid())
+  itemId    String                 @map("item_id")
+  type      SupplyTransactionType
+  quantity  Int
+  date      DateTime               @default(now())
+  reference String?
+
+  item      SupplyItem             @relation(fields: [itemId], references: [id])
+
+  @@map("supply_transactions")
 }
