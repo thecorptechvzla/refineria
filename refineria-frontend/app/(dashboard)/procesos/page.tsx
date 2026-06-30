@@ -61,7 +61,7 @@ function ProcessDetailView({
   const [actaConformidad, setActaConformidad] = useState<File | null>(null);
   const [uploadingActas, setUploadingActas] = useState(false);
   const removeBarsFromLot = useRemoveBarsFromLot();
-  const [sortBy, setSortBy] = useState<'weight-desc' | 'weight-asc' | 'lot-asc' | 'lot-desc'>('weight-desc');
+  const [sortBy, setSortBy] = useState<'lot-asc' | 'lot-desc'>('lot-asc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
 
   const availableLotNumbers = useMemo(() => {
@@ -76,25 +76,17 @@ function ProcessDetailView({
     let copy = filterLot
       ? availableBars.filter((b) => b.originalLot === filterLot)
       : [...availableBars];
-    if (sortBy === 'weight-desc') {
-      copy.sort((a, b) => b.grossWeight - a.grossWeight);
-    } else if (sortBy === 'weight-asc') {
-      copy.sort((a, b) => a.grossWeight - b.grossWeight);
-    } else if (sortBy === 'lot-asc') {
-      copy.sort((a, b) => {
+    copy.sort((a, b) => {
+      const lotCmp = (() => {
         if (!a.originalLot && !b.originalLot) return 0;
         if (!a.originalLot) return 1;
         if (!b.originalLot) return -1;
-        return a.originalLot.localeCompare(b.originalLot, undefined, { numeric: true, sensitivity: 'base' });
-      });
-    } else {
-      copy.sort((a, b) => {
-        if (!a.originalLot && !b.originalLot) return 0;
-        if (!a.originalLot) return 1;
-        if (!b.originalLot) return -1;
-        return b.originalLot.localeCompare(a.originalLot, undefined, { numeric: true, sensitivity: 'base' });
-      });
-    }
+        return sortBy === 'lot-asc'
+          ? a.originalLot.localeCompare(b.originalLot, undefined, { numeric: true, sensitivity: 'base' })
+          : b.originalLot.localeCompare(a.originalLot, undefined, { numeric: true, sensitivity: 'base' });
+      })();
+      return lotCmp !== 0 ? lotCmp : b.grossWeight - a.grossWeight;
+    });
     return copy;
   }, [availableBars, sortBy, filterLot]);
 
@@ -362,11 +354,9 @@ function ProcessDetailView({
                         </select>
                         <select
                           value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as 'weight-desc' | 'weight-asc' | 'lot-asc' | 'lot-desc')}
+                          onChange={(e) => setSortBy(e.target.value as 'lot-asc' | 'lot-desc')}
                           className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
                         >
-                          <option value="weight-desc">Peso: Mayor a Menor</option>
-                          <option value="weight-asc">Peso: Menor a Mayor</option>
                           <option value="lot-asc">Lote: Ascendente (1, 2, 3…)</option>
                           <option value="lot-desc">Lote: Descendente (…3, 2, 1)</option>
                         </select>
