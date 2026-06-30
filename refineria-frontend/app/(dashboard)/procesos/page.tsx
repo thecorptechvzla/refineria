@@ -62,9 +62,20 @@ function ProcessDetailView({
   const [uploadingActas, setUploadingActas] = useState(false);
   const removeBarsFromLot = useRemoveBarsFromLot();
   const [sortBy, setSortBy] = useState<'weight' | 'lot'>('weight');
+  const [filterLot, setFilterLot] = useState<string | null>(null);
+
+  const availableLotNumbers = useMemo(() => {
+    const lots = new Set<string>();
+    for (const bar of availableBars) {
+      if (bar.originalLot) lots.add(bar.originalLot);
+    }
+    return [...lots].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [availableBars]);
 
   const sortedAvailableBars = useMemo(() => {
-    const copy = [...availableBars];
+    let copy = filterLot
+      ? availableBars.filter((b) => b.originalLot === filterLot)
+      : [...availableBars];
     if (sortBy === 'weight') {
       copy.sort((a, b) => b.grossWeight - a.grossWeight);
     } else {
@@ -76,7 +87,7 @@ function ProcessDetailView({
       });
     }
     return copy;
-  }, [availableBars, sortBy]);
+  }, [availableBars, sortBy, filterLot]);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -319,14 +330,26 @@ function ProcessDetailView({
               <div className="p-4 sm:p-5 space-y-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{sortedAvailableBars.length} barra{sortedAvailableBars.length !== 1 ? 's' : ''}</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as 'weight' | 'lot')}
-                        className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
-                      >
-                        <option value="weight">Ordenar por Peso</option>
-                        <option value="lot">Ordenar por Lote</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={filterLot ?? ''}
+                          onChange={(e) => setFilterLot(e.target.value || null)}
+                          className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
+                        >
+                          <option value="">Todos los Lotes</option>
+                          {availableLotNumbers.map((lot) => (
+                            <option key={lot} value={lot}>Lote {lot}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as 'weight' | 'lot')}
+                          className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
+                        >
+                          <option value="weight">Ordenar por Peso</option>
+                          <option value="lot">Ordenar por Lote</option>
+                        </select>
+                      </div>
                     </div>
                     {sortedAvailableBars.length > 0 ? (
                       <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
@@ -365,7 +388,7 @@ function ProcessDetailView({
                       </div>
                 ) : (
                   <p className="text-center text-sm text-slate-500 py-6">
-                    No hay barras disponibles para este proveedor.
+                    {filterLot ? `No hay barras en el lote ${filterLot}.` : 'No hay barras disponibles para este proveedor.'}
                   </p>
                 )}
 
