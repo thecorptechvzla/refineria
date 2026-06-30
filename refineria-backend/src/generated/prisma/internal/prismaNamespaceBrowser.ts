@@ -133,6 +133,7 @@ export const GoldBarScalarFieldEnum = {
   recovered: 'recovered',
   leyAg: 'leyAg',
   analyticalAg: 'analyticalAg',
+  originalLot: 'originalLot',
   available: 'available',
   registrationDate: 'registrationDate',
   createdAt: 'createdAt',

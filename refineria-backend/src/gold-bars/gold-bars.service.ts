@@ -70,6 +70,9 @@ export class GoldBarsService {
       const analytical = Number((grossWeight * ley / 1000).toFixed(2));
       const expected = analytical * 0.99;
 
+      const lotVal = row.getCell(5).value;
+      const originalLot = lotVal != null ? String(lotVal).trim() : undefined;
+
       barsToCreate.push({
         code,
         supplierId,
@@ -78,6 +81,7 @@ export class GoldBarsService {
         analytical,
         expected,
         recovered: 0,
+        originalLot: originalLot || undefined,
       });
     }
 
@@ -109,6 +113,7 @@ export class GoldBarsService {
       analytical: b.analytical,
       expected: b.expected,
       recovered: 0,
+      originalLot: b.originalLot,
     }));
 
     const resultCreate = await this.prisma.goldBar.createMany({ data: prismaData });

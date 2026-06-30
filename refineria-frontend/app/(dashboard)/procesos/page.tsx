@@ -61,6 +61,22 @@ function ProcessDetailView({
   const [actaConformidad, setActaConformidad] = useState<File | null>(null);
   const [uploadingActas, setUploadingActas] = useState(false);
   const removeBarsFromLot = useRemoveBarsFromLot();
+  const [sortBy, setSortBy] = useState<'weight' | 'lot'>('weight');
+
+  const sortedAvailableBars = useMemo(() => {
+    const copy = [...availableBars];
+    if (sortBy === 'weight') {
+      copy.sort((a, b) => b.grossWeight - a.grossWeight);
+    } else {
+      copy.sort((a, b) => {
+        if (!a.originalLot && !b.originalLot) return 0;
+        if (!a.originalLot) return 1;
+        if (!b.originalLot) return -1;
+        return a.originalLot.localeCompare(b.originalLot);
+      });
+    }
+    return copy;
+  }, [availableBars, sortBy]);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -301,9 +317,20 @@ function ProcessDetailView({
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Disponibles</h2>
               </div>
               <div className="p-4 sm:p-5 space-y-3">
-                    {availableBars.length > 0 ? (
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{sortedAvailableBars.length} barra{sortedAvailableBars.length !== 1 ? 's' : ''}</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as 'weight' | 'lot')}
+                        className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
+                      >
+                        <option value="weight">Ordenar por Peso</option>
+                        <option value="lot">Ordenar por Lote</option>
+                      </select>
+                    </div>
+                    {sortedAvailableBars.length > 0 ? (
                       <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-                        {availableBars.map((bar) => (
+                        {sortedAvailableBars.map((bar) => (
                           <label
                             key={bar.id}
                             className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
@@ -328,6 +355,9 @@ function ProcessDetailView({
                                 <span>E: {formatLocaleNumber(bar.analytical)}</span>
                                 <span>F: {formatLocaleNumber(bar.expected)}</span>
                                 <span>G: {formatLocaleNumber(bar.recovered)}</span>
+                                {bar.originalLot && (
+                                  <span className="bg-midnight-700 text-slate-300 text-[9px] px-1.5 py-0.5 rounded font-mono leading-none">Lote: {bar.originalLot}</span>
+                                )}
                               </div>
                             </div>
                           </label>

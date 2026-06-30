@@ -171,7 +171,7 @@ export default function IngresoPage() {
     });
 
     const TOTAL = 500;
-    sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 1]);
+    sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 'L-405']);
     for (let r = 3; r <= TOTAL; r++) {
       sheet.addRow([null, null, null, { formula: `B${r}*C${r}/1000` }, null]);
     }
@@ -465,7 +465,7 @@ export default function IngresoPage() {
                 </div>
 
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                    El archivo debe tener las columnas: <span className="text-slate-300 font-mono">CÓDIGO, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g)</span>.
+                    El archivo debe tener las columnas: <span className="text-slate-300 font-mono">CÓDIGO, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g), LOTE N°</span>.
                   Descarga la plantilla para ver el formato exacto.
                 </p>
               </div>

@@ -34,6 +34,10 @@ export class UpdateGoldBarDto {
   @IsOptional()
   recovered?: number;
 
+  @IsString()
+  @IsOptional()
+  originalLot?: string;
+
   @IsBoolean()
   @IsOptional()
   available?: boolean;

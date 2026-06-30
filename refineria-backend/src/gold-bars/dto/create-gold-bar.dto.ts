@@ -39,6 +39,10 @@ export class CreateGoldBarDto {
   @IsOptional()
   analyticalAg?: number;
 
+  @IsString()
+  @IsOptional()
+  originalLot?: string;
+
   @IsBoolean()
   @IsOptional()
   available?: boolean;

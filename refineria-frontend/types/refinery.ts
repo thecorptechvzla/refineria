@@ -11,6 +11,7 @@ export interface GoldBar {
   recovered: number;
   leyAg?: number | null;
   analyticalAg?: number | null;
+  originalLot?: string | null;
   available: boolean;
   registrationDate: string;
 }
