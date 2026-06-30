@@ -38,7 +38,7 @@ export class GoldBarsService {
     const barsToCreate: CreateGoldBarDto[] = [];
     const codeRowMap = new Map<string, number>();
 
-    for (let rowNumber = 3; rowNumber <= sheet.rowCount; rowNumber++) {
+    for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
 
       const nVal = row.getCell(1).value;
