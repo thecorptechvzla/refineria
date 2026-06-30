@@ -61,7 +61,7 @@ function ProcessDetailView({
   const [actaConformidad, setActaConformidad] = useState<File | null>(null);
   const [uploadingActas, setUploadingActas] = useState(false);
   const removeBarsFromLot = useRemoveBarsFromLot();
-  const [sortBy, setSortBy] = useState<'weight' | 'lot'>('weight');
+  const [sortBy, setSortBy] = useState<'weight-desc' | 'weight-asc' | 'lot-asc' | 'lot-desc'>('weight-desc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
 
   const availableLotNumbers = useMemo(() => {
@@ -76,14 +76,23 @@ function ProcessDetailView({
     let copy = filterLot
       ? availableBars.filter((b) => b.originalLot === filterLot)
       : [...availableBars];
-    if (sortBy === 'weight') {
+    if (sortBy === 'weight-desc') {
       copy.sort((a, b) => b.grossWeight - a.grossWeight);
+    } else if (sortBy === 'weight-asc') {
+      copy.sort((a, b) => a.grossWeight - b.grossWeight);
+    } else if (sortBy === 'lot-asc') {
+      copy.sort((a, b) => {
+        if (!a.originalLot && !b.originalLot) return 0;
+        if (!a.originalLot) return 1;
+        if (!b.originalLot) return -1;
+        return a.originalLot.localeCompare(b.originalLot, undefined, { numeric: true, sensitivity: 'base' });
+      });
     } else {
       copy.sort((a, b) => {
         if (!a.originalLot && !b.originalLot) return 0;
         if (!a.originalLot) return 1;
         if (!b.originalLot) return -1;
-        return a.originalLot.localeCompare(b.originalLot);
+        return b.originalLot.localeCompare(a.originalLot, undefined, { numeric: true, sensitivity: 'base' });
       });
     }
     return copy;
@@ -139,6 +148,16 @@ function ProcessDetailView({
   const toggleBar = (barId: string) => {
     setSelectedBarIds((prev) =>
       prev.includes(barId) ? prev.filter((id) => id !== barId) : [...prev, barId]
+    );
+  };
+
+  const handleToggleAllFiltered = () => {
+    const visibleIds = sortedAvailableBars.map((b) => b.id);
+    const allSelected = visibleIds.every((id) => selectedBarIds.includes(id));
+    setSelectedBarIds((prev) =>
+      allSelected
+        ? prev.filter((id) => !visibleIds.includes(id))
+        : [...new Set([...prev, ...visibleIds])]
     );
   };
 
@@ -343,14 +362,28 @@ function ProcessDetailView({
                         </select>
                         <select
                           value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as 'weight' | 'lot')}
+                          onChange={(e) => setSortBy(e.target.value as 'weight-desc' | 'weight-asc' | 'lot-asc' | 'lot-desc')}
                           className="bg-midnight-800 border border-midnight-700 text-white text-[10px] font-mono px-2 py-1 outline-none cursor-pointer"
                         >
-                          <option value="weight">Ordenar por Peso</option>
-                          <option value="lot">Ordenar por Lote</option>
+                          <option value="weight-desc">Peso: Mayor a Menor</option>
+                          <option value="weight-asc">Peso: Menor a Mayor</option>
+                          <option value="lot-asc">Lote: Ascendente (1, 2, 3…)</option>
+                          <option value="lot-desc">Lote: Descendente (…3, 2, 1)</option>
                         </select>
                       </div>
                     </div>
+                    {filterLot && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={handleToggleAllFiltered}
+                          className="text-[10px] font-mono text-slate-400 bg-midnight-700 hover:bg-midnight-600 px-2 py-1 border border-midnight-600 transition-all"
+                        >
+                          {sortedAvailableBars.every((b) => selectedBarIds.includes(b.id))
+                            ? 'Deseleccionar Todo'
+                            : 'Seleccionar Todo'}
+                        </button>
+                      </div>
+                    )}
                     {sortedAvailableBars.length > 0 ? (
                       <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
                         {sortedAvailableBars.map((bar) => (
