@@ -225,11 +225,32 @@ export default function IngresoPage() {
         <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
       )}
       {successMessage && (
-        <div className="glass-panel-gold p-4 flex items-center gap-3">
-          <CheckCircle className="w-5 h-5 text-gold-500 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-gold-400">{successMessage}</p>
-            <p className="text-[10px] text-gold-500/60 uppercase tracking-wider mt-0.5">Barra registrada en bóveda</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/90">
+          <div className="bg-midnight-800 border border-gold-500/30 w-full max-w-lg mx-4">
+            <div className="p-4 border-b border-gold-500/10 flex items-center justify-between">
+              <span className="text-xs font-bold text-gold-400 uppercase tracking-widest">Carga exitosa</span>
+              <button
+                onClick={() => setSuccessMessage('')}
+                className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <CheckCircle className="w-6 h-6 text-gold-500 flex-shrink-0" />
+                <p className="text-sm font-semibold text-gold-400">{successMessage}</p>
+              </div>
+              <p className="text-[10px] text-gold-500/60 uppercase tracking-wider">Barras registradas en bóveda</p>
+            </div>
+            <div className="px-5 pb-5 flex justify-end">
+              <button
+                onClick={() => setSuccessMessage('')}
+                className="py-2 px-4 bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs font-bold uppercase tracking-widest hover:bg-gold-500/30 transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

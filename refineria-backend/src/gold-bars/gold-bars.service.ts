@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGoldBarDto } from './dto/create-gold-bar.dto';
 import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
@@ -15,12 +15,6 @@ export class GoldBarsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateGoldBarDto) {
-    const existing = await this.prisma.goldBar.findFirst({
-      where: { code: dto.code },
-    });
-    if (existing) {
-      throw new ConflictException(`Ya existe una barra con el código "${dto.code}"`);
-    }
     const data = { ...dto, recovered: dto.recovered ?? 0 };
     return this.prisma.goldBar.create({ data });
   }
@@ -88,23 +82,6 @@ export class GoldBarsService {
     if (barsToCreate.length === 0) {
       throw new BadRequestException('No se encontraron barras válidas en el archivo');
     }
-
-    // Layer B — duplicados en la base de datos
-    const codes = barsToCreate.map((b) => b.code);
-    const existing = await this.prisma.goldBar.findMany({
-      where: { code: { in: codes } },
-      select: { code: true },
-    });
-
-    if (existing.length > 0) {
-      const conflictRows = existing
-        .map((e) => `"${e.code}" (fila ${codeRowMap.get(e.code)})`)
-        .join(', ');
-      throw new BadRequestException(
-        `Error: Los siguientes códigos ya existen en la base de datos: ${conflictRows}`,
-      );
-    }
-
     const prismaData = barsToCreate.map((b) => ({
       code: b.code,
       supplierId: b.supplierId,
