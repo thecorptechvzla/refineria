@@ -170,21 +170,22 @@ export default function IngresoPage() {
       };
     });
 
+    const TOTAL = 500;
     sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 1]);
-    for (let r = 3; r <= 7; r++) {
+    for (let r = 3; r <= TOTAL; r++) {
       sheet.addRow([null, null, null, { formula: `B${r}*C${r}/1000` }, null]);
     }
-    [2, 3, 4, 5, 6, 7].forEach((r) => {
+    [2, 3, 4, 5].forEach((r) => {
       const cell = sheet.getRow(r).getCell(4);
       cell.font = { italic: true, color: { argb: 'FF666666' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
     });
 
-    for (let r = 2; r <= 100; r++) {
+    for (let r = 2; r <= TOTAL; r++) {
       const cell = sheet.getRow(r).getCell(1);
       cell.dataValidation = {
         type: 'custom',
-        formulae: [`=COUNTIF($A$2:$A$100,$A${r})=1`],
+        formulae: [`=COUNTIF($A$2:$A$${TOTAL},$A${r})=1`],
         showErrorMessage: true,
         errorTitle: 'Código duplicado',
         error: 'Este código ya existe en la columna. Corrige antes de guardar.',

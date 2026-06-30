@@ -1,7 +1,24 @@
-import { IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
-export class UpdateLotDto {
+class UpdateBarLeyAgDto {
+  @IsString()
+  barId: string;
+
   @IsNumber()
   @Min(0)
-  recovered: number;
+  leyAg: number;
+}
+
+export class UpdateLotDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  recovered?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateBarLeyAgDto)
+  bars?: UpdateBarLeyAgDto[];
 }

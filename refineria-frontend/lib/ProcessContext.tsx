@@ -18,6 +18,7 @@ interface ProcessContextType {
   assignToLot: (processId: string, barIds: string[]) => Promise<ProcessLot>;
   updateProcessStatus: (processId: string, status: string) => Promise<Process>;
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<ProcessLot>;
+  saveLotBarsLeyAg: (processId: string, lotId: string, bars: { barId: string; leyAg: number }[]) => Promise<ProcessLot>;
 }
 
 const ProcessContext = createContext<ProcessContextType | null>(null);
@@ -100,6 +101,13 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
     [updateLotRecoveredMutation]
   );
 
+  const saveLotBarsLeyAg = useCallback(
+    async (processId: string, lotId: string, bars: { barId: string; leyAg: number }[]) => {
+      return updateLotRecoveredMutation.mutateAsync({ processId, lotId, bars });
+    },
+    [updateLotRecoveredMutation]
+  );
+
   return (
     <ProcessContext.Provider
       value={{
@@ -114,7 +122,8 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
         uploadFile,
         assignToLot,
         updateProcessStatus,
-        saveLotRecovered,
+          saveLotRecovered,
+          saveLotBarsLeyAg,
       }}
     >
       {children}

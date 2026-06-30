@@ -97,9 +97,28 @@ export class ProcessesService {
     });
     if (!lot) throw new NotFoundException(`Lot with id ${lotId} not found`);
 
+    const updateData: any = {};
+    if (dto.recovered !== undefined) {
+      updateData.recovered = dto.recovered;
+    }
+
+    if (dto.bars && dto.bars.length > 0) {
+      for (const bar of dto.bars) {
+        const goldBar = await this.prisma.goldBar.findUniqueOrThrow({
+          where: { id: bar.barId },
+          select: { grossWeight: true },
+        });
+        const analyticalAg = Number((goldBar.grossWeight * bar.leyAg / 1000).toFixed(2));
+        await this.prisma.goldBar.update({
+          where: { id: bar.barId },
+          data: { leyAg: bar.leyAg, analyticalAg },
+        });
+      }
+    }
+
     return this.prisma.processLot.update({
       where: { id: lotId },
-      data: { recovered: dto.recovered },
+      data: updateData,
     });
   }
 

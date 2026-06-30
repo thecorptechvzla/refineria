@@ -107,17 +107,20 @@ export function useUpdateLotRecovered() {
       processId,
       lotId,
       recovered,
+      bars,
     }: {
       processId: string;
       lotId: string;
-      recovered: number;
+      recovered?: number;
+      bars?: { barId: string; leyAg: number }[];
     }) =>
       api<ProcessLot>(`/processes/${processId}/lots/${lotId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ recovered }),
+        body: JSON.stringify({ recovered, bars }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['processes'] });
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
     },
   });
 }

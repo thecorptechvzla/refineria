@@ -22,7 +22,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
     { name: 'Ingreso de Material', href: '/ingreso', icon: ClipboardList, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Configuración de procesos', href: '/procesos', icon: Settings, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Exportar', href: '/exportar', icon: FileDown, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
-    { name: 'Insumos', href: '/insumos', icon: Package, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Inventario', href: '/insumos', icon: Package, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Administración', href: '/admin/usuarios', icon: Shield, allowedRoles: ['SUPERADMIN'] as const },
   ];
 

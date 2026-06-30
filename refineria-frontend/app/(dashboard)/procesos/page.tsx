@@ -29,6 +29,7 @@ function ProcessDetailView({
   onAssign,
   onMarkComplete,
   saveLotRecovered,
+  saveLotBarsLeyAg,
   uploadFile,
 }: {
   processDetail: ProcessDetail;
@@ -41,9 +42,11 @@ function ProcessDetailView({
   onAssign: (barIds: string[]) => void;
   onMarkComplete: () => Promise<void>;
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<unknown>;
+  saveLotBarsLeyAg: (processId: string, lotId: string, bars: { barId: string; leyAg: number }[]) => Promise<unknown>;
   uploadFile: (file: File) => Promise<{ url: string }>;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
+  const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
   const [closeWarning, setCloseWarning] = useState('');
   const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -69,6 +72,8 @@ function ProcessDetailView({
     setLotG(initial);
     setSavingG({});
     setSavedG({});
+    setSavingLeyAg({});
+    setEditingLeyAg({});
   }, [processDetail.id]);
 
   const isOpen = processDetail.status === 'open';
@@ -161,6 +166,43 @@ function ProcessDetailView({
     } finally {
       setSavingG((prev) => ({ ...prev, [lotId]: false }));
     }
+  };
+
+  const [savingLeyAg, setSavingLeyAg] = useState<Record<string, boolean>>({});
+  const [editingLeyAg, setEditingLeyAg] = useState<Record<string, boolean>>({});
+
+  const handleSaveLotLeyAg = async (lotId: string) => {
+    const lot = processDetail.lotDetails.find((l) => l.id === lotId);
+    if (!lot) return;
+
+    const typedValues = lotLeyAg[lotId] || {};
+
+    const entries = lot.bars
+      .map((bar) => {
+        const raw = typedValues[bar.id] ?? (bar.leyAg != null ? String(bar.leyAg) : '');
+        if (!raw || !raw.trim()) return null;
+        const parsed = parseLocaleNumber(raw);
+        if (isNaN(parsed)) return null;
+        return { barId: bar.id, leyAg: parsed };
+      })
+      .filter((b): b is { barId: string; leyAg: number } => b !== null);
+
+    if (entries.length === 0) return;
+
+    setSavingLeyAg((prev) => ({ ...prev, [lotId]: true }));
+    try {
+      await saveLotBarsLeyAg(processDetail.id, lotId, entries);
+      setEditingLeyAg((prev) => ({ ...prev, [lotId]: false }));
+    } catch {
+      setErrorMessage('Error al guardar Ley Ag');
+      setShakeKey((k) => k + 1);
+    } finally {
+      setSavingLeyAg((prev) => ({ ...prev, [lotId]: false }));
+    }
+  };
+
+  const handleEditLeyAg = (lotId: string) => {
+    setEditingLeyAg((prev) => ({ ...prev, [lotId]: true }));
   };
 
   const handleCloseClick = async () => {
@@ -259,38 +301,38 @@ function ProcessDetailView({
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Disponibles</h2>
               </div>
               <div className="p-4 sm:p-5 space-y-3">
-                {availableBars.length > 0 ? (
-                  <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-                    {availableBars.map((bar) => (
-                      <label
-                        key={bar.id}
-                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
-                          selectedBarIds.includes(bar.id)
-                            ? 'bg-gold-500/10 border-gold-500/30'
-                            : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedBarIds.includes(bar.id)}
-                          onChange={() => toggleBar(bar.id)}
-                          className="w-4 h-4 accent-gold-500"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-mono text-slate-200">{bar.code}</span>
-                            <span className="text-xs font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)} g</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
-                            <span>Ley: {bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</span>
-                            <span>E: {formatLocaleNumber(bar.analytical)}</span>
-                            <span>F: {formatLocaleNumber(bar.expected)}</span>
-                            <span>G: {formatLocaleNumber(bar.recovered)}</span>
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                    {availableBars.length > 0 ? (
+                      <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+                        {availableBars.map((bar) => (
+                          <label
+                            key={bar.id}
+                            className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all border ${
+                              selectedBarIds.includes(bar.id)
+                                ? 'bg-gold-500/10 border-gold-500/30'
+                                : 'bg-midnight-800/50 border-transparent hover:bg-midnight-800'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedBarIds.includes(bar.id)}
+                              onChange={() => toggleBar(bar.id)}
+                              className="w-4 h-4 accent-gold-500"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-mono text-slate-200">{bar.code}</span>
+                                <span className="text-xs font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)} g</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
+                                <span>Ley: {bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</span>
+                                <span>E: {formatLocaleNumber(bar.analytical)}</span>
+                                <span>F: {formatLocaleNumber(bar.expected)}</span>
+                                <span>G: {formatLocaleNumber(bar.recovered)}</span>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
                 ) : (
                   <p className="text-center text-sm text-slate-500 py-6">
                     No hay barras disponibles para este proveedor.
@@ -511,19 +553,49 @@ function ProcessDetailView({
                             <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Serial</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Bruto (g)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley (‰)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley Ag (‰)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ag (g)</th>
                             {isOpen && <th className="px-3 py-2" />}
                           </tr>
                         </thead>
                         <tbody>
-                          {lot.bars.map((bar) => (
+                          {lot.bars.map((bar) => {
+                            const leyAgVal = lotLeyAg[lot.id]?.[bar.id] ?? (bar.leyAg != null ? String(bar.leyAg) : '');
+                            const leyAgNum = parseLocaleNumber(leyAgVal);
+                            const calculatedAg = !isNaN(leyAgNum) && leyAgNum > 0
+                              ? bar.grossWeight * leyAgNum / 1000
+                              : (bar.analyticalAg ?? null);
+                            return (
                             <tr key={bar.id} className="terminal-row">
                               <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right">
+                                    {(isOpen || isInProgress) && (
+                                      <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={leyAgVal}
+                                        onChange={(e) => setLotLeyAg((prev) => ({
+                                          ...prev,
+                                          [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: e.target.value },
+                                        }))}
+                                        disabled={lot.bars.every((b) => b.leyAg != null) && !editingLeyAg[lot.id]}
+                                        className="w-16 px-1.5 py-0.5 bg-midnight-900 border border-blue-500/20 text-slate-200 text-[11px] font-mono text-center outline-none text-right disabled:opacity-50 disabled:cursor-not-allowed"
+                                        placeholder="—"
+                                      />
+                                    )}
+                                {!isOpen && !isInProgress && (
+                                  <span className="text-sm font-mono text-slate-400">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">
+                                {calculatedAg !== null ? formatLocaleNumber(calculatedAg) : '—'}
+                              </td>
                               <td className="px-3 py-2 whitespace-nowrap text-right">
                                 {isOpen && (confirmDeleteBarId === bar.id ? (
                                   <div className="flex items-center gap-1 justify-end">
@@ -551,9 +623,38 @@ function ProcessDetailView({
                                 ))}
                               </td>
                             </tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
+                      {(isOpen || isInProgress) && (
+                        <div className="flex justify-end px-3 py-2 border-t border-blue-500/10">
+                          {lot.bars.every((b) => b.leyAg != null) && !editingLeyAg[lot.id] ? (
+                            <button
+                              onClick={() => handleEditLeyAg(lot.id)}
+                              className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-wider hover:bg-amber-500/20 transition-all flex items-center gap-1"
+                            >
+                              <Save className="w-3 h-3" />
+                              Editar
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSaveLotLeyAg(lot.id)}
+                              disabled={savingLeyAg[lot.id]}
+                              className="px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                            >
+                              {savingLeyAg[lot.id] ? (
+                                <Save className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Save className="w-3 h-3" />
+                                  Guardar Ley Ag
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -699,7 +800,7 @@ function ProcessDetailView({
 }
 export default function ProcesosPage() {
   const { data: suppliers } = useSuppliers();
-  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, uploadFile, assignToLot, updateProcessStatus, saveLotRecovered } = useProcess();
+  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, uploadFile, assignToLot, updateProcessStatus, saveLotRecovered, saveLotBarsLeyAg } = useProcess();
 
   const [view, setView] = useState<PageView>('list');
   const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
@@ -924,6 +1025,7 @@ export default function ProcesosPage() {
           onAssign={handleAssign}
           onMarkComplete={handleMarkComplete}
           saveLotRecovered={saveLotRecovered}
+          saveLotBarsLeyAg={saveLotBarsLeyAg}
           uploadFile={uploadFile}
         />
       </div>

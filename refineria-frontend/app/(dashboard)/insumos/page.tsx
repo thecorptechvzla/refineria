@@ -211,6 +211,13 @@ export default function InsumosPage() {
     () => bulkRows.slice(bulkPage * BULK_PAGE_SIZE, (bulkPage + 1) * BULK_PAGE_SIZE),
     [bulkRows, bulkPage]
   );
+  const filledCount = useMemo(
+    () => bulkRows.filter((r) => {
+      if (gridMode === 'existing') return r.itemId && r.itemId !== '';
+      return r.name && r.name.trim() !== '';
+    }).length,
+    [bulkRows, gridMode]
+  );
 
   useEffect(() => {
     if (bulkPage >= totalBulkPages) {
@@ -583,19 +590,23 @@ export default function InsumosPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[35%]">
+                        <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8">#</th>
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[32%]">
                           {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
                         </th>
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[13%]">Categoría</th>
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[13%]">Unidad</th>
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Categoría</th>
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Unidad</th>
                         <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
                         <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[50px]">Cant.</th>
                         <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pageRows.map((row) => (
+                      {pageRows.map((row, idx) => (
                         <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
+                          <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
+                            {String(bulkPage * BULK_PAGE_SIZE + idx + 1).padStart(2, '0')}
+                          </td>
                           <td className="py-1.5 px-3">
                             {bulkType === 'OUT' || gridMode === 'existing' ? (
                               <select
@@ -606,7 +617,7 @@ export default function InsumosPage() {
                                 <option value="">Seleccionar...</option>
                                 {items?.map((it) => (
                                   <option key={it.id} value={it.id}>
-                                    {it.code} — {it.name}
+                                    {it.code} — {it.name}  [{it.currentStock}]
                                   </option>
                                 ))}
                               </select>
@@ -729,8 +740,8 @@ export default function InsumosPage() {
                     }`}
                   >
                     {createBulkTx.isPending
-                      ? 'Registrando...'
-                      : `Registrar ${bulkType === 'IN' ? 'Cargos' : 'Descargos'}`}
+                      ? '▶ EJECUTANDO...'
+                      : `▶ EJECUTAR ${filledCount} ${bulkType === 'IN' ? 'CARGOS' : 'DESCARGOS'}`}
                   </button>
                 </div>
               </form>
