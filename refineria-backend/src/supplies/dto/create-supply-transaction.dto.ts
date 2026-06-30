@@ -1,4 +1,4 @@
-import { IsEnum, IsString, IsInt, Min, IsOptional } from 'class-validator';
+import { IsEnum, IsString, IsInt, Min, IsNotEmpty } from 'class-validator';
 import { SupplyTransactionType } from '../../generated/prisma/client';
 
 export class CreateSupplyTransactionDto {
@@ -12,7 +12,7 @@ export class CreateSupplyTransactionDto {
   @Min(1)
   quantity: number;
 
-  @IsOptional()
   @IsString()
-  reference?: string;
+  @IsNotEmpty()
+  reference: string;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect, useMemo } from 'react';
 import {
   useSupplyItems,
   useCreateSupplyItem,
@@ -23,9 +23,13 @@ import {
   AlertCircle,
   Trash2,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | null;
+
+const BULK_PAGE_SIZE = 20;
 
 const tabs: { label: string; value: CategoryFilter }[] = [
   { label: 'OPERACIONES', value: 'OPERATIONS' },
@@ -44,19 +48,21 @@ export default function InsumosPage() {
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkType, setBulkType] = useState<SupplyTransactionType>('IN');
+  const [gridMode, setGridMode] = useState<'existing' | 'new'>('existing');
   const [bulkDestination, setBulkDestination] = useState('');
   const [bulkRows, setBulkRows] = useState<{
     key: number;
-    mode: 'existing' | 'new';
     itemId?: string;
     name?: string;
     category?: string;
     unit?: string;
+    criticalLevel?: string;
     quantity: string;
   }[]>([]);
   const [bulkRowKey, setBulkRowKey] = useState(0);
   const [bulkError, setBulkError] = useState('');
   const [bulkShake, setBulkShake] = useState(0);
+  const [bulkPage, setBulkPage] = useState(0);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCode, setNewCode] = useState('');
@@ -112,16 +118,18 @@ export default function InsumosPage() {
 
   const resetBulkForm = () => {
     setBulkType('IN');
+    setGridMode('existing');
     setBulkDestination('');
     setBulkRows([]);
     setBulkRowKey(0);
+    setBulkPage(0);
     setBulkError('');
   };
 
   const handleBulkTypeChange = (newType: SupplyTransactionType) => {
     setBulkType(newType);
-    setBulkRows([]);
-    setBulkRowKey(0);
+    if (newType === 'OUT') setGridMode('existing');
+    initBulkRows();
     setBulkError('');
   };
 
@@ -130,42 +138,116 @@ export default function InsumosPage() {
     setBulkRowKey(nextKey);
     setBulkRows([
       ...bulkRows,
-      { key: nextKey, mode: 'existing', itemId: '', quantity: '1' },
+      { key: nextKey, itemId: '', criticalLevel: '1', quantity: '1' },
     ]);
   };
 
   const updateBulkRow = (key: number, field: string, value: string) => {
-    setBulkRows(bulkRows.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
+    setBulkRows((prev) => {
+      const updated = prev.map((r) => (r.key === key ? { ...r, [field]: value } : r));
+      const last = updated[updated.length - 1];
+      if (last.key === key && key === prev[prev.length - 1].key) {
+        const hasContent = gridMode === 'existing'
+          ? (field === 'itemId' && value !== '')
+          : (field === 'name' && value.trim().length >= 1);
+        if (hasContent) {
+          const nextKey = Math.max(...prev.map((r) => r.key), 0) + 1;
+          updated.push({
+            key: nextKey,
+            itemId: '',
+            criticalLevel: '1',
+            quantity: '1',
+          });
+        }
+      }
+      return updated;
+    });
+  };
+
+  const handleItemSelect = (rowKey: number, itemId: string) => {
+    const item = items?.find((i) => i.id === itemId);
+    setBulkRows((prev) =>
+      prev.map((r) =>
+        r.key === rowKey
+          ? {
+              ...r,
+              itemId,
+              name: item?.name || r.name,
+              category: item?.category || r.category,
+              unit: item?.unit || r.unit,
+              criticalLevel: String(item?.criticalLevel ?? r.criticalLevel ?? '1'),
+            }
+          : r
+      )
+    );
   };
 
   const removeBulkRow = (key: number) => {
     setBulkRows(bulkRows.filter((r) => r.key !== key));
   };
 
+  const initBulkRows = () => {
+    const rows = Array.from({ length: 5 }, (_, i) => ({
+      key: i,
+      itemId: '',
+      criticalLevel: '1',
+      quantity: '1',
+    }));
+    setBulkRows(rows);
+    setBulkRowKey(5);
+    setBulkPage(0);
+  };
+
+  const handleGridModeChange = (mode: 'existing' | 'new') => {
+    setGridMode(mode);
+    initBulkRows();
+  };
+
+  const totalBulkPages = useMemo(
+    () => Math.max(1, Math.ceil(bulkRows.length / BULK_PAGE_SIZE)),
+    [bulkRows.length]
+  );
+  const pageRows = useMemo(
+    () => bulkRows.slice(bulkPage * BULK_PAGE_SIZE, (bulkPage + 1) * BULK_PAGE_SIZE),
+    [bulkRows, bulkPage]
+  );
+
+  useEffect(() => {
+    if (bulkPage >= totalBulkPages) {
+      setBulkPage(Math.max(0, totalBulkPages - 1));
+    }
+  }, [bulkRows.length, bulkPage, totalBulkPages]);
+
   const handleBulkSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBulkError('');
 
-    if (bulkRows.length === 0) {
+    const filledRows = bulkRows.filter((r) => {
+      if (gridMode === 'existing') return r.itemId && r.itemId !== '';
+      return r.name && r.name.trim() !== '';
+    });
+
+    if (filledRows.length === 0) {
       setBulkShake((k) => k + 1);
       setBulkError('Agrega al menos un insumo.');
       return;
     }
 
-    const items = bulkRows.map((r) => {
-      if (r.mode === 'existing') {
+    const items = filledRows.map((r) => {
+      if (gridMode === 'existing') {
         return { itemId: r.itemId || '', quantity: parseInt(r.quantity, 10) };
       }
       return {
         name: r.name || '',
         category: (r.category || 'OPERATIONS') as SupplyCategory,
         unit: r.unit || 'UNIDAD',
+        criticalLevel: parseInt(r.criticalLevel || '1', 10),
         quantity: parseInt(r.quantity, 10),
       };
     });
 
     const invalid = items.find((r) => {
-      if ('itemId' in r) return !r.itemId || r.quantity < 1;
+      if (gridMode === 'existing') return !r.itemId || r.quantity < 1;
       return !r.name || !r.category || r.quantity < 1;
     });
 
@@ -408,25 +490,25 @@ export default function InsumosPage() {
           )}
 
           {bulkOpen && (
-            <div className="glass-panel">
-              <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
+            <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 rounded-none border-0">
+              <div className="flex-shrink-0 p-4 border-b border-blue-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4 text-blue-400" />
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">Cargos / Descargos</h2>
+                  <ArrowUpDown className="w-5 h-5 text-blue-400" />
+                  <h2 className="text-base font-bold text-white uppercase tracking-wider">Cargos / Descargos</h2>
                 </div>
                 <button
                   onClick={() => { setBulkOpen(false); resetBulkForm(); }}
                   className="text-slate-500 hover:text-slate-300 transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleBulkSubmit} className="p-4 sm:p-5 space-y-4">
+              <form onSubmit={handleBulkSubmit} className="flex flex-col flex-1 min-h-0 p-4 sm:p-5 gap-4">
                 {bulkError && (
                   <div
                     key={bulkShake}
-                    className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
+                    className="flex-shrink-0 bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
                     style={{ animation: 'shake 0.4s ease-in-out' }}
                   >
                     <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -434,92 +516,92 @@ export default function InsumosPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Tipo
-                  </label>
-                  <select
-                    value={bulkType}
-                    onChange={(e) => handleBulkTypeChange(e.target.value as SupplyTransactionType)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                  >
-                    <option value="IN">Entrada (CARGO)</option>
-                    <option value="OUT">Salida (DESCARGO)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Destino / Referencia
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={bulkDestination}
-                    onChange={(e) => setBulkDestination(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="Ej. Transferencia a Planta, Devolución"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-                      Insumos
+                <div className="flex-shrink-0 flex gap-3">
+                  <div className="w-1/3">
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                      Tipo
                     </label>
-                    <button
-                      type="button"
-                      onClick={addBulkRow}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 transition-all"
+                    <select
+                      value={bulkType}
+                      onChange={(e) => handleBulkTypeChange(e.target.value as SupplyTransactionType)}
+                      className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
                     >
-                      <Plus className="w-3 h-3" />
-                      Agregar
-                    </button>
+                      <option value="IN">CARGO</option>
+                      <option value="OUT">DESCARGO</option>
+                    </select>
                   </div>
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                      Destino / Referencia
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bulkDestination}
+                      onChange={(e) => setBulkDestination(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+                      placeholder="Ej. Transferencia a Planta, Devolución"
+                    />
+                  </div>
+                </div>
 
-                  {bulkRows.length === 0 && (
-                    <p className="text-[10px] text-slate-500 text-center py-3">
-                      Agrega al menos un insumo.
-                    </p>
-                  )}
+                {bulkType === 'IN' && (
+                  <div className="flex-shrink-0">
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                      Modo de Ingreso
+                    </label>
+                    <div className="bg-midnight-800 p-1 rounded-md inline-flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleGridModeChange('new')}
+                        className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                          gridMode === 'new'
+                            ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        Crear Nuevos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleGridModeChange('existing')}
+                        className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                          gridMode === 'existing'
+                            ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        Usar Existentes
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                  {bulkRows.map((row) => (
-                    <div key={row.key} className="space-y-2 p-3 bg-midnight-800/30 border border-blue-500/5">
-                      {bulkType === 'IN' && (
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateBulkRow(row.key, 'mode', 'existing')}
-                            className={`flex-1 py-1 text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                              row.mode === 'existing'
-                                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                                : 'bg-midnight-800/50 border-blue-500/10 text-slate-500 hover:text-slate-300'
-                            }`}
-                          >
-                            Ítem Existente
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateBulkRow(row.key, 'mode', 'new')}
-                            className={`flex-1 py-1 text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                              row.mode === 'new'
-                                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
-                                : 'bg-midnight-800/50 border-blue-500/10 text-slate-500 hover:text-slate-300'
-                            }`}
-                          >
-                            Nuevo Ítem
-                          </button>
-                        </div>
-                      )}
+                <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
 
-                      <div className="flex items-start gap-2">
-                        {row.mode === 'existing' ? (
-                          <>
-                            <div className="flex-1">
+                <div className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[35%]">
+                          {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
+                        </th>
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[13%]">Categoría</th>
+                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[13%]">Unidad</th>
+                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
+                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[50px]">Cant.</th>
+                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageRows.map((row) => (
+                        <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
+                          <td className="py-1.5 px-3">
+                            {bulkType === 'OUT' || gridMode === 'existing' ? (
                               <select
                                 value={row.itemId || ''}
-                                onChange={(e) => updateBulkRow(row.key, 'itemId', e.target.value)}
-                                className="w-full px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none"
+                                onChange={(e) => handleItemSelect(row.key, e.target.value)}
+                                className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
                               >
                                 <option value="">Seleccionar...</option>
                                 {items?.map((it) => (
@@ -528,78 +610,129 @@ export default function InsumosPage() {
                                   </option>
                                 ))}
                               </select>
-                            </div>
-                            <div className="w-20 flex-shrink-0">
+                            ) : (
                               <input
-                                type="number"
-                                min="1"
-                                value={row.quantity}
-                                onChange={(e) => updateBulkRow(row.key, 'quantity', e.target.value)}
-                                className="w-full px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none text-center"
+                                type="text"
+                                value={row.name || ''}
+                                onChange={(e) => updateBulkRow(row.key, 'name', e.target.value)}
+                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600 py-2"
+                                placeholder="Nombre del artículo"
                               />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex-1 space-y-2">
-                            <input
-                              type="text"
-                              value={row.name || ''}
-                              onChange={(e) => updateBulkRow(row.key, 'name', e.target.value)}
-                              className="w-full px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none"
-                              placeholder="Nombre del artículo"
-                            />
-                            <div className="flex gap-2">
+                            )}
+                          </td>
+                          <td className="py-1.5 px-3">
+                            {bulkType === 'IN' && gridMode === 'new' ? (
                               <select
                                 value={row.category || 'OPERATIONS'}
                                 onChange={(e) => updateBulkRow(row.key, 'category', e.target.value)}
-                                className="flex-1 px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none"
+                                className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
                               >
                                 <option value="OPERATIONS">Operaciones</option>
-                                <option value="GENERAL_SERVICES">Servicios Generales</option>
+                                <option value="GENERAL_SERVICES">Gral. Servicios</option>
                               </select>
+                            ) : gridMode === 'existing' && row.itemId ? (
+                              <span className="text-slate-400 text-xs">{row.category}</span>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-1.5 px-3">
+                            {bulkType === 'IN' && gridMode === 'new' ? (
                               <input
                                 type="text"
-                                value={row.unit || 'UNIDAD'}
+                                value={row.unit || ''}
                                 onChange={(e) => updateBulkRow(row.key, 'unit', e.target.value)}
-                                className="flex-1 px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none"
-                                placeholder="Unidad"
+                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600"
+                                placeholder="UNIDAD"
                               />
-                            </div>
+                            ) : gridMode === 'existing' && row.itemId ? (
+                              <span className="text-slate-400 text-xs">{row.unit}</span>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-1.5 px-3 text-center">
+                            {bulkType === 'IN' && gridMode === 'new' ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.criticalLevel || '1'}
+                                onChange={(e) => updateBulkRow(row.key, 'criticalLevel', e.target.value)}
+                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
+                              />
+                            ) : gridMode === 'existing' && row.itemId ? (
+                              <span className="text-slate-400 text-xs">{row.criticalLevel}</span>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-1.5 px-3 text-center">
                             <input
                               type="number"
                               min="1"
                               value={row.quantity}
                               onChange={(e) => updateBulkRow(row.key, 'quantity', e.target.value)}
-                              className="w-full px-2 py-2 bg-midnight-800 border border-blue-500/20 text-slate-200 text-xs outline-none text-center"
+                              className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
                             />
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeBulkRow(row.key)}
-                          className="p-2 text-red-400 hover:bg-red-500/10 transition-all rounded-sm flex-shrink-0"
-                          title="Quitar insumo"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                          </td>
+                          <td className="py-1.5 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeBulkRow(row.key)}
+                              className="text-red-400 hover:text-red-300 transition-colors"
+                              title="Quitar fila"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={createBulkTx.isPending}
-                  className={`w-full py-2.5 text-xs font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
-                    bulkType === 'IN'
-                      ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
-                      : 'bg-red-500 text-white hover:bg-red-400'
-                  }`}
-                >
-                  {createBulkTx.isPending
-                    ? 'Registrando...'
-                    : `Registrar ${bulkType === 'IN' ? 'Cargos' : 'Descargos'}`}
-                </button>
+                <div className="flex-shrink-0 flex items-center justify-between border-t border-blue-500/10 px-1 pt-3 pb-2">
+                  <span className="text-[10px] font-mono text-slate-500">
+                    {bulkRows.length} filas
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={bulkPage === 0}
+                      onClick={() => setBulkPage(bulkPage - 1)}
+                      className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
+                      {bulkPage + 1}/{totalBulkPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={bulkPage >= totalBulkPages - 1}
+                      onClick={() => setBulkPage(bulkPage + 1)}
+                      className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0 pt-1">
+                  <button
+                    type="submit"
+                    disabled={createBulkTx.isPending}
+                    className={`w-full py-3 text-sm font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
+                      bulkType === 'IN'
+                        ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
+                        : 'bg-red-500 text-white hover:bg-red-400'
+                    }`}
+                  >
+                    {createBulkTx.isPending
+                      ? 'Registrando...'
+                      : `Registrar ${bulkType === 'IN' ? 'Cargos' : 'Descargos'}`}
+                  </button>
+                </div>
               </form>
             </div>
           )}
@@ -723,7 +856,7 @@ export default function InsumosPage() {
                   {String(items?.length ?? 0).padStart(2, '0')}
                 </span>
                 <button
-                  onClick={() => { setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
+                  onClick={() => { initBulkRows(); setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
                   className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20"
                 >
                   <ArrowUpDown className="w-3 h-3" />
