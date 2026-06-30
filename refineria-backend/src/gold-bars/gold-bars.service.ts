@@ -36,15 +36,24 @@ export class GoldBarsService {
 
     const result: BulkResult = { created: 0, skipped: 0, errors: [] };
     const barsToCreate: CreateGoldBarDto[] = [];
+    const codeRowMap = new Map<string, number>();
 
     for (let rowNumber = 3; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
 
-      const nVal = row.getCell(5).value;
+      const nVal = row.getCell(1).value;
       if (nVal == null || nVal === '') continue;
 
       const code = String(nVal).trim();
       if (!code || /^(TOTAL|RESUMEN|SUBTOTAL|SUM|total|resumen)$/i.test(code)) continue;
+
+      // Layer A — duplicados dentro del archivo
+      if (codeRowMap.has(code)) {
+        throw new BadRequestException(
+          `Error: El código "${code}" está duplicado en la fila ${rowNumber} del archivo (primera aparición: fila ${codeRowMap.get(code)})`,
+        );
+      }
+      codeRowMap.set(code, rowNumber);
 
       const grossWeight = this.parseNumericCell(row.getCell(2));
       if (grossWeight == null || grossWeight <= 0) {
@@ -76,6 +85,22 @@ export class GoldBarsService {
       throw new BadRequestException('No se encontraron barras válidas en el archivo');
     }
 
+    // Layer B — duplicados en la base de datos
+    const codes = barsToCreate.map((b) => b.code);
+    const existing = await this.prisma.goldBar.findMany({
+      where: { code: { in: codes } },
+      select: { code: true },
+    });
+
+    if (existing.length > 0) {
+      const conflictRows = existing
+        .map((e) => `"${e.code}" (fila ${codeRowMap.get(e.code)})`)
+        .join(', ');
+      throw new BadRequestException(
+        `Error: Los siguientes códigos ya existen en la base de datos: ${conflictRows}`,
+      );
+    }
+
     const prismaData = barsToCreate.map((b) => ({
       code: b.code,
       supplierId: b.supplierId,
@@ -86,14 +111,9 @@ export class GoldBarsService {
       recovered: 0,
     }));
 
-    const resultCreate = await this.prisma.goldBar.createMany({
-      data: prismaData,
-      skipDuplicates: true,
-    });
+    const resultCreate = await this.prisma.goldBar.createMany({ data: prismaData });
 
     result.created = resultCreate.count;
-    result.skipped = barsToCreate.length - resultCreate.count;
-
     return result;
   }
 

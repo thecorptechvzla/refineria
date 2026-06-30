@@ -86,7 +86,7 @@ enum ProcessStatus {
 
 model GoldBar {
   id               String   @id @default(uuid())
-  code             String   @map("code")
+  code             String   @unique @map("code")
   supplierId       String   @map("supplier_id")
   grossWeight      Float    @map("gross_weight")
   ley              Float?   @map("ley")

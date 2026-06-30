@@ -29,6 +29,7 @@ export default function IngresoPage() {
   const [showBulk, setShowBulk] = useState(false);
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkError, setBulkError] = useState('');
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const bulkUpload = useBulkUpload();
 
@@ -128,8 +129,8 @@ export default function IngresoPage() {
     try {
       const result = await bulkUpload.mutateAsync(formData);
       const msg = result.errors.length > 0
-        ? `Se insertaron ${result.created} barras. Se omitieron ${result.skipped} por código duplicado. ${result.errors.length} error(es) en el archivo.`
-        : `Se insertaron ${result.created} barras correctamente.${result.skipped > 0 ? ` Se omitieron ${result.skipped} por código duplicado.` : ''}`;
+        ? `Se insertaron ${result.created} barras. ${result.errors.length} fila(s) con errores de formato.`
+        : `Se insertaron ${result.created} barras correctamente.`;
       setSuccessMessage(msg);
       setBulkFile(null);
       setBulkSupplierId('');
@@ -137,6 +138,7 @@ export default function IngresoPage() {
       setTimeout(() => setSuccessMessage(''), 6000);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al procesar la carga masiva';
+      setBulkError(msg);
       setErrorMessage(msg);
       setShakeKey((k) => k + 1);
     }
@@ -148,7 +150,7 @@ export default function IngresoPage() {
     const sheet = workbook.addWorksheet('Barras');
 
     sheet.columns = [
-      { header: 'N', width: 10 },
+      { header: 'CÓDIGO', width: 14, numFmt: '@' },
       { header: 'PESO BRUTO (g)', width: 18 },
       { header: 'LEY Au (‰)', width: 14 },
       { header: 'PESO FINO Au (g)', width: 20 },
@@ -168,12 +170,26 @@ export default function IngresoPage() {
       };
     });
 
-    const formulaRow = sheet.addRow([1, 1000, 900, { formula: 'REDONDEAR(B2*C2/1000;2)' }, 'LOTE 1']);
-    [4].forEach((col) => {
-      const cell = formulaRow.getCell(col);
+    sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 1]);
+    for (let r = 3; r <= 7; r++) {
+      sheet.addRow([null, null, null, { formula: `B${r}*C${r}/1000` }, null]);
+    }
+    [2, 3, 4, 5, 6, 7].forEach((r) => {
+      const cell = sheet.getRow(r).getCell(4);
       cell.font = { italic: true, color: { argb: 'FF666666' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
     });
+
+    for (let r = 2; r <= 100; r++) {
+      const cell = sheet.getRow(r).getCell(1);
+      cell.dataValidation = {
+        type: 'custom',
+        formulae: [`=COUNTIF($A$2:$A$100,$A${r})=1`],
+        showErrorMessage: true,
+        errorTitle: 'Código duplicado',
+        error: 'Este código ya existe en la columna. Corrige antes de guardar.',
+      };
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -448,7 +464,7 @@ export default function IngresoPage() {
                 </div>
 
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                  El archivo debe tener las columnas: <span className="text-slate-300 font-mono">N, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g), LOTE N°</span>.
+                    El archivo debe tener las columnas: <span className="text-slate-300 font-mono">CÓDIGO, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g)</span>.
                   Descarga la plantilla para ver el formato exacto.
                 </p>
               </div>
@@ -571,6 +587,33 @@ export default function IngresoPage() {
           </div>
         </div>
       </div>
+
+      {bulkError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/90">
+          <div className="bg-midnight-800 border border-red-500/30 w-full max-w-lg mx-4">
+            <div className="p-4 border-b border-red-500/10 flex items-center justify-between">
+              <span className="text-xs font-bold text-red-400 uppercase tracking-widest">Error de carga masiva</span>
+              <button
+                onClick={() => setBulkError('')}
+                className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-red-400 font-mono leading-relaxed whitespace-pre-wrap">{bulkError}</p>
+            </div>
+            <div className="px-5 pb-5 flex justify-end">
+              <button
+                onClick={() => setBulkError('')}
+                className="py-2 px-4 bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

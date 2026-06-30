@@ -106,6 +106,36 @@ export class SuppliesService {
   }
 
   async createBulkTransaction(dto: CreateBulkSupplyTransactionDto) {
+    // ---- Pre-validación de duplicados (items nuevos) ----
+    const newItems = dto.items.filter((i) => dto.type === 'IN' && !i.itemId && i.name);
+
+    if (newItems.length > 0) {
+      // Layer A — nombres duplicados dentro del mismo lote
+      const seen = new Set<string>();
+      for (const item of newItems) {
+        const key = item.name!.trim().toLowerCase();
+        if (seen.has(key)) {
+          throw new BadRequestException(
+            `Error: El insumo "${item.name}" está duplicado dentro del mismo lote.`,
+          );
+        }
+        seen.add(key);
+      }
+
+      // Layer B — nombres que ya existen en la base de datos
+      const names = [...seen];
+      const existing = await this.prisma.supplyItem.findMany({
+        where: { name: { in: names, mode: 'insensitive' } },
+        select: { name: true },
+      });
+
+      if (existing.length > 0) {
+        throw new BadRequestException(
+          `Error: Ya existe(n) insumo(s) con el mismo nombre: ${existing.map((e) => `"${e.name}"`).join(', ')}`,
+        );
+      }
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const transactions = [];
 
