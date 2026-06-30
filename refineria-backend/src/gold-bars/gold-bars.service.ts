@@ -40,7 +40,7 @@ export class GoldBarsService {
     for (let rowNumber = 3; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
 
-      const nVal = row.getCell(8).value;
+      const nVal = row.getCell(5).value;
       if (nVal == null || nVal === '') continue;
 
       const code = String(nVal).trim();
@@ -61,9 +61,6 @@ export class GoldBarsService {
       const analytical = Number((grossWeight * ley / 1000).toFixed(2));
       const expected = analytical * 0.99;
 
-      const leyAg = this.parseNumericCell(row.getCell(6));
-      const analyticalAg = leyAg != null && leyAg > 0 ? grossWeight * leyAg / 1000 : undefined;
-
       barsToCreate.push({
         code,
         supplierId,
@@ -72,8 +69,6 @@ export class GoldBarsService {
         analytical,
         expected,
         recovered: 0,
-        leyAg: leyAg ?? undefined,
-        analyticalAg,
       });
     }
 
@@ -89,8 +84,6 @@ export class GoldBarsService {
       analytical: b.analytical,
       expected: b.expected,
       recovered: 0,
-      leyAg: b.leyAg,
-      analyticalAg: b.analyticalAg,
     }));
 
     const resultCreate = await this.prisma.goldBar.createMany({

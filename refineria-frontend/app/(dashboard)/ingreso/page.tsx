@@ -152,9 +152,6 @@ export default function IngresoPage() {
       { header: 'PESO BRUTO (g)', width: 18 },
       { header: 'LEY Au (‰)', width: 14 },
       { header: 'PESO FINO Au (g)', width: 20 },
-      { header: 'PESO FINO ESP. (-1%)', width: 22 },
-      { header: 'LEY Ag (‰)', width: 14 },
-      { header: 'PESO FINO Ag (g)', width: 18 },
       { header: 'LOTE N°', width: 12 },
     ];
 
@@ -171,8 +168,8 @@ export default function IngresoPage() {
       };
     });
 
-    const formulaRow = sheet.addRow([1, 1000, 900, { formula: 'REDONDEAR(B2*C2/1000;2)' }, { formula: 'D2*0.99' }, 50, { formula: 'B2*F2/1000' }, 'LOTE 1']);
-    [4, 5, 7].forEach((col) => {
+    const formulaRow = sheet.addRow([1, 1000, 900, { formula: 'REDONDEAR(B2*C2/1000;2)' }, 'LOTE 1']);
+    [4].forEach((col) => {
       const cell = formulaRow.getCell(col);
       cell.font = { italic: true, color: { argb: 'FF666666' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
@@ -451,7 +448,7 @@ export default function IngresoPage() {
                 </div>
 
                 <p className="text-[10px] text-slate-500 leading-relaxed">
-                  El archivo debe tener las columnas: <span className="text-slate-300 font-mono">N, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g), PESO FINO ESP. (-1%), LEY Ag (‰), PESO FINO Ag (g), LOTE N°</span>.
+                  El archivo debe tener las columnas: <span className="text-slate-300 font-mono">N, PESO BRUTO (g), LEY Au (‰), PESO FINO Au (g), LOTE N°</span>.
                   Descarga la plantilla para ver el formato exacto.
                 </p>
               </div>
