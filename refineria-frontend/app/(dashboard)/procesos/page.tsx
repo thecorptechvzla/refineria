@@ -640,8 +640,8 @@ function ProcessDetailView({
                           </tr>
                         </thead>
                         <tbody>
-                          {lot.bars.map((bar) => {
-                            const leyAgVal = lotLeyAg[lot.id]?.[bar.id] ?? (bar.leyAg != null ? String(bar.leyAg) : '');
+                           {[...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                             const leyAgVal = lotLeyAg[lot.id]?.[bar.id] ?? (bar.leyAg != null ? String(bar.leyAg) : '');
                             const leyAgNum = parseLocaleNumber(leyAgVal);
                             const calculatedAg = !isNaN(leyAgNum) && leyAgNum > 0
                               ? bar.grossWeight * leyAgNum / 1000
