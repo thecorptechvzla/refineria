@@ -167,13 +167,15 @@ export function useSaveActaUrl() {
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
+      const uniqueFilename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+
       const tokenRes = await fetch('/api/blob/upload', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           type: 'blob.generate-client-token',
           payload: {
-            pathname: file.name,
+            pathname: uniqueFilename,
             clientPayload: null,
             multipart: false,
           },
@@ -187,7 +189,7 @@ export function useUploadFile() {
 
       const { clientToken } = await tokenRes.json();
       const storeId = clientToken.split('_')[3];
-      const params = new URLSearchParams({ pathname: file.name });
+      const params = new URLSearchParams({ pathname: uniqueFilename });
 
       const uploadRes = await fetch(`https://vercel.com/api/blob/?${params.toString()}`, {
         method: 'PUT',
