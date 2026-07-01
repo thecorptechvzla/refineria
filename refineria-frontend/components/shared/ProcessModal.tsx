@@ -172,7 +172,7 @@ export function ProcessModal({
                       </tr>
                     </thead>
                     <tbody>
-                      {lot.bars.map((bar) => (
+                      {[...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => (
                         <tr key={bar.id} className="terminal-row">
                           <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
                           <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
