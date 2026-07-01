@@ -95,6 +95,20 @@ export class GoldBarsService {
 
     const resultCreate = await this.prisma.goldBar.createMany({ data: prismaData });
 
+    const totalWeight = barsToCreate.reduce((s, b) => s + b.grossWeight, 0);
+    const totalAnalytical = barsToCreate.reduce((s, b) => s + b.analytical, 0);
+    const avgPurity = totalWeight > 0 ? totalAnalytical / totalWeight : 0;
+
+    await this.prisma.transaction.create({
+      data: {
+        type: 'IN',
+        weight: totalWeight,
+        weightUnit: 'g',
+        purity: avgPurity,
+        supplierId,
+      },
+    });
+
     result.created = resultCreate.count;
     return result;
   }

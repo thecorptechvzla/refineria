@@ -78,6 +78,7 @@ export function useBulkUpload() {
       apiUpload<BulkUploadResult>('/gold-bars/bulk-upload', formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 }
