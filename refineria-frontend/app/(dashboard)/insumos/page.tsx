@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { useState, FormEvent, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import {
   useSupplyItems,
   useCreateSupplyItem,
@@ -29,8 +29,6 @@ import {
 
 type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | null;
 
-const BULK_PAGE_SIZE = 20;
-
 const tabs: { label: string; value: CategoryFilter }[] = [
   { label: 'OPERACIONES', value: 'OPERATIONS' },
   { label: 'SERVICIOS GENERALES', value: 'GENERAL_SERVICES' },
@@ -40,6 +38,8 @@ const tabs: { label: string; value: CategoryFilter }[] = [
 export default function InsumosPage() {
   const { user } = useGold();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
+  const tableBodyRef = useRef<HTMLDivElement>(null);
+  const [bulkPageSize, setBulkPageSize] = useState(20);
   const { data: items } = useSupplyItems(category ?? undefined);
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
@@ -48,7 +48,7 @@ export default function InsumosPage() {
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkType, setBulkType] = useState<SupplyTransactionType>('IN');
-  const [gridMode, setGridMode] = useState<'existing' | 'new'>('existing');
+  const [gridMode, setGridMode] = useState<'existing' | 'new'>('new');
   const [bulkDestination, setBulkDestination] = useState('');
   const [bulkRows, setBulkRows] = useState<{
     key: number;
@@ -63,6 +63,15 @@ export default function InsumosPage() {
   const [bulkError, setBulkError] = useState('');
   const [bulkShake, setBulkShake] = useState(0);
   const [bulkPage, setBulkPage] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!bulkOpen || !tableBodyRef.current) return;
+    const container = tableBodyRef.current;
+    const rowHeight = 42;
+    const available = container.clientHeight;
+    const pages = Math.max(5, Math.floor(available / rowHeight));
+    setBulkPageSize(pages);
+  }, [bulkOpen]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCode, setNewCode] = useState('');
@@ -118,7 +127,7 @@ export default function InsumosPage() {
 
   const resetBulkForm = () => {
     setBulkType('IN');
-    setGridMode('existing');
+    setGridMode('new');
     setBulkDestination('');
     setBulkRows([]);
     setBulkRowKey(0);
@@ -128,7 +137,7 @@ export default function InsumosPage() {
 
   const handleBulkTypeChange = (newType: SupplyTransactionType) => {
     setBulkType(newType);
-    if (newType === 'OUT') setGridMode('existing');
+    setGridMode(newType === 'OUT' ? 'existing' : 'new');
     initBulkRows();
     setBulkError('');
   };
@@ -187,14 +196,8 @@ export default function InsumosPage() {
   };
 
   const initBulkRows = () => {
-    const rows = Array.from({ length: 5 }, (_, i) => ({
-      key: i,
-      itemId: '',
-      criticalLevel: '1',
-      quantity: '1',
-    }));
-    setBulkRows(rows);
-    setBulkRowKey(5);
+    setBulkRows([{ key: 0, itemId: '', criticalLevel: '1', quantity: '1' }]);
+    setBulkRowKey(1);
     setBulkPage(0);
   };
 
@@ -204,12 +207,12 @@ export default function InsumosPage() {
   };
 
   const totalBulkPages = useMemo(
-    () => Math.max(1, Math.ceil(bulkRows.length / BULK_PAGE_SIZE)),
-    [bulkRows.length]
+    () => Math.max(1, Math.ceil(bulkRows.length / bulkPageSize)),
+    [bulkRows.length, bulkPageSize]
   );
   const pageRows = useMemo(
-    () => bulkRows.slice(bulkPage * BULK_PAGE_SIZE, (bulkPage + 1) * BULK_PAGE_SIZE),
-    [bulkRows, bulkPage]
+    () => bulkRows.slice(bulkPage * bulkPageSize, (bulkPage + 1) * bulkPageSize),
+    [bulkRows, bulkPage, bulkPageSize]
   );
   const filledCount = useMemo(
     () => bulkRows.filter((r) => {
@@ -224,6 +227,15 @@ export default function InsumosPage() {
       setBulkPage(Math.max(0, totalBulkPages - 1));
     }
   }, [bulkRows.length, bulkPage, totalBulkPages]);
+
+  useEffect(() => {
+    if (!bulkOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBulkOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [bulkOpen]);
 
   const handleBulkSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -495,7 +507,7 @@ export default function InsumosPage() {
       )}
 
       {bulkOpen && (
-        <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 rounded-none border-0">
+        <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 animate-slide-up">
           <div className="flex-shrink-0 p-4 border-b border-blue-500/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-5 h-5 text-blue-400" />
@@ -521,19 +533,35 @@ export default function InsumosPage() {
               </div>
             )}
 
-            <div className="flex-shrink-0 flex gap-3">
-              <div className="w-1/3">
+            <div className="flex-shrink-0 flex gap-3 items-end">
+              <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   Tipo
                 </label>
-                <select
-                  value={bulkType}
-                  onChange={(e) => handleBulkTypeChange(e.target.value as SupplyTransactionType)}
-                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                >
-                  <option value="IN">CARGO</option>
-                  <option value="OUT">DESCARGO</option>
-                </select>
+                <div className="bg-midnight-800 p-1 rounded-md inline-flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleBulkTypeChange('IN')}
+                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-sm transition-all ${
+                      bulkType === 'IN'
+                        ? 'bg-green-500/10 border border-green-500/30 text-green-400'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    CARGO
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBulkTypeChange('OUT')}
+                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-sm transition-all ${
+                      bulkType === 'OUT'
+                        ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    DESCARGO
+                  </button>
+                </div>
               </div>
               <div className="flex-1">
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
@@ -546,6 +574,7 @@ export default function InsumosPage() {
                   onChange={(e) => setBulkDestination(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
                   placeholder="Ej. Transferencia a Planta, Devolución"
+                  autoFocus
                 />
               </div>
             </div>
@@ -584,33 +613,33 @@ export default function InsumosPage() {
 
             <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
 
-            <div className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
+            <div ref={tableBodyRef} className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
-                    <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8">#</th>
-                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[32%]">
+                    <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-8">#</th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[32%]">
                       {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
                     </th>
-                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Categoría</th>
-                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Unidad</th>
-                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
-                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[50px]">Cant.</th>
-                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8"></th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[12%]">Categoría</th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[12%]">Unidad</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[50px]">Cant.</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-8"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((row, idx) => (
                     <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
                       <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
-                        {String(bulkPage * BULK_PAGE_SIZE + idx + 1).padStart(2, '0')}
+                        {String(bulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
                       </td>
                       <td className="py-1.5 px-3">
                         {bulkType === 'OUT' || gridMode === 'existing' ? (
                           <select
                             value={row.itemId || ''}
                             onChange={(e) => handleItemSelect(row.key, e.target.value)}
-                            className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
+                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
                           >
                             <option value="">Seleccionar...</option>
                             {items?.map((it) => (
@@ -634,7 +663,7 @@ export default function InsumosPage() {
                           <select
                             value={row.category || 'OPERATIONS'}
                             onChange={(e) => updateBulkRow(row.key, 'category', e.target.value)}
-                            className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
+                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
                           >
                             <option value="OPERATIONS">Operaciones</option>
                             <option value="GENERAL_SERVICES">Gral. Servicios</option>
@@ -738,7 +767,7 @@ export default function InsumosPage() {
                 }`}
               >
                 {createBulkTx.isPending
-                  ? '▶ EJECUTANDO...'
+                  ? `⏳ EJECUTANDO ${filledCount} ${bulkType === 'IN' ? 'CARGOS' : 'DESCARGOS'}...`
                   : `▶ EJECUTAR ${filledCount} ${bulkType === 'IN' ? 'CARGOS' : 'DESCARGOS'}`}
               </button>
             </div>
@@ -995,6 +1024,13 @@ export default function InsumosPage() {
         }
         .animate-slide-left {
           animation: slideLeft 0.25s ease-out;
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.2s ease-out;
         }
       `}</style>
     </div>
