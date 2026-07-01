@@ -62,7 +62,8 @@ export const ModelName = {
   CustomFieldValue: 'CustomFieldValue',
   ProcessCounter: 'ProcessCounter',
   SupplyItem: 'SupplyItem',
-  SupplyTransaction: 'SupplyTransaction'
+  SupplyTransaction: 'SupplyTransaction',
+  Notification: 'Notification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -244,6 +245,18 @@ export const SupplyTransactionScalarFieldEnum = {
 } as const
 
 export type SupplyTransactionScalarFieldEnum = (typeof SupplyTransactionScalarFieldEnum)[keyof typeof SupplyTransactionScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  title: 'title',
+  message: 'message',
+  read: 'read',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -99,3 +99,8 @@ export type SupplyItem = Prisma.SupplyItemModel
  * 
  */
 export type SupplyTransaction = Prisma.SupplyTransactionModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel

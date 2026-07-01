@@ -24,6 +24,19 @@ export class FilesController {
     private readonly processesService: ProcessesService,
   ) {}
 
+  @Patch('processes/:id/actas')
+  async saveActasUrls(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      actaRecepcion?: string | null;
+      actaFundicion?: string | null;
+      actaConformidad?: string | null;
+    },
+  ) {
+    return this.processesService.updateActasUrls(id, body);
+  }
+
   @Patch('processes/:id/close')
   async closeProcess(
     @Param('id') id: string,

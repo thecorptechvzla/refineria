@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { useGold } from '@/lib/GoldContext';
-import { useLogin } from '@/lib/hooks/useAuth';
-import { Eye, EyeOff, ChevronRight } from 'lucide-react';
-import ShakeAlert from '@/components/ShakeAlert';
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useGold } from "@/lib/GoldContext";
+import { useLogin } from "@/lib/hooks/useAuth";
+import { Eye, EyeOff, ChevronRight } from "lucide-react";
+import ShakeAlert from "@/components/ShakeAlert";
+import Image from "next/image"; // ← Importa el componente Image
+import logo from "@/public/icon.png";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [shakeKey, setShakeKey] = useState(0);
   const [showPass, setShowPass] = useState(false);
   const { setUser } = useGold();
@@ -19,14 +21,21 @@ export default function LoginPage() {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
       const res = await loginMutation.mutateAsync({ email, password });
       setUser(res.user);
-      router.push(res.user.role === 'SUPERADMIN' || res.user.role === 'OWNER' ? '/' : '/transacciones');
+      router.push(
+        res.user.role === "SUPERADMIN" || res.user.role === "OWNER"
+          ? "/"
+          : "/transacciones",
+      );
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Credenciales incorrectas. Intenta de nuevo.';
+      const msg =
+        e instanceof Error
+          ? e.message
+          : "Credenciales incorrectas. Intenta de nuevo.";
       setShakeKey((k) => k + 1);
       setError(msg);
     }
@@ -39,12 +48,22 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
         <div className="flex flex-col items-center mb-8">
-                      <img src="/icon.png" alt="GoldTrack" width={36} height={36} className="rounded-sm" />
+          {/* ← CAMBIO: Usa Image de Next.js con ruta absoluta /icon.png */}
+          <Image
+  src={logo} // 2. Usa la variable en lugar del string
+  alt="GoldTrack"
+  width={36}
+  height={36}
+  className="rounded-sm"
+  priority
+/>
 
           <h2 className="text-3xl font-bold text-white tracking-tight">
             Gold<span className="text-gold-500">Track</span>
           </h2>
-          <p className="text-sm text-slate-500 mt-1 tracking-wider uppercase">Sistema de Gestión de Refinería</p>
+          <p className="text-sm text-slate-500 mt-1 tracking-wider uppercase">
+            Sistema de Gestión de Refinería
+          </p>
         </div>
 
         <div className="glass-panel rounded-sm p-8">
@@ -54,7 +73,9 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                Correo Electrónico
+              </label>
               <input
                 type="email"
                 required
@@ -66,10 +87,12 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                Contraseña
+              </label>
               <div className="relative">
                 <input
-                  type={showPass ? 'text' : 'password'}
+                  type={showPass ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -81,7 +104,11 @@ export default function LoginPage() {
                   onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                 >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPass ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -103,8 +130,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { createContext, useContext, useCallback, type ReactNode } from 'react';
 import type { GoldBar, Process, ProcessLot } from '@/types/refinery';
 import { useGoldBars, useCreateGoldBar } from '@/lib/hooks/useGoldBars';
-import { useProcesses, useCreateProcess, useCloseProcess, useCloseProcessWithActas, useUpdateProcessStatus, useUpdateLotRecovered, useAddLot, useUploadFile } from '@/lib/hooks/useProcesses';
+import { useProcesses, useCreateProcess, useCloseProcess, useCloseProcessWithActas, useUpdateProcessStatus, useUpdateLotRecovered, useAddLot, useUploadFile, useSaveActaUrl } from '@/lib/hooks/useProcesses';
 
 interface ProcessContextType {
   goldBars: GoldBar[];
@@ -15,6 +15,7 @@ interface ProcessContextType {
   closeProcess: (processId: string, lots?: { id: string; recovered: number }[]) => Promise<Process>;
   closeProcessWithActas: (processId: string, actas: { actaRecepcion: string; actaFundicion: string; actaConformidad: string }) => Promise<Process>;
   uploadFile: (file: File) => Promise<{ url: string }>;
+  saveActaUrl: (data: { processId: string; actaRecepcion?: string | null; actaFundicion?: string | null; actaConformidad?: string | null }) => Promise<Process>;
   assignToLot: (processId: string, barIds: string[]) => Promise<ProcessLot>;
   updateProcessStatus: (processId: string, status: string) => Promise<Process>;
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<ProcessLot>;
@@ -32,6 +33,7 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
   const closeProcessMutation = useCloseProcess();
   const closeProcessWithActasMutation = useCloseProcessWithActas();
   const uploadFileMutation = useUploadFile();
+  const saveActaUrlMutation = useSaveActaUrl();
   const addLotMutation = useAddLot();
   const updateProcessStatusMutation = useUpdateProcessStatus();
   const updateLotRecoveredMutation = useUpdateLotRecovered();
@@ -80,6 +82,13 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
     [uploadFileMutation]
   );
 
+  const saveActaUrl = useCallback(
+    async (data: { processId: string; actaRecepcion?: string | null; actaFundicion?: string | null; actaConformidad?: string | null }) => {
+      return saveActaUrlMutation.mutateAsync(data);
+    },
+    [saveActaUrlMutation]
+  );
+
   const assignToLot = useCallback(
     async (processId: string, barIds: string[]) => {
       return addLotMutation.mutateAsync({ processId, barIds });
@@ -120,6 +129,7 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
         closeProcess,
         closeProcessWithActas,
         uploadFile,
+        saveActaUrl,
         assignToLot,
         updateProcessStatus,
           saveLotRecovered,

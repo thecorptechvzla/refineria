@@ -209,6 +209,26 @@ export class ProcessesService {
     });
   }
 
+  async updateActasUrls(
+    id: string,
+    actas: {
+      actaRecepcion?: string | null;
+      actaFundicion?: string | null;
+      actaConformidad?: string | null;
+    },
+  ) {
+    const data: Record<string, string | null> = {};
+    if (actas.actaRecepcion !== undefined) data.actaRecepcion = actas.actaRecepcion;
+    if (actas.actaFundicion !== undefined) data.actaFundicion = actas.actaFundicion;
+    if (actas.actaConformidad !== undefined) data.actaConformidad = actas.actaConformidad;
+
+    return this.prisma.process.update({
+      where: { id },
+      data,
+      include: { lots: true },
+    });
+  }
+
   async closeWithActas(
     id: string,
     actas: {

@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateSupplyItemDto } from './dto/create-supply-item.dto';
 import { UpdateSupplyItemDto } from './dto/update-supply-item.dto';
 import { CreateSupplyTransactionDto } from './dto/create-supply-transaction.dto';
@@ -13,7 +14,10 @@ import { SupplyCategory } from '../generated/prisma/client';
 
 @Injectable()
 export class SuppliesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createItem(dto: CreateSupplyItemDto) {
     const existing = await this.prisma.supplyItem.findUnique({
@@ -86,6 +90,8 @@ export class SuppliesService {
     }
 
     const delta = dto.type === 'IN' ? dto.quantity : -dto.quantity;
+    const oldStock = item.currentStock;
+    const newStock = oldStock + delta;
 
     const [transaction] = await this.prisma.$transaction([
       this.prisma.supplyTransaction.create({
@@ -98,9 +104,15 @@ export class SuppliesService {
       }),
       this.prisma.supplyItem.update({
         where: { id: dto.itemId },
-        data: { currentStock: { increment: delta } },
+        data: { currentStock: newStock },
       }),
     ]);
+
+    await this.notificationsService.checkThresholdCross(
+      dto.itemId,
+      oldStock,
+      newStock,
+    );
 
     return transaction;
   }
@@ -136,7 +148,9 @@ export class SuppliesService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const thresholdChecks: Array<() => Promise<void>> = [];
+
+    await this.prisma.$transaction(async (tx) => {
       const transactions = [];
 
       for (const item of dto.items) {
@@ -174,6 +188,14 @@ export class SuppliesService {
               },
             }),
           );
+
+          thresholdChecks.push(() =>
+            this.notificationsService.checkThresholdCross(
+              item.itemId!,
+              supply.currentStock,
+              newStock,
+            ),
+          );
         } else {
           if (item.itemId) {
             const supply = await tx.supplyItem.findUniqueOrThrow({
@@ -196,6 +218,14 @@ export class SuppliesService {
                   reference: dto.destination,
                 },
               }),
+            );
+
+            thresholdChecks.push(() =>
+              this.notificationsService.checkThresholdCross(
+                item.itemId!,
+                supply.currentStock,
+                newStock,
+              ),
             );
           } else {
             if (!item.name || !item.category) {
@@ -235,6 +265,10 @@ export class SuppliesService {
 
       return transactions;
     });
+
+    for (const check of thresholdChecks) {
+      await check();
+    }
   }
 
   private async generateCode(tx: any, category: SupplyCategory): Promise<string> {

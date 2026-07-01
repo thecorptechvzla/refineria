@@ -31,6 +31,7 @@ function ProcessDetailView({
   saveLotRecovered,
   saveLotBarsLeyAg,
   uploadFile,
+  saveActaUrl,
 }: {
   processDetail: ProcessDetail;
   availableBars: GoldBar[];
@@ -44,6 +45,7 @@ function ProcessDetailView({
   saveLotRecovered: (processId: string, lotId: string, recovered: number) => Promise<unknown>;
   saveLotBarsLeyAg: (processId: string, lotId: string, bars: { barId: string; leyAg: number }[]) => Promise<unknown>;
   uploadFile: (file: File) => Promise<{ url: string }>;
+  saveActaUrl: (data: { processId: string; actaRecepcion?: string | null; actaFundicion?: string | null; actaConformidad?: string | null }) => Promise<unknown>;
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
@@ -56,10 +58,8 @@ function ProcessDetailView({
   const [savedG, setSavedG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
-  const [actaRecepcion, setActaRecepcion] = useState<File | null>(null);
-  const [actaFundicion, setActaFundicion] = useState<File | null>(null);
-  const [actaConformidad, setActaConformidad] = useState<File | null>(null);
-  const [uploadingActas, setUploadingActas] = useState(false);
+  const [actaUrls, setActaUrls] = useState<Record<string, string>>({});
+  const [uploadingActa, setUploadingActa] = useState<Record<string, boolean>>({});
   const removeBarsFromLot = useRemoveBarsFromLot();
   const [sortBy, setSortBy] = useState<'lot-asc' | 'lot-desc'>('lot-asc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
@@ -104,6 +104,12 @@ function ProcessDetailView({
     setSavingLeyAg({});
     setEditingLeyAg({});
     setLotLeyAg({});
+    setActaUrls({
+      ...(processDetail.actaRecepcion ? { recepcion: processDetail.actaRecepcion } : {}),
+      ...(processDetail.actaFundicion ? { fundicion: processDetail.actaFundicion } : {}),
+      ...(processDetail.actaConformidad ? { conformidad: processDetail.actaConformidad } : {}),
+    });
+    setUploadingActa({});
   }, [processDetail.id]);
 
   const isOpen = processDetail.status === 'open';
@@ -271,34 +277,26 @@ function ProcessDetailView({
       }
     }
 
-    const allFilesReady = actaRecepcion && actaFundicion && actaConformidad;
-    if (!allFilesReady) {
+    if (!actaUrls.recepcion || !actaUrls.fundicion || !actaUrls.conformidad) {
       setCloseWarning('Debe subir las 3 actas de validación (Recepción, Fundición y Conformidad) antes de cerrar el proceso.');
       setTimeout(() => setCloseWarning(''), 5000);
       return;
     }
 
-    setUploadingActas(true);
     setErrorMessage('');
     try {
-      const recepcionUrl = await uploadFile(actaRecepcion!);
-      const fundicionUrl = await uploadFile(actaFundicion!);
-      const conformidadUrl = await uploadFile(actaConformidad!);
-
       const lots = processDetail.lotDetails.map((lot) => ({
         id: lot.id,
         recovered: getLotG(lot.id)!,
       }));
       await onCloseProcessWithActas(
-        { actaRecepcion: recepcionUrl.url, actaFundicion: fundicionUrl.url, actaConformidad: conformidadUrl.url },
+        { actaRecepcion: actaUrls.recepcion, actaFundicion: actaUrls.fundicion, actaConformidad: actaUrls.conformidad },
         lots,
       );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al subir archivos';
+      const msg = err instanceof Error ? err.message : 'Error al cerrar el proceso';
       setErrorMessage(msg);
       setShakeKey((k) => k + 1);
-    } finally {
-      setUploadingActas(false);
     }
   };
 
@@ -801,52 +799,123 @@ function ProcessDetailView({
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {([
-                  { key: 'recepcion', label: 'Acta de Recepci&oacute;n', state: actaRecepcion, setter: setActaRecepcion },
-                  { key: 'fundicion', label: 'Acta de Fundici&oacute;n', state: actaFundicion, setter: setActaFundicion },
-                  { key: 'conformidad', label: 'Acta de Conformidad', state: actaConformidad, setter: setActaConformidad },
-                ] as const).map(({ key, label, state, setter }) => (
-                  <div key={key}>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                      {label}
-                    </label>
-                    {state ? (
-                      <div className="flex items-center justify-between px-3 py-2.5 bg-blue-500/5 border border-blue-500/20">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                          <span className="text-xs text-slate-300 truncate">{state.name}</span>
-                        </div>
-                        <button
-                          onClick={() => setter(null)}
-                          className="p-1 text-slate-500 hover:text-red-400 transition-colors shrink-0"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="flex items-center justify-center gap-2 px-3 py-3 bg-blue-500/5 border border-dashed border-slate-700 text-slate-500 hover:bg-blue-500/10 hover:border-slate-600 hover:text-slate-400 transition-all cursor-pointer">
-                        <Upload className="w-4 h-4" />
-                        <span className="text-xs font-medium uppercase tracking-wider">Seleccionar PDF</span>
-                        <input
-                          type="file"
-                          accept="application/pdf"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setter(file);
-                          }}
-                        />
+                  { key: 'recepcion', label: 'Acta de Recepción' },
+                  { key: 'fundicion', label: 'Acta de Fundición' },
+                  { key: 'conformidad', label: 'Acta de Conformidad' },
+                ] as const).map(({ key, label }) => {
+                  const existingUrl = actaUrls[key];
+                  const isUploading = uploadingActa[key];
+
+                  return (
+                    <div key={key}>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                        {label}
                       </label>
-                    )}
-                  </div>
-                ))}
+                      {existingUrl ? (
+                        <div className="flex items-center justify-between px-3 py-2.5 bg-green-500/5 border border-green-500/20">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-4 h-4 text-green-400 shrink-0" />
+                            <a
+                              href={`/api/processes/${processDetail.id}/actas/${key}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-slate-300 truncate hover:text-green-400 underline underline-offset-2"
+                            >
+                              Ver PDF
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <label className="flex items-center gap-1 px-2 py-1 text-[10px] text-slate-400 hover:text-slate-300 cursor-pointer transition-colors">
+                              <Upload className="w-3 h-3" />
+                              <span>Reemplazar</span>
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setUploadingActa((prev) => ({ ...prev, [key]: true }));
+                                  try {
+                                    const { url } = await uploadFile(file);
+                                    await saveActaUrl({
+                                      processId: processDetail.id,
+                                      [`acta${key.charAt(0).toUpperCase() + key.slice(1)}`]: url,
+                                    });
+                                    setActaUrls((prev) => ({ ...prev, [key]: url }));
+                                  } catch {
+                                    setErrorMessage(`Error al subir ${label}. Intente de nuevo.`);
+                                    setShakeKey((k) => k + 1);
+                                  } finally {
+                                    setUploadingActa((prev) => ({ ...prev, [key]: false }));
+                                  }
+                                }}
+                              />
+                            </label>
+                            <button
+                              onClick={() => {
+                                setActaUrls((prev) => {
+                                  const next = { ...prev };
+                                  delete next[key];
+                                  return next;
+                                });
+                                saveActaUrl({
+                                  processId: processDetail.id,
+                                  [`acta${key.charAt(0).toUpperCase() + key.slice(1)}`]: null,
+                                }).catch(() => {});
+                              }}
+                              className="p-1 text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                              title="Eliminar"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : isUploading ? (
+                        <div className="flex items-center justify-center gap-2 px-3 py-3 bg-blue-500/5 border border-dashed border-slate-700">
+                          <Save className="w-4 h-4 text-blue-400 animate-spin" />
+                          <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Subiendo...</span>
+                        </div>
+                      ) : (
+                        <label className="flex items-center justify-center gap-2 px-3 py-3 bg-blue-500/5 border border-dashed border-slate-700 text-slate-500 hover:bg-blue-500/10 hover:border-slate-600 hover:text-slate-400 transition-all cursor-pointer">
+                          <Upload className="w-4 h-4" />
+                          <span className="text-xs font-medium uppercase tracking-wider">Seleccionar PDF</span>
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setUploadingActa((prev) => ({ ...prev, [key]: true }));
+                              try {
+                                const { url } = await uploadFile(file);
+                                await saveActaUrl({
+                                  processId: processDetail.id,
+                                  [`acta${key.charAt(0).toUpperCase() + key.slice(1)}`]: url,
+                                });
+                                setActaUrls((prev) => ({ ...prev, [key]: url }));
+                              } catch {
+                                setErrorMessage(`Error al subir ${label}. Intente de nuevo.`);
+                                setShakeKey((k) => k + 1);
+                              } finally {
+                                setUploadingActa((prev) => ({ ...prev, [key]: false }));
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <p className="text-[9px] text-slate-400">Peso máximo: 10 MB por PDF</p>
               <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                <div className={`w-2 h-2 rounded-full ${actaRecepcion ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <div className={`w-2 h-2 rounded-full ${actaUrls.recepcion ? 'bg-green-500' : 'bg-slate-700'}`} />
                 <span>Recepci&oacute;n</span>
-                <div className={`w-2 h-2 rounded-full ${actaFundicion ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <div className={`w-2 h-2 rounded-full ${actaUrls.fundicion ? 'bg-green-500' : 'bg-slate-700'}`} />
                 <span>Fundici&oacute;n</span>
-                <div className={`w-2 h-2 rounded-full ${actaConformidad ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <div className={`w-2 h-2 rounded-full ${actaUrls.conformidad ? 'bg-green-500' : 'bg-slate-700'}`} />
                 <span>Conformidad</span>
               </div>
 
@@ -862,16 +931,16 @@ function ProcessDetailView({
               <div className="flex items-center gap-2 pt-2 border-t border-blue-500/10">
                 <button
                   onClick={handleCloseClick}
-                  disabled={!actaRecepcion || !actaFundicion || !actaConformidad || uploadingActas}
+                  disabled={!actaUrls.recepcion || !actaUrls.fundicion || !actaUrls.conformidad}
                   className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
-                    actaRecepcion && actaFundicion && actaConformidad && !uploadingActas
+                    actaUrls.recepcion && actaUrls.fundicion && actaUrls.conformidad
                       ? 'bg-red-600 text-white hover:bg-red-500'
                       : 'bg-slate-800 border border-slate-700 text-slate-600 cursor-not-allowed'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    {uploadingActas ? <Save className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
-                    {uploadingActas ? 'Cerrando...' : 'Cerrar Proceso'}
+                    <Lock className="w-3.5 h-3.5" />
+                    Cerrar Proceso
                   </span>
                 </button>
               </div>
@@ -900,7 +969,7 @@ function ProcessDetailView({
 }
 export default function ProcesosPage() {
   const { data: suppliers } = useSuppliers();
-  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, uploadFile, assignToLot, updateProcessStatus, saveLotRecovered, saveLotBarsLeyAg } = useProcess();
+  const { goldBars, processes, openProcess, closeProcess, closeProcessWithActas, uploadFile, saveActaUrl, assignToLot, updateProcessStatus, saveLotRecovered, saveLotBarsLeyAg } = useProcess();
 
   const [view, setView] = useState<PageView>('list');
   const [managingProcessId, setManagingProcessId] = useState<string | null>(null);
@@ -1127,6 +1196,7 @@ export default function ProcesosPage() {
           saveLotRecovered={saveLotRecovered}
           saveLotBarsLeyAg={saveLotBarsLeyAg}
           uploadFile={uploadFile}
+          saveActaUrl={saveActaUrl}
         />
       </div>
     );

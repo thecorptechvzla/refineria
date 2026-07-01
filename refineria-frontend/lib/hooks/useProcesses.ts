@@ -142,12 +142,36 @@ export function useAddLot() {
   });
 }
 
+export function useSaveActaUrl() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      processId,
+      ...urls
+    }: {
+      processId: string;
+      actaRecepcion?: string | null;
+      actaFundicion?: string | null;
+      actaConformidad?: string | null;
+    }) =>
+      api<Process>(`/processes/${processId}/actas`, {
+        method: 'PATCH',
+        body: JSON.stringify(urls),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processes'] });
+    },
+  });
+}
+
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
       const blob = await upload(file.name, file, {
         access: 'private',
         handleUploadUrl: '/api/blob/upload',
+        contentType: file.type || 'application/pdf',
       });
       return { url: blob.url };
     },
