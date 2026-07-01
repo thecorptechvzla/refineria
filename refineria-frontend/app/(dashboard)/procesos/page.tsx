@@ -63,6 +63,7 @@ function ProcessDetailView({
   const removeBarsFromLot = useRemoveBarsFromLot();
   const [sortBy, setSortBy] = useState<'lot-asc' | 'lot-desc'>('lot-asc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
+  const [showLeyAgWarning, setShowLeyAgWarning] = useState(false);
 
   const availableLotNumbers = useMemo(() => {
     const lots = new Set<string>();
@@ -102,6 +103,7 @@ function ProcessDetailView({
     setSavedG({});
     setSavingLeyAg({});
     setEditingLeyAg({});
+    setLotLeyAg({});
   }, [processDetail.id]);
 
   const isOpen = processDetail.status === 'open';
@@ -225,7 +227,10 @@ function ProcessDetailView({
       })
       .filter((b): b is { barId: string; leyAg: number } => b !== null);
 
-    if (entries.length === 0) return;
+    if (entries.length === 0) {
+      setShowLeyAgWarning(true);
+      return;
+    }
 
     setSavingLeyAg((prev) => ({ ...prev, [lotId]: true }));
     try {
@@ -273,6 +278,13 @@ function ProcessDetailView({
       return;
     }
 
+    const maxSize = 10 * 1024 * 1024;
+    if ((actaRecepcion?.size ?? 0) > maxSize || (actaFundicion?.size ?? 0) > maxSize || (actaConformidad?.size ?? 0) > maxSize) {
+      setErrorMessage('El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.');
+      setShakeKey((k) => k + 1);
+      return;
+    }
+
     setUploadingActas(true);
     setErrorMessage('');
     try {
@@ -288,8 +300,11 @@ function ProcessDetailView({
         { actaRecepcion: recepcionUrl.url, actaFundicion: fundicionUrl.url, actaConformidad: conformidadUrl.url },
         lots,
       );
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error al subir archivos';
+    } catch (err: unknown) {
+      let msg = err instanceof Error ? err.message : 'Error al subir archivos';
+      if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 413) {
+        msg = 'El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.';
+      }
       setErrorMessage(msg);
       setShakeKey((k) => k + 1);
     } finally {
@@ -298,7 +313,7 @@ function ProcessDetailView({
   };
 
   return (
-    <div className="space-y-5">
+    <><div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 text-slate-500 hover:text-slate-300 hover:bg-blue-500/5 transition-all border border-transparent hover:border-blue-500/20">
@@ -874,6 +889,23 @@ function ProcessDetailView({
           </div>
         )}
     </div>
+
+      {showLeyAgWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="glass-panel p-6 max-w-sm w-full mx-4 text-center">
+            <p className="text-sm text-slate-300 mb-4">
+              Debes ingresar la Ley Ag para al menos una barra antes de guardar.
+            </p>
+            <button
+              onClick={() => setShowLeyAgWarning(false)}
+              className="px-5 py-2 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 export default function ProcesosPage() {

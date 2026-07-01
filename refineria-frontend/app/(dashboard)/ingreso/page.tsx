@@ -122,6 +122,13 @@ export default function IngresoPage() {
   const handleBulkUpload = async () => {
     if (!bulkSupplierId || !bulkFile) return;
 
+    if (bulkFile.size > 10 * 1024 * 1024) {
+      setBulkError('El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.');
+      setErrorMessage('El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.');
+      setShakeKey((k) => k + 1);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', bulkFile);
     formData.append('supplierId', bulkSupplierId);
@@ -137,7 +144,10 @@ export default function IngresoPage() {
       setShowBulk(false);
       setTimeout(() => setSuccessMessage(''), 6000);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error al procesar la carga masiva';
+      let msg = e instanceof Error ? e.message : 'Error al procesar la carga masiva';
+      if (e && typeof e === 'object' && 'status' in e && (e as { status: number }).status === 413) {
+        msg = 'El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.';
+      }
       setBulkError(msg);
       setErrorMessage(msg);
       setShakeKey((k) => k + 1);
