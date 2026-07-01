@@ -11,6 +11,7 @@ import { ProcessesModule } from './processes/processes.module';
 import { FilesModule } from './files/files.module';
 import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { SuppliesModule } from './supplies/supplies.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SuppliesModule } from './supplies/supplies.module';
     FilesModule,
     CustomFieldsModule,
     SuppliesModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

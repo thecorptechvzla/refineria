@@ -211,3 +211,14 @@ model SupplyTransaction {
 
   @@map("supply_transactions")
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // "CRITICAL_STOCK"
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
