@@ -753,7 +753,7 @@ function ProcessDetailView({
             </div>
             <div className="p-4 sm:p-5">
               {processDetail.actaRecepcion || processDetail.actaFundicion || processDetail.actaConformidad ? (
-                <div className="flex flex-wrap gap-3">
+                <><div className="flex flex-wrap gap-3">
                   {[
                     { type: 'recepcion', label: 'Acta de Recepción', url: processDetail.actaRecepcion },
                     { type: 'fundicion', label: 'Acta de Fundición', url: processDetail.actaFundicion },
@@ -773,6 +773,7 @@ function ProcessDetailView({
                     ) : null
                   ))}
                 </div>
+                <p className="text-[9px] text-slate-400 mt-2">Peso máximo: 10 MB por PDF</p></>
               ) : (
                 <p className="text-xs text-slate-500">No hay documentos de validación asociados.</p>
               )}
@@ -834,6 +835,7 @@ function ProcessDetailView({
                   </div>
                 ))}
               </div>
+              <p className="text-[9px] text-slate-400">Peso máximo: 10 MB por PDF</p>
               <div className="flex items-center gap-2 text-[10px] text-slate-600">
                 <div className={`w-2 h-2 rounded-full ${actaRecepcion ? 'bg-green-500' : 'bg-slate-700'}`} />
                 <span>Recepci&oacute;n</span>

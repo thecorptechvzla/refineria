@@ -466,6 +466,7 @@ export default function IngresoPage() {
                     onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
                     className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-gold-500 file:text-midnight-900 file:cursor-pointer cursor-pointer"
                   />
+                  <p className="text-[9px] text-slate-400 mt-1">Peso máximo: 10 MB</p>
                 </div>
 
                 <div className="flex gap-2">
