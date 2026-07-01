@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { upload, BlobError } from '@vercel/blob/client';
 import { api } from '@/lib/api';
 import type { Process, ProcessLot } from '@/types/refinery';
 
@@ -168,21 +167,51 @@ export function useSaveActaUrl() {
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
-      try {
-        const blob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/blob/upload',
-          contentType: file.type || 'application/pdf',
-        });
-        return { url: blob.url };
-      } catch (err) {
-        if (err instanceof BlobError) {
-          console.error('[Vercel Blob Error]', err.message, err);
-        } else {
-          console.error('[Upload Error]', err);
-        }
-        throw err;
+      const tokenRes = await fetch('/api/blob/upload', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'blob.generate-client-token',
+          payload: {
+            pathname: file.name,
+            clientPayload: null,
+            multipart: false,
+          },
+        }),
+      });
+
+      if (!tokenRes.ok) {
+        const err = await tokenRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al obtener token de subida');
       }
+
+      const { clientToken } = await tokenRes.json();
+      const storeId = clientToken.split('_')[3];
+      const params = new URLSearchParams({ pathname: file.name });
+
+      const uploadRes = await fetch(`https://vercel.com/api/blob/?${params.toString()}`, {
+        method: 'PUT',
+        credentials: 'omit',
+        headers: {
+          authorization: `Bearer ${clientToken}`,
+          'x-vercel-blob-store-id': storeId,
+          'x-vercel-blob-access': 'public',
+          'x-api-version': '12',
+          'x-api-blob-request-id': `${storeId}:${Date.now()}:${Math.random().toString(16).slice(2)}`,
+          'x-api-blob-request-attempt': '0',
+          'x-content-type': file.type || 'application/pdf',
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const errBody = await uploadRes.text().catch(() => '');
+        console.error('[Vercel Blob PUT Error]', uploadRes.status, errBody);
+        throw new Error(`Error al subir archivo (${uploadRes.status})`);
+      }
+
+      const result = await uploadRes.json();
+      return { url: result.url };
     },
   });
 }
