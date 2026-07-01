@@ -195,7 +195,7 @@ export function useUploadFile() {
         headers: {
           authorization: `Bearer ${clientToken}`,
           'x-vercel-blob-store-id': storeId,
-          'x-vercel-blob-access': 'public',
+          'x-vercel-blob-access': 'private',
           'x-api-version': '12',
           'x-api-blob-request-id': `${storeId}:${Date.now()}:${Math.random().toString(16).slice(2)}`,
           'x-api-blob-request-attempt': '0',
