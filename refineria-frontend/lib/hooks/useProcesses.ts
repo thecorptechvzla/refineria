@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { upload } from '@vercel/blob/client';
+import { upload, BlobError } from '@vercel/blob/client';
 import { api } from '@/lib/api';
 import type { Process, ProcessLot } from '@/types/refinery';
 
@@ -168,12 +168,21 @@ export function useSaveActaUrl() {
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
-      const blob = await upload(file.name, file, {
-        access: 'private',
-        handleUploadUrl: '/api/blob/upload',
-        contentType: file.type || 'application/pdf',
-      });
-      return { url: blob.url };
+      try {
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/blob/upload',
+          contentType: file.type || 'application/pdf',
+        });
+        return { url: blob.url };
+      } catch (err) {
+        if (err instanceof BlobError) {
+          console.error('[Vercel Blob Error]', err.message, err);
+        } else {
+          console.error('[Upload Error]', err);
+        }
+        throw err;
+      }
     },
   });
 }
