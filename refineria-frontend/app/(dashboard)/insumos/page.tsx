@@ -748,7 +748,7 @@ export default function InsumosPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
         {showCreateModal && (
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-4 animate-slide-left">
             <div className="glass-panel">
               <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -987,6 +987,16 @@ export default function InsumosPage() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slideLeft {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-left {
+          animation: slideLeft 0.25s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
