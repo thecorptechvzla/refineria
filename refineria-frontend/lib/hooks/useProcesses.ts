@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, apiUpload } from '@/lib/api';
+import { upload } from '@vercel/blob/client';
+import { api } from '@/lib/api';
 import type { Process, ProcessLot } from '@/types/refinery';
 
 export function useProcesses() {
@@ -143,10 +144,12 @@ export function useAddLot() {
 
 export function useUploadFile() {
   return useMutation({
-    mutationFn: (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      return apiUpload<{ url: string }>('/files/upload', formData);
+    mutationFn: async (file: File): Promise<{ url: string }> => {
+      const blob = await upload(file.name, file, {
+        access: 'private',
+        handleUploadUrl: '/api/blob/upload',
+      });
+      return { url: blob.url };
     },
   });
 }

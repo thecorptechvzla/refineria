@@ -278,13 +278,6 @@ function ProcessDetailView({
       return;
     }
 
-    const maxSize = 10 * 1024 * 1024;
-    if ((actaRecepcion?.size ?? 0) > maxSize || (actaFundicion?.size ?? 0) > maxSize || (actaConformidad?.size ?? 0) > maxSize) {
-      setErrorMessage('El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.');
-      setShakeKey((k) => k + 1);
-      return;
-    }
-
     setUploadingActas(true);
     setErrorMessage('');
     try {
@@ -301,10 +294,7 @@ function ProcessDetailView({
         lots,
       );
     } catch (err: unknown) {
-      let msg = err instanceof Error ? err.message : 'Error al subir archivos';
-      if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 413) {
-        msg = 'El archivo excede el tamaño máximo de 10 MB. Compresiónalo o seleccione uno más pequeño.';
-      }
+      const msg = err instanceof Error ? err.message : 'Error al subir archivos';
       setErrorMessage(msg);
       setShakeKey((k) => k + 1);
     } finally {
