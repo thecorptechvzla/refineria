@@ -488,7 +488,7 @@ function ProcessDetailView({
                 </thead>
                 <tbody>
                   {processDetail.lotDetails.length > 0 ? (
-                    [...processDetail.lotDetails].reverse().map((lot) => {
+                    [...processDetail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
                       const liveG = getLotG(lot.id) ?? lot.g;
                       const livePct = lot.e > 0 ? (liveG / lot.e) * 100 : 0;
                       const liveDif = liveG - lot.f;
@@ -527,7 +527,7 @@ function ProcessDetailView({
         </div>
 
         {processDetail.lotDetails.length > 0 ? (
-          [...processDetail.lotDetails].reverse().map((lot) => {
+          [...processDetail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
             const sumE = lot.bars.reduce((s, b) => s + b.analytical, 0);
             const sumF = lot.bars.reduce((s, b) => s + b.expected, 0);
             const gVal = getLotG(lot.id);

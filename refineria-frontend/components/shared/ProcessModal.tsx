@@ -122,7 +122,7 @@ export function ProcessModal({
                 </tr>
               </thead>
               <tbody>
-                {detail.lotDetails.map((lot) => (
+            {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
                   <tr key={lot.id} className="terminal-row">
                     <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight}</td>
