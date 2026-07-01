@@ -314,7 +314,7 @@ export default function InsumosPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 mx-auto max-w-7xl px-1">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
           <Package className="w-5 h-5 text-gold-500" />
@@ -323,432 +323,432 @@ export default function InsumosPage() {
         <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Almacén Padre de la Patria</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        <div className="lg:col-span-2 space-y-4">
-          {txModal && (
-            <div className="glass-panel">
-              <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {txModal.type === 'IN' ? (
-                    <PlusCircle className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <MinusCircle className="w-4 h-4 text-red-400" />
-                  )}
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                    {txModal.type === 'IN' ? 'Registrar Entrada' : 'Registrar Salida'}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => { setTxModal(null); resetTxForm(); }}
-                  className="text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+      {txModal && (
+        <div className="glass-panel">
+          <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {txModal.type === 'IN' ? (
+                <PlusCircle className="w-4 h-4 text-green-400" />
+              ) : (
+                <MinusCircle className="w-4 h-4 text-red-400" />
+              )}
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                {txModal.type === 'IN' ? 'Registrar Entrada' : 'Registrar Salida'}
+              </h2>
+            </div>
+            <button
+              onClick={() => { setTxModal(null); resetTxForm(); }}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <form onSubmit={handleTxSubmit} className="p-4 sm:p-5 space-y-4">
+            {txError && (
+              <div
+                key={txShake}
+                className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
+                style={{ animation: 'shake 0.4s ease-in-out' }}
+              >
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-400 font-medium">{txError}</p>
               </div>
+            )}
 
-              <form onSubmit={handleTxSubmit} className="p-4 sm:p-5 space-y-4">
-                {txError && (
-                  <div
-                    key={txShake}
-                    className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
-                    style={{ animation: 'shake 0.4s ease-in-out' }}
-                  >
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                    <p className="text-xs text-red-400 font-medium">{txError}</p>
-                  </div>
-                )}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                Insumo
+              </label>
+              <p className="text-sm text-slate-200 font-medium">{txModal.item.name}</p>
+              <p className="text-[10px] font-mono text-slate-500">
+                {txModal.item.code} — Stock actual: <span className="text-slate-300">{txModal.item.currentStock}</span>
+              </p>
+            </div>
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Insumo
-                  </label>
-                  <p className="text-sm text-slate-200 font-medium">{txModal.item.name}</p>
-                  <p className="text-[10px] font-mono text-slate-500">
-                    {txModal.item.code} — Stock actual: <span className="text-slate-300">{txModal.item.currentStock}</span>
-                  </p>
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                Tipo
+              </label>
+              <span
+                className={`inline-block px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+                  txModal.type === 'IN'
+                    ? 'text-green-400 bg-green-500/10 border-green-500/20'
+                    : 'text-red-400 bg-red-500/10 border-red-500/20'
+                }`}
+              >
+                {txModal.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                Cantidad
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={txQuantity}
+                onChange={(e) => setTxQuantity(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+                placeholder="Ej. 5"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                Referencia / Nota
+              </label>
+              <input
+                type="text"
+                required
+                value={txReference}
+                onChange={(e) => setTxReference(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+                placeholder="Ej. Compra mensual, Orden #123"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={createTx.isPending}
+              className={`w-full py-2.5 text-xs font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
+                txModal.type === 'IN'
+                  ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
+                  : 'bg-red-500 text-white hover:bg-red-400'
+              }`}
+            >
+              {createTx.isPending ? 'Registrando...' : `Registrar ${txModal.type === 'IN' ? 'Entrada' : 'Salida'}`}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {historyItemId && (
+        <div className="glass-panel">
+          <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-blue-400" />
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                Historial
+              </h2>
+            </div>
+            <button
+              onClick={() => { setHistoryItemId(null); }}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-4 border-b border-blue-500/10">
+            <p className="text-sm text-slate-200 font-medium">{historyItem?.name ?? '—'}</p>
+            <p className="text-[10px] font-mono text-slate-500">{historyItem?.code}</p>
+          </div>
+
+          <div className="p-4 sm:p-5 max-h-[400px] overflow-y-auto space-y-2">
+            {historyLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-midnight-800/50 animate-pulse">
+                  <div className="w-16 h-4 bg-midnight-700 rounded" />
+                  <div className="w-14 h-4 bg-midnight-700 rounded" />
+                  <div className="w-10 h-4 bg-midnight-700 rounded" />
+                  <div className="flex-1 h-4 bg-midnight-700 rounded" />
                 </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Tipo
-                  </label>
+              ))
+            ) : historyTxs && historyTxs.length > 0 ? (
+              historyTxs.map((tx) => (
+                <div key={tx.id} className="flex items-center gap-3 p-3 bg-midnight-800/50 border border-blue-500/5">
+                  <span className="text-[10px] font-mono text-slate-500 w-20 flex-shrink-0">
+                    {new Date(tx.date).toLocaleString('es-VE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
                   <span
-                    className={`inline-block px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
-                      txModal.type === 'IN'
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border flex-shrink-0 ${
+                      tx.type === 'IN'
                         ? 'text-green-400 bg-green-500/10 border-green-500/20'
                         : 'text-red-400 bg-red-500/10 border-red-500/20'
                     }`}
                   >
-                    {txModal.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
+                    {tx.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-200 w-10 flex-shrink-0 text-right">
+                    {tx.quantity}
+                  </span>
+                  <span className="text-[10px] text-slate-500 truncate flex-1 text-right">
+                    {tx.reference || '—'}
                   </span>
                 </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 text-center py-6">No hay movimientos registrados.</p>
+            )}
+          </div>
+        </div>
+      )}
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Cantidad
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={txQuantity}
-                    onChange={(e) => setTxQuantity(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="Ej. 5"
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Referencia / Nota
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={txReference}
-                    onChange={(e) => setTxReference(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="Ej. Compra mensual, Orden #123"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={createTx.isPending}
-                  className={`w-full py-2.5 text-xs font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
-                    txModal.type === 'IN'
-                      ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
-                      : 'bg-red-500 text-white hover:bg-red-400'
-                  }`}
-                >
-                  {createTx.isPending ? 'Registrando...' : `Registrar ${txModal.type === 'IN' ? 'Entrada' : 'Salida'}`}
-                </button>
-              </form>
+      {bulkOpen && (
+        <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 rounded-none border-0">
+          <div className="flex-shrink-0 p-4 border-b border-blue-500/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-5 h-5 text-blue-400" />
+              <h2 className="text-base font-bold text-white uppercase tracking-wider">Cargos / Descargos</h2>
             </div>
-          )}
+            <button
+              onClick={() => { setBulkOpen(false); resetBulkForm(); }}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-          {historyItemId && (
-            <div className="glass-panel">
-              <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-blue-400" />
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Historial
-                  </h2>
-                </div>
-                <button
-                  onClick={() => { setHistoryItemId(null); }}
-                  className="text-slate-500 hover:text-slate-300 transition-colors"
+          <form onSubmit={handleBulkSubmit} className="flex flex-col flex-1 min-h-0 p-4 sm:p-5 gap-4">
+            {bulkError && (
+              <div
+                key={bulkShake}
+                className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
+                style={{ animation: 'shake 0.4s ease-in-out' }}
+              >
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-400 font-medium">{bulkError}</p>
+              </div>
+            )}
+
+            <div className="flex-shrink-0 flex gap-3">
+              <div className="w-1/3">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  Tipo
+                </label>
+                <select
+                  value={bulkType}
+                  onChange={(e) => handleBulkTypeChange(e.target.value as SupplyTransactionType)}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
                 >
-                  <X className="w-4 h-4" />
-                </button>
+                  <option value="IN">CARGO</option>
+                  <option value="OUT">DESCARGO</option>
+                </select>
               </div>
-
-              <div className="p-4 border-b border-blue-500/10">
-                <p className="text-sm text-slate-200 font-medium">{historyItem?.name ?? '—'}</p>
-                <p className="text-[10px] font-mono text-slate-500">{historyItem?.code}</p>
-              </div>
-
-              <div className="p-4 sm:p-5 max-h-[400px] overflow-y-auto space-y-2">
-                {historyLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-midnight-800/50 animate-pulse">
-                      <div className="w-16 h-4 bg-midnight-700 rounded" />
-                      <div className="w-14 h-4 bg-midnight-700 rounded" />
-                      <div className="w-10 h-4 bg-midnight-700 rounded" />
-                      <div className="flex-1 h-4 bg-midnight-700 rounded" />
-                    </div>
-                  ))
-                ) : historyTxs && historyTxs.length > 0 ? (
-                  historyTxs.map((tx) => (
-                    <div key={tx.id} className="flex items-center gap-3 p-3 bg-midnight-800/50 border border-blue-500/5">
-                      <span className="text-[10px] font-mono text-slate-500 w-20 flex-shrink-0">
-                        {new Date(tx.date).toLocaleString('es-VE', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border flex-shrink-0 ${
-                          tx.type === 'IN'
-                            ? 'text-green-400 bg-green-500/10 border-green-500/20'
-                            : 'text-red-400 bg-red-500/10 border-red-500/20'
-                        }`}
-                      >
-                        {tx.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
-                      </span>
-                      <span className="text-xs font-mono font-bold text-slate-200 w-10 flex-shrink-0 text-right">
-                        {tx.quantity}
-                      </span>
-                      <span className="text-[10px] text-slate-500 truncate flex-1 text-right">
-                        {tx.reference || '—'}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500 text-center py-6">No hay movimientos registrados.</p>
-                )}
+              <div className="flex-1">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  Destino / Referencia
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bulkDestination}
+                  onChange={(e) => setBulkDestination(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+                  placeholder="Ej. Transferencia a Planta, Devolución"
+                />
               </div>
             </div>
-          )}
 
-          {bulkOpen && (
-            <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 rounded-none border-0">
-              <div className="flex-shrink-0 p-4 border-b border-blue-500/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-5 h-5 text-blue-400" />
-                  <h2 className="text-base font-bold text-white uppercase tracking-wider">Cargos / Descargos</h2>
-                </div>
-                <button
-                  onClick={() => { setBulkOpen(false); resetBulkForm(); }}
-                  className="text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleBulkSubmit} className="flex flex-col flex-1 min-h-0 p-4 sm:p-5 gap-4">
-                {bulkError && (
-                  <div
-                    key={bulkShake}
-                    className="flex-shrink-0 bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
-                    style={{ animation: 'shake 0.4s ease-in-out' }}
-                  >
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                    <p className="text-xs text-red-400 font-medium">{bulkError}</p>
-                  </div>
-                )}
-
-                <div className="flex-shrink-0 flex gap-3">
-                  <div className="w-1/3">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                      Tipo
-                    </label>
-                    <select
-                      value={bulkType}
-                      onChange={(e) => handleBulkTypeChange(e.target.value as SupplyTransactionType)}
-                      className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    >
-                      <option value="IN">CARGO</option>
-                      <option value="OUT">DESCARGO</option>
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                      Destino / Referencia
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={bulkDestination}
-                      onChange={(e) => setBulkDestination(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                      placeholder="Ej. Transferencia a Planta, Devolución"
-                    />
-                  </div>
-                </div>
-
-                {bulkType === 'IN' && (
-                  <div className="flex-shrink-0">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                      Modo de Ingreso
-                    </label>
-                    <div className="bg-midnight-800 p-1 rounded-md inline-flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleGridModeChange('new')}
-                        className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
-                          gridMode === 'new'
-                            ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
-                            : 'text-slate-500 hover:text-slate-300'
-                        }`}
-                      >
-                        Crear Nuevos
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleGridModeChange('existing')}
-                        className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
-                          gridMode === 'existing'
-                            ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
-                            : 'text-slate-500 hover:text-slate-300'
-                        }`}
-                      >
-                        Usar Existentes
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
-
-                <div className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
-                        <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8">#</th>
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[32%]">
-                          {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
-                        </th>
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Categoría</th>
-                        <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Unidad</th>
-                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
-                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[50px]">Cant.</th>
-                        <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pageRows.map((row, idx) => (
-                        <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
-                          <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
-                            {String(bulkPage * BULK_PAGE_SIZE + idx + 1).padStart(2, '0')}
-                          </td>
-                          <td className="py-1.5 px-3">
-                            {bulkType === 'OUT' || gridMode === 'existing' ? (
-                              <select
-                                value={row.itemId || ''}
-                                onChange={(e) => handleItemSelect(row.key, e.target.value)}
-                                className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
-                              >
-                                <option value="">Seleccionar...</option>
-                                {items?.map((it) => (
-                                  <option key={it.id} value={it.id}>
-                                    {it.code} — {it.name}  [{it.currentStock}]
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                type="text"
-                                value={row.name || ''}
-                                onChange={(e) => updateBulkRow(row.key, 'name', e.target.value)}
-                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600 py-2"
-                                placeholder="Nombre del artículo"
-                              />
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3">
-                            {bulkType === 'IN' && gridMode === 'new' ? (
-                              <select
-                                value={row.category || 'OPERATIONS'}
-                                onChange={(e) => updateBulkRow(row.key, 'category', e.target.value)}
-                                className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
-                              >
-                                <option value="OPERATIONS">Operaciones</option>
-                                <option value="GENERAL_SERVICES">Gral. Servicios</option>
-                              </select>
-                            ) : gridMode === 'existing' && row.itemId ? (
-                              <span className="text-slate-400 text-xs">{row.category}</span>
-                            ) : (
-                              <span className="text-slate-500">—</span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3">
-                            {bulkType === 'IN' && gridMode === 'new' ? (
-                              <input
-                                type="text"
-                                value={row.unit || ''}
-                                onChange={(e) => updateBulkRow(row.key, 'unit', e.target.value)}
-                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600"
-                                placeholder="UNIDAD"
-                              />
-                            ) : gridMode === 'existing' && row.itemId ? (
-                              <span className="text-slate-400 text-xs">{row.unit}</span>
-                            ) : (
-                              <span className="text-slate-500">—</span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3 text-center">
-                            {bulkType === 'IN' && gridMode === 'new' ? (
-                              <input
-                                type="number"
-                                min="0"
-                                value={row.criticalLevel || '1'}
-                                onChange={(e) => updateBulkRow(row.key, 'criticalLevel', e.target.value)}
-                                className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
-                              />
-                            ) : gridMode === 'existing' && row.itemId ? (
-                              <span className="text-slate-400 text-xs">{row.criticalLevel}</span>
-                            ) : (
-                              <span className="text-slate-500">—</span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3 text-center">
-                            <input
-                              type="number"
-                              min="1"
-                              value={row.quantity}
-                              onChange={(e) => updateBulkRow(row.key, 'quantity', e.target.value)}
-                              className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
-                            />
-                          </td>
-                          <td className="py-1.5 px-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => removeBulkRow(row.key)}
-                              className="text-red-400 hover:text-red-300 transition-colors"
-                              title="Quitar fila"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex-shrink-0 flex items-center justify-between border-t border-blue-500/10 px-1 pt-3 pb-2">
-                  <span className="text-[10px] font-mono text-slate-500">
-                    {bulkRows.length} filas
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={bulkPage === 0}
-                      onClick={() => setBulkPage(bulkPage - 1)}
-                      className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <span className="text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
-                      {bulkPage + 1}/{totalBulkPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={bulkPage >= totalBulkPages - 1}
-                      onClick={() => setBulkPage(bulkPage + 1)}
-                      className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-shrink-0 pt-1">
+            {bulkType === 'IN' && (
+              <div className="flex-shrink-0">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  Modo de Ingreso
+                </label>
+                <div className="bg-midnight-800 p-1 rounded-md inline-flex gap-1">
                   <button
-                    type="submit"
-                    disabled={createBulkTx.isPending}
-                    className={`w-full py-3 text-sm font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
-                      bulkType === 'IN'
-                        ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
-                        : 'bg-red-500 text-white hover:bg-red-400'
+                    type="button"
+                    onClick={() => handleGridModeChange('new')}
+                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                      gridMode === 'new'
+                        ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
+                        : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
-                    {createBulkTx.isPending
-                      ? '▶ EJECUTANDO...'
-                      : `▶ EJECUTAR ${filledCount} ${bulkType === 'IN' ? 'CARGOS' : 'DESCARGOS'}`}
+                    Crear Nuevos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGridModeChange('existing')}
+                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                      gridMode === 'existing'
+                        ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    Usar Existentes
                   </button>
                 </div>
-              </form>
-            </div>
-          )}
+              </div>
+            )}
 
-          {showCreateModal && (
+            <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
+
+            <div className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
+                    <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8">#</th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[32%]">
+                      {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
+                    </th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Categoría</th>
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[12%]">Unidad</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest min-w-[50px]">N. Crít.</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-[50px]">Cant.</th>
+                    <th className="text-center py-2.5 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest w-8"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((row, idx) => (
+                    <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
+                      <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
+                        {String(bulkPage * BULK_PAGE_SIZE + idx + 1).padStart(2, '0')}
+                      </td>
+                      <td className="py-1.5 px-3">
+                        {bulkType === 'OUT' || gridMode === 'existing' ? (
+                          <select
+                            value={row.itemId || ''}
+                            onChange={(e) => handleItemSelect(row.key, e.target.value)}
+                            className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
+                          >
+                            <option value="">Seleccionar...</option>
+                            {items?.map((it) => (
+                              <option key={it.id} value={it.id}>
+                                {it.code} — {it.name}  [{it.currentStock}]
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={row.name || ''}
+                            onChange={(e) => updateBulkRow(row.key, 'name', e.target.value)}
+                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600 py-2"
+                            placeholder="Nombre del artículo"
+                          />
+                        )}
+                      </td>
+                      <td className="py-1.5 px-3">
+                        {bulkType === 'IN' && gridMode === 'new' ? (
+                          <select
+                            value={row.category || 'OPERATIONS'}
+                            onChange={(e) => updateBulkRow(row.key, 'category', e.target.value)}
+                            className="w-full bg-midnight-800 border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none"
+                          >
+                            <option value="OPERATIONS">Operaciones</option>
+                            <option value="GENERAL_SERVICES">Gral. Servicios</option>
+                          </select>
+                        ) : gridMode === 'existing' && row.itemId ? (
+                          <span className="text-slate-400 text-xs">{row.category}</span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-3">
+                        {bulkType === 'IN' && gridMode === 'new' ? (
+                          <input
+                            type="text"
+                            value={row.unit || ''}
+                            onChange={(e) => updateBulkRow(row.key, 'unit', e.target.value)}
+                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600"
+                            placeholder="UNIDAD"
+                          />
+                        ) : gridMode === 'existing' && row.itemId ? (
+                          <span className="text-slate-400 text-xs">{row.unit}</span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-3 text-center">
+                        {bulkType === 'IN' && gridMode === 'new' ? (
+                          <input
+                            type="number"
+                            min="0"
+                            value={row.criticalLevel || '1'}
+                            onChange={(e) => updateBulkRow(row.key, 'criticalLevel', e.target.value)}
+                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
+                          />
+                        ) : gridMode === 'existing' && row.itemId ? (
+                          <span className="text-slate-400 text-xs">{row.criticalLevel}</span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-3 text-center">
+                        <input
+                          type="number"
+                          min="1"
+                          value={row.quantity}
+                          onChange={(e) => updateBulkRow(row.key, 'quantity', e.target.value)}
+                          className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => removeBulkRow(row.key)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                          title="Quitar fila"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex-shrink-0 flex items-center justify-between border-t border-blue-500/10 px-1 pt-3 pb-2">
+              <span className="text-[10px] font-mono text-slate-500">
+                {bulkRows.length} filas
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={bulkPage === 0}
+                  onClick={() => setBulkPage(bulkPage - 1)}
+                  className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
+                  {bulkPage + 1}/{totalBulkPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={bulkPage >= totalBulkPages - 1}
+                  onClick={() => setBulkPage(bulkPage + 1)}
+                  className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 pt-1">
+              <button
+                type="submit"
+                disabled={createBulkTx.isPending}
+                className={`w-full py-3 text-sm font-bold uppercase tracking-widest disabled:opacity-50 transition-all ${
+                  bulkType === 'IN'
+                    ? 'bg-green-500 text-midnight-900 hover:bg-green-400 glow-gold-sm'
+                    : 'bg-red-500 text-white hover:bg-red-400'
+                }`}
+              >
+                {createBulkTx.isPending
+                  ? '▶ EJECUTANDO...'
+                  : `▶ EJECUTAR ${filledCount} ${bulkType === 'IN' ? 'CARGOS' : 'DESCARGOS'}`}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+        {showCreateModal && (
+          <div className="lg:col-span-4">
             <div className="glass-panel">
               <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -852,10 +852,9 @@ export default function InsumosPage() {
                 </button>
               </form>
             </div>
-          )}
-        </div>
-
-        <div className="lg:col-span-3">
+          </div>
+        )}
+        <div className={showCreateModal ? 'lg:col-span-7 lg:col-start-6' : 'lg:col-span-8 lg:col-start-3'}>
           <div className="glass-panel h-full flex flex-col">
             <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2">
