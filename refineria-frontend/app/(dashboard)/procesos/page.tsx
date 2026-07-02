@@ -285,7 +285,7 @@ function ProcessDetailView({
 
     const missingLots = processDetail.lotDetails
       .filter((lot) =>
-        lot.bars.every((bar) => bar.leyAg == null && bar.analyticalAg == null),
+        lot.bars.some((bar) => bar.leyAg == null),
       )
       .map((lot) => lot.number);
 
