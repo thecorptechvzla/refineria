@@ -49,7 +49,7 @@ function ProcessDetailView({
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
-  const [closeError, setCloseError] = useState('');
+  const [closeError, setCloseError] = useState<string | { lotNumber: number; bars: { id: string; code: string }[] }[] | null>(null);
   const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
@@ -279,11 +279,15 @@ function ProcessDetailView({
       }
     }
 
-    const anyLotMissingLeyAg = processDetail.lotDetails.some((lot) =>
-      lot.bars.every((bar) => bar.leyAg == null && bar.analyticalAg == null),
-    );
-    if (anyLotMissingLeyAg) {
-      setCloseError('Todos los lotes deben tener Ley Ag ingresada antes de cerrar el proceso.');
+    const missingBarsByLot = processDetail.lotDetails
+      .map((lot) => ({
+        lotNumber: lot.number,
+        bars: lot.bars.filter((bar) => bar.leyAg == null && bar.analyticalAg == null),
+      }))
+      .filter((entry) => entry.bars.length > 0);
+
+    if (missingBarsByLot.length > 0) {
+      setCloseError(missingBarsByLot);
       return;
     }
 
@@ -948,12 +952,38 @@ function ProcessDetailView({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
                   <div className="glass-panel p-6 max-w-sm w-full mx-4">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Error</span>
-                      <button onClick={() => setCloseError('')} className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-wider">
+                        {typeof closeError === 'string' ? 'Error' : 'Ley Ag pendiente'}
+                      </span>
+                      <button onClick={() => setCloseError(null)} className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-sm text-slate-300">{closeError}</p>
+                    {typeof closeError === 'string' ? (
+                      <p className="text-sm text-slate-300">{closeError}</p>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-300 mb-3">
+                          Las siguientes barras no tienen Ley Ag asignada:
+                        </p>
+                        <div className="space-y-2">
+                          {closeError.map((entry) => (
+                            <div key={entry.lotNumber}>
+                              <p className="text-xs font-bold text-gold-400 uppercase tracking-wider mb-1">
+                                Lote #{entry.lotNumber}
+                              </p>
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {entry.bars.map((bar) => (
+                                  <span key={bar.id} className="px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-mono">
+                                    {bar.code}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
