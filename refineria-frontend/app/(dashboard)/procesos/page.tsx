@@ -49,7 +49,7 @@ function ProcessDetailView({
 }) {
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
-  const [closeWarning, setCloseWarning] = useState('');
+  const [closeError, setCloseError] = useState('');
   const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
@@ -260,14 +260,13 @@ function ProcessDetailView({
 
   const handleCloseClick = async () => {
     if (!hasBars) {
-      setCloseWarning('No se puede cerrar el proceso porque no contiene barras asignadas.');
-      setTimeout(() => setCloseWarning(''), 4000);
+      setCloseError('No se puede cerrar el proceso porque no contiene barras asignadas.');
       return;
     }
 
     if (anyLotBlocked) {
-      setCloseWarning('Advertencia: Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900. Puede cerrar el proceso de todas formas.');
-      setTimeout(() => setCloseWarning(''), 5000);
+      setCloseError('Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900.');
+      return;
     }
 
     if (isInProgress) {
@@ -275,8 +274,7 @@ function ProcessDetailView({
         (lot) => getLotG(lot.id) === null,
       );
       if (missingG) {
-        setCloseWarning('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
-        setTimeout(() => setCloseWarning(''), 5000);
+        setCloseError('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
         return;
       }
     }
@@ -285,14 +283,12 @@ function ProcessDetailView({
       lot.bars.every((bar) => bar.leyAg == null && bar.analyticalAg == null),
     );
     if (anyLotMissingLeyAg) {
-      setCloseWarning('Todos los lotes deben tener Ley Ag ingresada antes de cerrar el proceso.');
-      setTimeout(() => setCloseWarning(''), 5000);
+      setCloseError('Todos los lotes deben tener Ley Ag ingresada antes de cerrar el proceso.');
       return;
     }
 
     if (!actaUrls.recepcion || !actaUrls.fundicion || !actaUrls.conformidad) {
-      setCloseWarning('Debe subir las 3 actas de validación (Recepción, Fundición y Conformidad) antes de cerrar el proceso.');
-      setTimeout(() => setCloseWarning(''), 5000);
+      setCloseError('Debe subir las 3 actas de validación (Recepción, Fundición y Conformidad) antes de cerrar el proceso.');
       return;
     }
 
@@ -948,9 +944,17 @@ function ProcessDetailView({
               {errorMessage && (
                 <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
               )}
-              {closeWarning && (
-                <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
-                  <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
+              {closeError && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                  <div className="glass-panel p-6 max-w-sm w-full mx-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Error</span>
+                      <button onClick={() => setCloseError('')} className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-300">{closeError}</p>
+                  </div>
                 </div>
               )}
 
