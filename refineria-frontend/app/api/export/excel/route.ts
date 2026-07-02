@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
     { key: 'esperado', width: 20 },
     { key: 'recup', width: 20 },
     { key: 'pct', width: 16 },
-    { key: 'dif', width: 14 },
     { key: 'leyAg', width: 16 },
     { key: 'plata', width: 20 },
+    { key: 'dif', width: 14 },
   ];
 
   const HEADER_ROW = 5;
@@ -77,9 +77,9 @@ export async function POST(req: NextRequest) {
     { col: 6, val: 'PESO FINO\n ESPERADO (g) ' },
     { col: 7, val: 'PESO FINO\nRECUPERADO (g)' },
     { col: 8, val: '% \nRECUPERACIÓN' },
-    { col: 9, val: 'DIFERENCIA' },
-    { col: 10, val: 'LEY Ag (‰)' },
-    { col: 11, val: 'PESO FINO\nAg (g)' },
+    { col: 9, val: 'LEY Ag (‰)' },
+    { col: 10, val: 'PESO FINO\nAg (g)' },
+    { col: 11, val: 'DIFERENCIA' },
   ];
 
   const hRow = ws.getRow(HEADER_ROW);
@@ -111,9 +111,9 @@ export async function POST(req: NextRequest) {
       { col: 6, val: r.f },
       { col: 7, val: r.g },
       { col: 8, val: r.pct },
-      { col: 9, val: r.dif },
-      { col: 10, val: r.leyAg },
-      { col: 11, val: r.totalAg },
+      { col: 9, val: r.leyAg },
+      { col: 10, val: r.totalAg },
+      { col: 11, val: r.dif },
     ];
 
     for (const d of dataCols) {
@@ -144,9 +144,9 @@ export async function POST(req: NextRequest) {
     { col: 6, val: totalF },
     { col: 7, val: totalG },
     { col: 8, val: totalPct },
-    { col: 9, val: totalDif },
-    { col: 10, val: totalLeyAg },
-    { col: 11, val: totalAg },
+    { col: 9, val: totalLeyAg },
+    { col: 10, val: totalAg },
+    { col: 11, val: totalDif },
   ];
 
   for (const d of totalDataCols) {
