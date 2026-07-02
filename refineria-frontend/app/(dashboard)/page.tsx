@@ -438,9 +438,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-        <button
+        <div
           onClick={() => setStatusModalOpen('in_progress')}
-          className="glass-panel p-4 text-left cursor-pointer hover:border-blue-400/40 transition-all"
+          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
@@ -449,10 +449,10 @@ export default function DashboardPage() {
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.inProgress ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos en curso</p>
           <div className="mt-3 h-[2px] w-full bg-blue-500/30" />
-        </button>
-        <button
+        </div>
+        <div
           onClick={() => setStatusModalOpen('open')}
-          className="glass-panel p-4 text-left cursor-pointer hover:border-green-400/40 transition-all"
+          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
@@ -461,10 +461,10 @@ export default function DashboardPage() {
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.open ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Listos para cerrar</p>
           <div className="mt-3 h-[2px] w-full bg-green-500/30" />
-        </button>
-        <button
+        </div>
+        <div
           onClick={() => setStatusModalOpen('closed')}
-          className="glass-panel p-4 text-left cursor-pointer hover:border-gold-400/40 transition-all"
+          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
@@ -473,7 +473,7 @@ export default function DashboardPage() {
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.closed ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos finalizados</p>
           <div className="mt-3 h-[2px] w-full bg-gold-500/30" />
-        </button>
+        </div>
       </div>
 
       <div className="glass-panel">
