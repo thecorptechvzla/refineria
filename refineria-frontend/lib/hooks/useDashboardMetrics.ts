@@ -53,7 +53,7 @@ type Params = {
   endDate?: string;
 };
 
-export function useDashboardMetrics(params: Params) {
+export function useDashboardMetrics(params: Params, enabled = true) {
   const queryString = new URLSearchParams();
   if (params.supplierId && params.supplierId !== 'all') queryString.set('supplierId', params.supplierId);
   if (params.startDate) queryString.set('startDate', params.startDate);
@@ -63,6 +63,8 @@ export function useDashboardMetrics(params: Params) {
   return useQuery<DashboardMetrics>({
     queryKey: ['dashboard', 'metrics', qs],
     queryFn: () => api<DashboardMetrics>(`/dashboard/metrics${qs ? `?${qs}` : ''}`),
+    enabled,
     staleTime: 30_000,
+    retry: 2,
   });
 }

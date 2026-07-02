@@ -77,7 +77,8 @@ export default function DashboardPage() {
     return p;
   }, [selectedSupplierId, selectedPeriod, startDate, endDate, monthRange]);
 
-  const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics(params);
+  const { data: metrics, isLoading: metricsLoading, isError: metricsError, refetch: refetchMetrics } =
+    useDashboardMetrics(params, !!user && !authLoading);
   const { data: processDetail, isLoading: detailLoading } = useProcessDetail(viewingProcessId);
 
   const processBySupplier = useMemo(() => {
@@ -100,8 +101,6 @@ export default function DashboardPage() {
     if (!expandedSupplierId || !metrics?.processSummary) return [];
     return metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId);
   }, [expandedSupplierId, metrics?.processSummary]);
-
-  const isLoading = authLoading || metricsLoading;
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -134,7 +133,7 @@ export default function DashboardPage() {
     } as ProcessDetail;
   }, [processDetail]);
 
-  if (isLoading || !user) {
+  if (authLoading) {
     return (
       <div className="flex h-full items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center space-y-4">
@@ -143,6 +142,36 @@ export default function DashboardPage() {
             <div className="absolute inset-1 border-t-2 border-gold-500 animate-spin rounded-sm" />
           </div>
           <p className="text-slate-500 font-medium animate-pulse text-sm uppercase tracking-widest">Sincronizando Bóveda</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-full items-center justify-center min-h-[60vh]">
+        <div className="glass-panel p-8 max-w-sm w-full mx-4 text-center">
+          <Shield className="w-10 h-10 text-red-400 mx-auto mb-3" />
+          <p className="text-sm text-slate-300 font-semibold mb-1">Sesión expirada</p>
+          <p className="text-xs text-slate-500 mb-5">Tu sesión ha expirado. Inicia sesión nuevamente.</p>
+          <a href="/login" className="inline-block px-6 py-2.5 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all">
+            Iniciar Sesión
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (metricsError && !metrics) {
+    return (
+      <div className="flex h-full items-center justify-center min-h-[60vh]">
+        <div className="glass-panel p-8 max-w-sm w-full mx-4 text-center">
+          <Activity className="w-10 h-10 text-red-400 mx-auto mb-3" />
+          <p className="text-sm text-slate-300 font-semibold mb-1">Error al cargar métricas</p>
+          <p className="text-xs text-slate-500 mb-5">No se pudieron obtener los datos del panel de mando.</p>
+          <button onClick={() => refetchMetrics()} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
+            Reintentar Conexión
+          </button>
         </div>
       </div>
     );
