@@ -13,6 +13,8 @@ export type LotDetail = ProcessLot & {
   g: number;
   pct: number;
   dif: number;
+  totalAg: number;
+  leyAg: number;
 };
 
 export type ProcessDetail = Process & {
@@ -23,14 +25,22 @@ export type ProcessDetail = Process & {
   totalG: number;
   totalPct: number;
   totalDif: number;
+  totalAg: number;
+  totalLeyAg: number;
 };
 
 function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
   const bars = allBars.filter((b) => lot.barIds.includes(b.id));
-  const grossWeight = bars.reduce((s, b) => s + b.grossWeight, 0);
-  const e = bars.reduce((s, b) => s + b.analytical, 0);
-  const f = bars.reduce((s, b) => s + b.expected, 0);
-  const g = lot.recovered ?? bars.reduce((s, b) => s + b.recovered, 0);
+  const grossWeight = Number(bars.reduce((s, b) => s + b.grossWeight, 0).toFixed(2));
+  const e = Number(bars.reduce((s, b) => s + b.analytical, 0).toFixed(2));
+  const f = Number(bars.reduce((s, b) => s + b.expected, 0).toFixed(2));
+  const g = Number((lot.recovered ?? bars.reduce((s, b) => s + b.recovered, 0)).toFixed(2));
+  const totalAg = Number(bars.reduce((s, b) => {
+    if (b.analyticalAg != null) return s + b.analyticalAg;
+    if (b.leyAg != null) return s + b.grossWeight * b.leyAg / 1000;
+    return s;
+  }, 0).toFixed(2));
+  const leyAg = grossWeight > 0 ? Number(((totalAg / grossWeight) * 1000).toFixed(2)) : 0;
   return {
     ...lot,
     bars,
@@ -40,6 +50,8 @@ function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
     g,
     pct: e > 0 ? (g / e) * 100 : 0,
     dif: g - f,
+    totalAg,
+    leyAg,
   };
 }
 
@@ -49,6 +61,8 @@ export function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetai
   const totalE = lotDetails.reduce((s, l) => s + l.e, 0);
   const totalF = lotDetails.reduce((s, l) => s + l.f, 0);
   const totalG = lotDetails.reduce((s, l) => s + l.g, 0);
+  const totalAg = Number(lotDetails.reduce((s, l) => s + l.totalAg, 0).toFixed(2));
+  const totalLeyAg = totalGrossWeight > 0 ? Number(((totalAg / totalGrossWeight) * 1000).toFixed(2)) : 0;
   return {
     ...p,
     lotDetails,
@@ -58,6 +72,8 @@ export function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetai
     totalG,
     totalPct: totalE > 0 ? (totalG / totalE) * 100 : 0,
     totalDif: totalG - totalF,
+    totalAg,
+    totalLeyAg,
   };
 }
 
@@ -118,14 +134,16 @@ export function ProcessModal({
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recup.</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Dif (g)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">LEY Ag (‰)</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
                   <th className="px-3 py-3" />
                 </tr>
               </thead>
               <tbody>
-            {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
+              {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
                   <tr key={lot.id} className="terminal-row">
                     <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight.toFixed(2)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
@@ -133,6 +151,8 @@ export function ProcessModal({
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
                       {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
                     </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.leyAg.toFixed(2)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.totalAg.toFixed(2)}</td>
                     <td className="px-3 py-3 text-right">
                       <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
                     </td>
@@ -140,7 +160,7 @@ export function ProcessModal({
                 ))}
                 <tr className="border-t border-gold-500/20 bg-gold-500/5">
                   <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalGrossWeight}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalGrossWeight.toFixed(2)}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalE.toFixed(1)}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalF.toFixed(1)}</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalG.toFixed(1)}</td>
@@ -148,6 +168,8 @@ export function ProcessModal({
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
                     {detail.totalDif >= 0 ? '+' : ''}{detail.totalDif.toFixed(1)}
                   </td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalLeyAg.toFixed(2)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalAg.toFixed(2)}</td>
                   <td />
                 </tr>
               </tbody>
@@ -169,6 +191,8 @@ export function ProcessModal({
                         <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
                         <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
                         <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Recuperado — G (g)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley Ag (‰)</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ag (g)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -180,6 +204,14 @@ export function ProcessModal({
                           <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
                           <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
                           <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.recovered)}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">
+                            {bar.analyticalAg != null
+                              ? formatLocaleNumber(bar.analyticalAg)
+                              : bar.leyAg != null
+                              ? formatLocaleNumber(bar.grossWeight * bar.leyAg / 1000)
+                              : '—'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

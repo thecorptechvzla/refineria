@@ -10,6 +10,7 @@ interface LotRow {
   pct: number;
   dif: number;
   totalAg: number;
+  leyAg: number;
 }
 
 function thinBorder() {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
   const totalAg = rows.reduce((s, r) => s + r.totalAg, 0);
   const totalPct = totalE > 0 ? (totalG / totalE) * 100 : 0;
   const totalDif = totalG - totalF;
+  const totalLeyAg = totalGrossWeight > 0 ? Number(((totalAg / totalGrossWeight) * 1000).toFixed(2)) : 0;
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('CONSOLIDADO');
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
     { key: 'recup', width: 20 },
     { key: 'pct', width: 16 },
     { key: 'dif', width: 14 },
+    { key: 'leyAg', width: 16 },
     { key: 'plata', width: 20 },
   ];
 
@@ -64,7 +67,7 @@ export async function POST(req: NextRequest) {
   supplierRow.getCell(3).value = supplierName;
   supplierRow.getCell(3).font = { bold: true };
   supplierRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(4, 3, 4, 10);
+  ws.mergeCells(4, 3, 4, 11);
   supplierRow.height = 24;
 
   const headerCells = [
@@ -75,7 +78,8 @@ export async function POST(req: NextRequest) {
     { col: 7, val: 'PESO FINO\nRECUPERADO (g)' },
     { col: 8, val: '% \nRECUPERACIÓN' },
     { col: 9, val: 'DIFERENCIA' },
-    { col: 10, val: 'PESO PLATA\nRECUPERADO (g)' },
+    { col: 10, val: 'LEY Ag (‰)' },
+    { col: 11, val: 'PESO FINO\nAg (g)' },
   ];
 
   const hRow = ws.getRow(HEADER_ROW);
@@ -108,7 +112,8 @@ export async function POST(req: NextRequest) {
       { col: 7, val: r.g },
       { col: 8, val: r.pct },
       { col: 9, val: r.dif },
-      { col: 10, val: r.totalAg },
+      { col: 10, val: r.leyAg },
+      { col: 11, val: r.totalAg },
     ];
 
     for (const d of dataCols) {
@@ -140,7 +145,8 @@ export async function POST(req: NextRequest) {
     { col: 7, val: totalG },
     { col: 8, val: totalPct },
     { col: 9, val: totalDif },
-    { col: 10, val: totalAg },
+    { col: 10, val: totalLeyAg },
+    { col: 11, val: totalAg },
   ];
 
   for (const d of totalDataCols) {
