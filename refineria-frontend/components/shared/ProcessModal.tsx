@@ -156,7 +156,7 @@ export function ProcessModal({
 
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalle de Barras por Lote</h3>
-            {detail.lotDetails.map((lot) => (
+            {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
               <div key={lot.id} className="bg-midnight-800/50 border border-blue-500/10 p-4">
                 <p className="text-sm font-bold text-slate-300 mb-3">Lote #{lot.number}</p>
                 <div className="overflow-x-auto">
