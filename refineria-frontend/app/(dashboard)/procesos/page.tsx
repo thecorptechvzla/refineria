@@ -50,12 +50,13 @@ function ProcessDetailView({
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
   const [closeWarning, setCloseWarning] = useState('');
-  const [closeError, setCloseError] = useState<{ lotNumber: number; bars: { id: string; code: string }[] }[] | null>(null);
+  const [closeError, setCloseError] = useState<string | null>(null);
   const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
+  const [editingG, setEditingG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const [actaUrls, setActaUrls] = useState<Record<string, string>>({});
@@ -101,6 +102,11 @@ function ProcessDetailView({
     }
     setLotG(initial);
     setSavingG({});
+    const editingInitial: Record<string, boolean> = {};
+    for (const lot of processDetail.lotDetails) {
+      editingInitial[lot.id] = !(lot.recovered != null && lot.recovered > 0);
+    }
+    setEditingG(editingInitial);
     setSavingLeyAg({});
     setEditingLeyAg({});
     setLotLeyAg({});
@@ -202,6 +208,7 @@ function ProcessDetailView({
       if (isOpen) {
         await onMarkComplete();
       }
+      setEditingG((prev) => ({ ...prev, [lotId]: false }));
       const lotGNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
       setSuccessMessage(`Peso fino recuperado guardado correctamente para el Lote #${lotGNum}`);
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -276,15 +283,15 @@ function ProcessDetailView({
       }
     }
 
-    const missingBarsByLot = processDetail.lotDetails
-      .map((lot) => ({
-        lotNumber: lot.number,
-        bars: lot.bars.filter((bar) => bar.leyAg == null && bar.analyticalAg == null),
-      }))
-      .filter((entry) => entry.bars.length > 0);
+    const missingLots = processDetail.lotDetails
+      .filter((lot) =>
+        lot.bars.every((bar) => bar.leyAg == null && bar.analyticalAg == null),
+      )
+      .map((lot) => lot.number);
 
-    if (missingBarsByLot.length > 0) {
-      setCloseError(missingBarsByLot);
+    if (missingLots.length > 0) {
+      const lotList = missingLots.map((n) => `Lote #${n}`).join(', ');
+      setCloseError(`No se puede cerrar el proceso. Faltan barras por asignarles la Ley de Plata (Ley Ag) en los siguientes lotes: ${lotList}.`);
       return;
     }
 
@@ -577,26 +584,44 @@ function ProcessDetailView({
                             value={lotG[lot.id] ?? ''}
                             onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
                             onKeyDown={(e) => {
+                              const ctrl = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter'];
+                              if (ctrl.includes(e.key)) return;
+                              if (e.key === ',' || e.key === '.') return;
+                              if (e.key >= '0' && e.key <= '9') return;
+                              e.preventDefault();
                               if (e.key === 'Enter' && (isOpen || isInProgress)) {
-                                e.preventDefault();
                                 handleSaveLotG(lot.id);
                               }
                             }}
                             placeholder="0,00"
-                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
+                            disabled={!editingG[lot.id]}
+                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
         {(isOpen || isInProgress) && (
                           <button
-                            onClick={() => handleSaveLotG(lot.id)}
+                            onClick={() => {
+                              if (!editingG[lot.id]) {
+                                setEditingG((prev) => ({ ...prev, [lot.id]: true }));
+                              } else {
+                                handleSaveLotG(lot.id);
+                              }
+                            }}
                             disabled={savingG[lot.id]}
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                              savingG[lot.id]
+                              !editingG[lot.id]
+                              ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                              : savingG[lot.id]
                               ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 opacity-50 cursor-not-allowed'
                               : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {savingG[lot.id] ? (
                               <Save className="w-3 h-3 animate-spin" />
+                            ) : !editingG[lot.id] ? (
+                              <span className="flex items-center gap-1">
+                                <Save className="w-3 h-3" />
+                                Editar
+                              </span>
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Save className="w-3 h-3" />
@@ -672,6 +697,13 @@ function ProcessDetailView({
                                           ...prev,
                                           [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: formatInputNumber(e.target.value) },
                                         }))}
+                                        onKeyDown={(e) => {
+                                          const ctrl = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                                          if (ctrl.includes(e.key)) return;
+                                          if (e.key === ',' || e.key === '.') return;
+                                          if (e.key >= '0' && e.key <= '9') return;
+                                          e.preventDefault();
+                                        }}
                                         disabled={lot.bars.every((b) => b.leyAg != null) && !editingLeyAg[lot.id]}
                                         className="w-16 px-1.5 py-0.5 bg-midnight-900 border border-blue-500/20 text-slate-200 text-[11px] font-mono text-center outline-none text-right disabled:opacity-50 disabled:cursor-not-allowed"
                                         placeholder="—"
@@ -945,25 +977,7 @@ function ProcessDetailView({
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-sm text-slate-300 mb-3">
-                      Las siguientes barras no tienen Ley Ag asignada:
-                    </p>
-                    <div className="space-y-2">
-                      {closeError.map((entry) => (
-                        <div key={entry.lotNumber}>
-                          <p className="text-xs font-bold text-gold-400 uppercase tracking-wider mb-1">
-                            Lote #{entry.lotNumber}
-                          </p>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {entry.bars.map((bar) => (
-                              <span key={bar.id} className="px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-mono">
-                                {bar.code}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-slate-300">{closeError}</p>
                   </div>
                 </div>
               )}
