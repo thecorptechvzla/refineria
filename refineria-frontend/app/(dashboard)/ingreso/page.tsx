@@ -165,6 +165,8 @@ export default function IngresoPage() {
       { header: 'LEY Au (‰)', width: 14 },
       { header: 'PESO FINO Au (g)', width: 20 },
       { header: 'LOTE N°', width: 12 },
+      { header: 'LEY Ag (‰)', width: 14 },
+      { header: 'PESO FINO Ag (g)', width: 20 },
     ];
 
     const headerRow = sheet.getRow(1);
@@ -181,14 +183,17 @@ export default function IngresoPage() {
     });
 
     const TOTAL = 500;
-    sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 'L-405']);
+    sheet.addRow(['BAR-001', 1000, 900, { formula: 'B2*C2/1000' }, 'L-405', null, { formula: 'B2*F2/1000' }]);
     for (let r = 3; r <= TOTAL; r++) {
-      sheet.addRow([null, null, null, { formula: `B${r}*C${r}/1000` }, null]);
+      sheet.addRow([null, null, null, { formula: `B${r}*C${r}/1000` }, null, null, { formula: `B${r}*F${r}/1000` }]);
     }
     [2, 3, 4, 5].forEach((r) => {
       const cell = sheet.getRow(r).getCell(4);
       cell.font = { italic: true, color: { argb: 'FF666666' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
+      const cellAg = sheet.getRow(r).getCell(7);
+      cellAg.font = { italic: true, color: { argb: 'FF666666' } };
+      cellAg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
     });
 
     for (let r = 2; r <= TOTAL; r++) {
