@@ -394,40 +394,8 @@ export default function DashboardPage() {
                           </span>
                         )}
                         <ChevronDown className={`w-3 h-3 text-slate-600 transition-transform ${isSupplierExpanded ? 'rotate-180' : ''}`} />
-          </div>
-
-          <div className="border-t border-blue-500/10" />
-
-          <div className="grid grid-cols-3 gap-3 p-4 sm:p-5">
-            <div className="glass-panel p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
-                <Settings className="w-3.5 h-3.5 text-blue-500" />
-              </div>
-              <p className="hud-number text-lg text-white">{metrics?.processCounts.inProgress ?? 0}</p>
-              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">En curso</p>
-              <div className="mt-2 h-[2px] w-full bg-blue-500/30" />
-            </div>
-            <div className="glass-panel p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
-                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-              </div>
-              <p className="hud-number text-lg text-white">{metrics?.processCounts.open ?? 0}</p>
-              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">Listos para cerrar</p>
-              <div className="mt-2 h-[2px] w-full bg-green-500/30" />
-            </div>
-            <div className="glass-panel p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
-                <Crosshair className="w-3.5 h-3.5 text-gold-500" />
-              </div>
-              <p className="hud-number text-lg text-white">{metrics?.processCounts.closed ?? 0}</p>
-              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">Procesos finalizados</p>
-              <div className="mt-2 h-[2px] w-full bg-gold-500/30" />
-            </div>
-          </div>
-        </div>
+                      </div>
+                    </div>
                     {isSupplierExpanded && (
                       <div className="border-t border-blue-500/10 pt-2 pb-1 px-3 space-y-1.5">
                         {supplierProcessMap.length > 0 ? (
@@ -461,6 +429,36 @@ export default function DashboardPage() {
               <p className="text-center text-sm text-slate-500 py-6">No hay procesos activos.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+        <div className="glass-panel p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
+            <Settings className="w-4 h-4 text-blue-500" />
+          </div>
+          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.inProgress ?? 0}</p>
+          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos en curso</p>
+          <div className="mt-3 h-[2px] w-full bg-blue-500/30" />
+        </div>
+        <div className="glass-panel p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.open ?? 0}</p>
+          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Listos para cerrar</p>
+          <div className="mt-3 h-[2px] w-full bg-green-500/30" />
+        </div>
+        <div className="glass-panel p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
+            <Crosshair className="w-4 h-4 text-gold-500" />
+          </div>
+          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.closed ?? 0}</p>
+          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos finalizados</p>
+          <div className="mt-3 h-[2px] w-full bg-gold-500/30" />
         </div>
       </div>
 
