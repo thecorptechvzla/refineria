@@ -56,7 +56,6 @@ function ProcessDetailView({
   const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
-  const [editingG, setEditingG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const [actaUrls, setActaUrls] = useState<Record<string, string>>({});
@@ -102,7 +101,6 @@ function ProcessDetailView({
     }
     setLotG(initial);
     setSavingG({});
-    setEditingG({});
     setSavingLeyAg({});
     setEditingLeyAg({});
     setLotLeyAg({});
@@ -204,7 +202,6 @@ function ProcessDetailView({
       if (isOpen) {
         await onMarkComplete();
       }
-      setEditingG((prev) => ({ ...prev, [lotId]: false }));
       const lotGNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
       setSuccessMessage(`Peso fino recuperado guardado correctamente para el Lote #${lotGNum}`);
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -267,7 +264,6 @@ function ProcessDetailView({
 
     if (anyLotBlocked) {
       setCloseWarning('Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900.');
-      return;
     }
 
     if (isInProgress) {
@@ -587,34 +583,20 @@ function ProcessDetailView({
                               }
                             }}
                             placeholder="0,00"
-                            disabled={!editingG[lot.id] && getLotG(lot.id) !== null}
-                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
                           />
         {(isOpen || isInProgress) && (
                           <button
-                            onClick={() => {
-                              if (!editingG[lot.id] && getLotG(lot.id) !== null) {
-                                setEditingG((prev) => ({ ...prev, [lot.id]: true }));
-                              } else {
-                                handleSaveLotG(lot.id);
-                              }
-                            }}
-                            disabled={savingG[lot.id] || (!editingG[lot.id] && getLotG(lot.id) === null)}
+                            onClick={() => handleSaveLotG(lot.id)}
+                            disabled={savingG[lot.id]}
                             className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                              !editingG[lot.id] && getLotG(lot.id) !== null
-                                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                                : savingG[lot.id]
-                                ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 opacity-50 cursor-not-allowed'
-                                : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                              savingG[lot.id]
+                              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 opacity-50 cursor-not-allowed'
+                              : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {savingG[lot.id] ? (
                               <Save className="w-3 h-3 animate-spin" />
-                            ) : !editingG[lot.id] && getLotG(lot.id) !== null ? (
-                              <span className="flex items-center gap-1">
-                                <Save className="w-3 h-3" />
-                                Editar
-                              </span>
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Save className="w-3 h-3" />
@@ -688,7 +670,7 @@ function ProcessDetailView({
                                         value={leyAgVal}
                                         onChange={(e) => setLotLeyAg((prev) => ({
                                           ...prev,
-                                          [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: e.target.value },
+                                          [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: formatInputNumber(e.target.value) },
                                         }))}
                                         disabled={lot.bars.every((b) => b.leyAg != null) && !editingLeyAg[lot.id]}
                                         className="w-16 px-1.5 py-0.5 bg-midnight-900 border border-blue-500/20 text-slate-200 text-[11px] font-mono text-center outline-none text-right disabled:opacity-50 disabled:cursor-not-allowed"
