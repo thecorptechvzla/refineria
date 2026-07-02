@@ -12,6 +12,7 @@ export class DashboardService {
       oroIngresado,
       oroEnBoveda,
       oroEnProceso,
+      faltaPorRefinar,
       processCounts,
       processSummary,
       supplierChartData,
@@ -22,6 +23,7 @@ export class DashboardService {
       this.getOroIngresado(supplierId, dateRange),
       this.getOroEnBoveda(supplierId, dateRange),
       this.getOroEnProceso(supplierId, dateRange),
+      this.getOroPorProcesar(supplierId, dateRange),
       this.getProcessCounts(supplierId, dateRange),
       this.getProcessSummary(supplierId, dateRange),
       this.getSupplierChartData(supplierId, dateRange),
@@ -34,7 +36,7 @@ export class DashboardService {
       oroIngresado,
       oroEnBoveda,
       oroEnProceso,
-      faltaPorRefinar: oroIngresado - (oroEnBoveda + oroEnProceso),
+      faltaPorRefinar,
       totalBarCount,
       availableBarCount,
       processCounts,
@@ -112,9 +114,17 @@ export class DashboardService {
     return Number((result._sum.recovered ?? 0).toFixed(2));
   }
 
+  private async getOroPorProcesar(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+    const result = await this.prisma.goldBar.aggregate({
+      _sum: { grossWeight: true },
+      where: { ...this.buildGoldBarWhere(supplierId, dateRange), available: true },
+    });
+    return result._sum.grossWeight ?? 0;
+  }
+
   private async getOroEnProceso(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
     const inProgressLots = await this.prisma.processLot.findMany({
-      where: { process: { status: 'in_progress' } },
+      where: { process: { status: { in: ['open', 'in_progress'] } } },
       select: { barIds: true },
     });
     const allBarIds = [...new Set(inProgressLots.flatMap((l) => l.barIds))];
