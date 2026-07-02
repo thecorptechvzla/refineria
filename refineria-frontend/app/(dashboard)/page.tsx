@@ -336,8 +336,8 @@ export default function DashboardPage() {
                 <tbody>
                   {(metrics?.supplierChartData ?? []).length > 0 ? (
                     (metrics?.supplierChartData ?? []).map((row) => (
-                      <tr key={row.supplierId} className="terminal-row">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.supplierName}</td>
+                      <tr key={row.id} className="terminal-row">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>

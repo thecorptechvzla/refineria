@@ -177,15 +177,15 @@ export class DashboardService {
       include: { supplier: { select: { name: true } } },
     });
 
-    const map = new Map<string, { supplierId: string; supplierName: string; grossIn: number; fineIn: number; fineOut: number }>();
+    const map = new Map<string, { id: string; name: string; grossIn: number; fineIn: number; fineOut: number }>();
 
     for (const tx of transactions) {
       if (!tx.supplierId) continue;
       const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
       if (!map.has(tx.supplierId)) {
         map.set(tx.supplierId, {
-          supplierId: tx.supplierId,
-          supplierName: tx.supplier?.name ?? '',
+          id: tx.supplierId,
+          name: tx.supplier?.name ?? '',
           grossIn: 0,
           fineIn: 0,
           fineOut: 0,
@@ -200,7 +200,14 @@ export class DashboardService {
       }
     }
 
-    return Array.from(map.values()).filter((d) => d.grossIn > 0 || d.fineOut > 0);
+    return Array.from(map.values())
+      .filter((d) => d.grossIn > 0 || d.fineOut > 0)
+      .map((d) => ({
+        ...d,
+        grossIn: Number(d.grossIn.toFixed(2)),
+        fineIn: Number(d.fineIn.toFixed(2)),
+        fineOut: Number(d.fineOut.toFixed(2)),
+      }));
   }
 
   private async getRecentTransactions(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
