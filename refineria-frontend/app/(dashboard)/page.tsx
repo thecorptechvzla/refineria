@@ -53,6 +53,7 @@ export default function DashboardPage() {
 
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -83,9 +84,12 @@ export default function DashboardPage() {
 
   const processBySupplier = useMemo(() => {
     if (!suppliers || !metrics?.processSummary) return [];
+    const filtered = statusFilter
+      ? metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusFilter)
+      : metrics.processSummary;
     return suppliers
       .map((s) => {
-        const sp = metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === s.id);
+        const sp = filtered.filter((p: ProcessSummaryItem) => p.supplierId === s.id);
         return {
           id: s.id,
           name: s.name,
@@ -95,12 +99,14 @@ export default function DashboardPage() {
         };
       })
       .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
-  }, [metrics?.processSummary, suppliers]);
+  }, [metrics?.processSummary, suppliers, statusFilter]);
 
   const supplierProcessMap = useMemo(() => {
     if (!expandedSupplierId || !metrics?.processSummary) return [];
-    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId);
-  }, [expandedSupplierId, metrics?.processSummary]);
+    return metrics.processSummary
+      .filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId)
+      .filter((p) => !statusFilter || p.status === statusFilter);
+  }, [expandedSupplierId, metrics?.processSummary, statusFilter]);
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -432,33 +438,54 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-        <div className="glass-panel p-4">
+        <button
+          onClick={() => setStatusFilter(statusFilter === 'in_progress' ? null : 'in_progress')}
+          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
+            statusFilter === 'in_progress' ? 'ring-1 ring-blue-400/50 border-blue-400/40' : ''
+          }`}
+        >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
-            <Settings className="w-4 h-4 text-blue-500" />
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+              statusFilter === 'in_progress' ? 'text-blue-400' : 'text-blue-400/70'
+            }`}>ABIERTOS</span>
+            <Settings className={`w-4 h-4 ${statusFilter === 'in_progress' ? 'text-blue-400' : 'text-blue-500'}`} />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.inProgress ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos en curso</p>
           <div className="mt-3 h-[2px] w-full bg-blue-500/30" />
-        </div>
-        <div className="glass-panel p-4">
+        </button>
+        <button
+          onClick={() => setStatusFilter(statusFilter === 'open' ? null : 'open')}
+          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
+            statusFilter === 'open' ? 'ring-1 ring-green-400/50 border-green-400/40' : ''
+          }`}
+        >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
-            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+              statusFilter === 'open' ? 'text-green-400' : 'text-green-400/70'
+            }`}>TERMINADOS</span>
+            <CheckCircle className={`w-4 h-4 ${statusFilter === 'open' ? 'text-green-400' : 'text-green-500'}`} />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.open ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Listos para cerrar</p>
           <div className="mt-3 h-[2px] w-full bg-green-500/30" />
-        </div>
-        <div className="glass-panel p-4">
+        </button>
+        <button
+          onClick={() => setStatusFilter(statusFilter === 'closed' ? null : 'closed')}
+          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
+            statusFilter === 'closed' ? 'ring-1 ring-gold-400/50 border-gold-400/40' : ''
+          }`}
+        >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
-            <Crosshair className="w-4 h-4 text-gold-500" />
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+              statusFilter === 'closed' ? 'text-gold-400' : 'text-gold-400/70'
+            }`}>CERRADOS</span>
+            <Crosshair className={`w-4 h-4 ${statusFilter === 'closed' ? 'text-gold-400' : 'text-gold-500'}`} />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.closed ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos finalizados</p>
           <div className="mt-3 h-[2px] w-full bg-gold-500/30" />
-        </div>
+        </button>
       </div>
 
       <div className="glass-panel">

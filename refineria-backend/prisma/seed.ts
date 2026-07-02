@@ -16,6 +16,7 @@ async function main() {
   const hashedPassword1 = await bcrypt.hash('JuanDavila*', 10);
   const hashedPassword2 = await bcrypt.hash('AngelEspinosa*', 10);
   const hashedPassword3 = await bcrypt.hash('RodrigoRojas*', 10);
+  const hashedPassword4 = await bcrypt.hash('TheCorpAdmin1*', 10);
 
   const superadminCorp = await prisma.user.upsert({
     where: { email: 'thecorptech@goldtrack.com' },
@@ -61,7 +62,18 @@ async function main() {
     },
   });
 
-  console.log('Users created:', superadminCorp.email, superadmin.email, admin.email, admin1.email);
+  const owner2 = await prisma.user.upsert({
+    where: { email: 'thecorptech1@goldtrack.com' },
+    update: {},
+    create: {
+      name: 'The Corp Tech',
+      email: 'thecorptech1@goldtrack.com',
+      password: hashedPassword4,
+      role: 'OWNER',
+    },
+  });
+
+  console.log('Users created:', superadminCorp.email, superadmin.email, admin.email, admin1.email, owner2.email);
 
   // const suppliers = await Promise.all([
   //   prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', rif: 'J-12345678-9', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),

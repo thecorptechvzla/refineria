@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, Fragment } from 'react';
 import { getSupplierName, formatLocaleNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
-import { Crosshair, X, FileText } from 'lucide-react';
+import { ChevronDown, Crosshair, X, FileText } from 'lucide-react';
 
 export type LotDetail = ProcessLot & {
   bars: GoldBar[];
@@ -85,6 +86,7 @@ export function ProcessModal({
   suppliers: { id: string; name: string }[] | undefined;
   onClose: () => void;
 }) {
+  const [expandedLotId, setExpandedLotId] = useState<string | null>(null);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
@@ -119,11 +121,44 @@ export function ProcessModal({
         </div>
 
         <div className="p-5 space-y-6">
+          {/* Documentos de Validación — moved to top */}
+          <div className="border border-blue-500/10 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-blue-400" />
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-wider">Documentos de Validaci&oacute;n</h3>
+            </div>
+            {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { type: 'recepcion', label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
+                  { type: 'fundicion', label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
+                  { type: 'conformidad', label: 'Acta de Conformidad', url: detail.actaConformidad },
+                ].map((acta) => (
+                  acta.url ? (
+                    <a
+                      key={acta.label}
+                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${detail.id}/actas/${acta.type}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
+                    >
+                      <FileText className="w-3 h-3 text-blue-400 shrink-0" />
+                      <span>{acta.label}</span>
+                    </a>
+                  ) : null
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-slate-500">No hay documentos de validaci&oacute;n asociados.</p>
+            )}
+          </div>
+
+          {/* Tabla colapsable de Lotes / Barras */}
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-blue-500/10">
-                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote</th>
+                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote / Barra</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
@@ -136,24 +171,63 @@ export function ProcessModal({
                 </tr>
               </thead>
               <tbody>
-              {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
-                  <tr key={lot.id} className="terminal-row">
-                    <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">#{lot.number}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight.toFixed(2)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                      {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.leyAg.toFixed(2)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.totalAg.toFixed(2)}</td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
-                    </td>
-                  </tr>
-                ))}
+                {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
+                  const isExpanded = expandedLotId === lot.id;
+                  return (
+                    <Fragment key={lot.id}>
+                      <tr
+                        onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
+                        className="terminal-row cursor-pointer select-none"
+                      >
+                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                            <span>#{lot.number}</span>
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight.toFixed(2)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                          {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.leyAg.toFixed(2)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.totalAg.toFixed(2)}</td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
+                        </td>
+                      </tr>
+                      {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                        const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
+                        const barDif = bar.recovered - bar.expected;
+                        const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
+                        return (
+                          <tr key={bar.id} className="bg-midnight-900/40 border-b border-blue-500/5">
+                            <td className="px-3 py-2 whitespace-nowrap text-[11px] font-mono text-slate-500">
+                              <span className="inline-flex items-center gap-1.5 pl-6">
+                                <span className="w-1 h-1 rounded-full bg-slate-600 inline-block shrink-0" />
+                                <span>{bar.code}</span>
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.grossWeight.toFixed(2)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.analytical.toFixed(1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.expected.toFixed(1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.recovered.toFixed(1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barPct.toFixed(2)}%</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
+                              {barDif >= 0 ? '+' : ''}{barDif.toFixed(1)}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? bar.leyAg.toFixed(2) : '—'}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? barAgG.toFixed(2) : '—'}</td>
+                            <td />
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  );
+                })}
                 <tr className="border-t border-gold-500/20 bg-gold-500/5">
                   <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalGrossWeight.toFixed(2)}</td>
@@ -171,85 +245,7 @@ export function ProcessModal({
               </tbody>
             </table>
           </div>
-
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalle de Barras por Lote</h3>
-            {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => (
-              <div key={lot.id} className="bg-midnight-800/50 border border-blue-500/10 p-4">
-                <p className="text-sm font-bold text-slate-300 mb-3">Lote #{lot.number}</p>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-blue-500/10">
-                        <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Serial</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Bruto (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley (‰)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Fino Recuperado — G (g)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley Ag (‰)</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ag (g)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => (
-                        <tr key={bar.id} className="terminal-row">
-                          <td className="px-3 py-2 whitespace-nowrap text-sm font-mono text-slate-300">{bar.code}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.grossWeight)}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.analytical)}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.expected)}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(bar.recovered)}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-mono text-slate-400">
-                            {bar.analyticalAg != null
-                              ? formatLocaleNumber(bar.analyticalAg)
-                              : bar.leyAg != null
-                              ? formatLocaleNumber(bar.grossWeight * bar.leyAg / 1000)
-                              : '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
-
-        {detail.status === 'closed' && (
-          <div className="p-5 border-t border-blue-500/10">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Documentos de Validaci&oacute;n</h3>
-            </div>
-            {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { type: 'recepcion', label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
-                  { type: 'fundicion', label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
-                  { type: 'conformidad', label: 'Acta de Conformidad', url: detail.actaConformidad },
-                ].map((acta) => (
-                  acta.url ? (
-                    <a
-                      key={acta.label}
-                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${detail.id}/actas/${acta.type}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
-                    >
-                      <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                      <span>{acta.label}</span>
-                    </a>
-                  ) : null
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-500">No hay documentos de validaci&oacute;n asociados.</p>
-            )}
-          </div>
-        )}
 
         <div className="p-5 border-t border-blue-500/10 flex justify-end">
           <button onClick={onClose} className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
