@@ -31,9 +31,8 @@ export type RecentTransactionItem = {
 
 export type DashboardMetrics = {
   oroIngresado: number;
-  oroEnInventario: number;
+  oroEnBoveda: number;
   oroEnProceso: number;
-  oroRefinado: number;
   faltaPorRefinar: number;
   totalBarCount: number;
   availableBarCount: number;

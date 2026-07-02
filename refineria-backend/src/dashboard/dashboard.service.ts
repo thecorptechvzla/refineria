@@ -10,9 +10,8 @@ export class DashboardService {
 
     const [
       oroIngresado,
-      oroEnInventario,
+      oroEnBoveda,
       oroEnProceso,
-      oroRefinado,
       processCounts,
       processSummary,
       supplierChartData,
@@ -21,9 +20,8 @@ export class DashboardService {
       availableBarCount,
     ] = await Promise.all([
       this.getOroIngresado(supplierId, dateRange),
-      this.getOroEnInventario(supplierId, dateRange),
+      this.getOroEnBoveda(supplierId, dateRange),
       this.getOroEnProceso(supplierId, dateRange),
-      this.getOroRefinado(supplierId, dateRange),
       this.getProcessCounts(supplierId, dateRange),
       this.getProcessSummary(supplierId, dateRange),
       this.getSupplierChartData(supplierId, dateRange),
@@ -34,10 +32,9 @@ export class DashboardService {
 
     return {
       oroIngresado,
-      oroEnInventario,
+      oroEnBoveda,
       oroEnProceso,
-      oroRefinado,
-      faltaPorRefinar: oroEnInventario + oroEnProceso,
+      faltaPorRefinar: oroIngresado - (oroEnBoveda + oroEnProceso),
       totalBarCount,
       availableBarCount,
       processCounts,
@@ -99,12 +96,20 @@ export class DashboardService {
     return result._sum.grossWeight ?? 0;
   }
 
-  private async getOroEnInventario(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
-    const result = await this.prisma.goldBar.aggregate({
-      _sum: { grossWeight: true },
-      where: { ...this.buildGoldBarWhere(supplierId, dateRange), available: true },
+  private async getOroEnBoveda(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+    const processWhere: any = { status: { in: ['open', 'closed'] } };
+    if (supplierId) processWhere.supplierId = supplierId;
+    if (dateRange?.gte || dateRange?.lte) {
+      processWhere.createdAt = {};
+      if (dateRange.gte) processWhere.createdAt.gte = dateRange.gte;
+      if (dateRange.lte) processWhere.createdAt.lte = dateRange.lte;
+    }
+
+    const result = await this.prisma.processLot.aggregate({
+      _sum: { recovered: true },
+      where: { process: processWhere },
     });
-    return result._sum.grossWeight ?? 0;
+    return Number((result._sum.recovered ?? 0).toFixed(2));
   }
 
   private async getOroEnProceso(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
@@ -120,22 +125,6 @@ export class DashboardService {
       where: { id: { in: allBarIds }, ...this.buildGoldBarWhere(supplierId, dateRange) },
     });
     return result._sum.grossWeight ?? 0;
-  }
-
-  private async getOroRefinado(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
-    const processWhere: any = { status: 'closed' };
-    if (supplierId) processWhere.supplierId = supplierId;
-    if (dateRange?.gte || dateRange?.lte) {
-      processWhere.createdAt = {};
-      if (dateRange.gte) processWhere.createdAt.gte = dateRange.gte;
-      if (dateRange.lte) processWhere.createdAt.lte = dateRange.lte;
-    }
-
-    const result = await this.prisma.processLot.aggregate({
-      _sum: { recovered: true },
-      where: { process: processWhere },
-    });
-    return result._sum.recovered ?? 0;
   }
 
   private async getProcessCounts(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {

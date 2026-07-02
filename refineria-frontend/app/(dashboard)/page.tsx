@@ -179,10 +179,9 @@ export default function DashboardPage() {
 
   const kpiCards = metrics ? [
     { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${metrics.totalBarCount} barras registradas` },
-    { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnInventario), icon: Shield, accent: 'gold', subtitle: `${metrics.availableBarCount} barras sin procesar` },
-    { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: `${metrics.processCounts.inProgress} procesos terminados` },
-    { label: 'Oro Refinado', value: formatLocaleWeight(metrics.oroRefinado), icon: Crosshair, accent: 'gold', subtitle: `${metrics.processCounts.closed} procesos cerrados` },
-    { label: 'Falta por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Bóveda + En proceso' },
+    { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados' },
+    { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos' },
+    { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: 'Ingresado - Bóveda - Proceso' },
   ] : [];
 
   return (
@@ -271,7 +270,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         {kpiCards.map((kpi) => {
           const isGold = kpi.accent === 'gold';
           const Icon = kpi.icon;
