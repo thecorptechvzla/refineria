@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
-  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle,
+  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle, X,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -53,7 +53,11 @@ export default function DashboardPage() {
 
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [statusModalOpen, setStatusModalOpen] = useState<'in_progress' | 'open' | 'closed' | null>(null);
+  const filteredProcessList = useMemo(() => {
+    if (!statusModalOpen || !metrics?.processSummary) return [];
+    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusModalOpen);
+  }, [statusModalOpen, metrics?.processSummary]);
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -84,12 +88,9 @@ export default function DashboardPage() {
 
   const processBySupplier = useMemo(() => {
     if (!suppliers || !metrics?.processSummary) return [];
-    const filtered = statusFilter
-      ? metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusFilter)
-      : metrics.processSummary;
     return suppliers
       .map((s) => {
-        const sp = filtered.filter((p: ProcessSummaryItem) => p.supplierId === s.id);
+        const sp = metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === s.id);
         return {
           id: s.id,
           name: s.name,
@@ -99,14 +100,12 @@ export default function DashboardPage() {
         };
       })
       .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
-  }, [metrics?.processSummary, suppliers, statusFilter]);
+  }, [metrics?.processSummary, suppliers]);
 
   const supplierProcessMap = useMemo(() => {
     if (!expandedSupplierId || !metrics?.processSummary) return [];
-    return metrics.processSummary
-      .filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId)
-      .filter((p) => !statusFilter || p.status === statusFilter);
-  }, [expandedSupplierId, metrics?.processSummary, statusFilter]);
+    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId);
+  }, [expandedSupplierId, metrics?.processSummary]);
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -439,48 +438,36 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         <button
-          onClick={() => setStatusFilter(statusFilter === 'in_progress' ? null : 'in_progress')}
-          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
-            statusFilter === 'in_progress' ? 'ring-1 ring-blue-400/50 border-blue-400/40' : ''
-          }`}
+          onClick={() => setStatusModalOpen('in_progress')}
+          className="glass-panel p-4 text-left cursor-pointer hover:border-blue-400/40 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
-            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-              statusFilter === 'in_progress' ? 'text-blue-400' : 'text-blue-400/70'
-            }`}>ABIERTOS</span>
-            <Settings className={`w-4 h-4 ${statusFilter === 'in_progress' ? 'text-blue-400' : 'text-blue-500'}`} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
+            <Settings className="w-4 h-4 text-blue-500" />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.inProgress ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos en curso</p>
           <div className="mt-3 h-[2px] w-full bg-blue-500/30" />
         </button>
         <button
-          onClick={() => setStatusFilter(statusFilter === 'open' ? null : 'open')}
-          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
-            statusFilter === 'open' ? 'ring-1 ring-green-400/50 border-green-400/40' : ''
-          }`}
+          onClick={() => setStatusModalOpen('open')}
+          className="glass-panel p-4 text-left cursor-pointer hover:border-green-400/40 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
-            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-              statusFilter === 'open' ? 'text-green-400' : 'text-green-400/70'
-            }`}>TERMINADOS</span>
-            <CheckCircle className={`w-4 h-4 ${statusFilter === 'open' ? 'text-green-400' : 'text-green-500'}`} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
+            <CheckCircle className="w-4 h-4 text-green-500" />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.open ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Listos para cerrar</p>
           <div className="mt-3 h-[2px] w-full bg-green-500/30" />
         </button>
         <button
-          onClick={() => setStatusFilter(statusFilter === 'closed' ? null : 'closed')}
-          className={`glass-panel p-4 text-left cursor-pointer hover:border-opacity-60 transition-all ${
-            statusFilter === 'closed' ? 'ring-1 ring-gold-400/50 border-gold-400/40' : ''
-          }`}
+          onClick={() => setStatusModalOpen('closed')}
+          className="glass-panel p-4 text-left cursor-pointer hover:border-gold-400/40 transition-all"
         >
           <div className="flex items-center justify-between mb-1">
-            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-              statusFilter === 'closed' ? 'text-gold-400' : 'text-gold-400/70'
-            }`}>CERRADOS</span>
-            <Crosshair className={`w-4 h-4 ${statusFilter === 'closed' ? 'text-gold-400' : 'text-gold-500'}`} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
+            <Crosshair className="w-4 h-4 text-gold-500" />
           </div>
           <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.closed ?? 0}</p>
           <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos finalizados</p>
@@ -534,6 +521,45 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+
+      {statusModalOpen && filteredProcessList.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={() => setStatusModalOpen(null)}>
+          <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto glass-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-blue-500/10 flex items-center justify-between sticky top-0 bg-midnight-800/95 backdrop-blur">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                {statusModalOpen === 'in_progress' ? 'Procesos en Curso' : statusModalOpen === 'open' ? 'Procesos Terminados' : 'Procesos Cerrados'}
+              </h3>
+              <button onClick={() => setStatusModalOpen(null)} className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 space-y-2">
+              {filteredProcessList.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setStatusModalOpen(null); setViewingProcessId(p.id); }}
+                  className="w-full text-left terminal-row px-3 py-3 cursor-pointer hover:bg-blue-500/10 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-mono font-bold text-gold-500">#{p.number}</span>
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
+                      p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
+                      'bg-gray-500/10 text-gray-400'
+                    }`}>
+                      {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[11px] text-slate-400">{suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}</span>
+                    <span className="text-[10px] text-slate-600">{p.lotCount} lote{p.lotCount !== 1 ? 's' : ''} &middot; {p.barCount} barra{p.barCount !== 1 ? 's' : ''}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewingProcessId && !detailLoading && enrichedDetail && (
         <ProcessModal
