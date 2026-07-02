@@ -1572,8 +1572,7 @@ export default function ProcesosPage() {
 
       {viewingProcess && (
         <ProcessModal
-          process={viewingProcess}
-          allBars={goldBars}
+          detail={buildProcessDetail(viewingProcess, goldBars)}
           suppliers={suppliers}
           onClose={() => setViewingProcessId(null)}
         />

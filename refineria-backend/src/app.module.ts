@@ -12,6 +12,7 @@ import { FilesModule } from './files/files.module';
 import { CustomFieldsModule } from './custom-fields/custom-fields.module';
 import { SuppliesModule } from './supplies/supplies.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     CustomFieldsModule,
     SuppliesModule,
     NotificationsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

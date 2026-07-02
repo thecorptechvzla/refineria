@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { getSupplierName, formatLocaleNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import { Crosshair, X, FileText } from 'lucide-react';
@@ -78,17 +77,14 @@ export function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetai
 }
 
 export function ProcessModal({
-  process: procData,
-  allBars,
+  detail,
   suppliers,
   onClose,
 }: {
-  process: Process;
-  allBars: GoldBar[];
+  detail: ProcessDetail;
   suppliers: { id: string; name: string }[] | undefined;
   onClose: () => void;
 }) {
-  const detail = useMemo(() => buildProcessDetail(procData, allBars), [procData, allBars]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>

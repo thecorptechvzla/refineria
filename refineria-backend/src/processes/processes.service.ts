@@ -197,6 +197,35 @@ export class ProcessesService {
     return { deleted: true };
   }
 
+  async removeAll() {
+    const allProcesses = await this.prisma.process.findMany({
+      include: { lots: true },
+    });
+
+    const allBarIds = allProcesses.flatMap((p) =>
+      p.lots.flatMap((l) => l.barIds),
+    );
+    if (allBarIds.length > 0) {
+      await this.prisma.goldBar.updateMany({
+        where: { id: { in: allBarIds } },
+        data: { available: true },
+      });
+    }
+
+    const allLotIds = allProcesses.flatMap((p) =>
+      p.lots.map((l) => l.id),
+    );
+    if (allLotIds.length > 0) {
+      await this.prisma.processLot.deleteMany({
+        where: { id: { in: allLotIds } },
+      });
+    }
+
+    await this.prisma.processCounter.deleteMany({});
+    await this.prisma.process.deleteMany({});
+    return { deleted: true };
+  }
+
   async findClosedBySupplier(supplierId: string) {
     return this.prisma.process.findMany({
       where: { supplierId, status: 'closed' },
@@ -263,5 +292,27 @@ export class ProcessesService {
       },
       include: { lots: true },
     });
+  }
+
+  async findDetail(id: string) {
+    const process = await this.prisma.process.findUnique({
+      where: { id },
+      include: { lots: { orderBy: { number: 'asc' } } },
+    });
+    if (!process) throw new NotFoundException(`Process with id ${id} not found`);
+
+    const allBarIds = [...new Set(process.lots.flatMap((l) => l.barIds))];
+    const bars = allBarIds.length > 0
+      ? await this.prisma.goldBar.findMany({ where: { id: { in: allBarIds } } })
+      : [];
+    const barMap = new Map(bars.map((b) => [b.id, b]));
+
+    return {
+      ...process,
+      lotDetails: process.lots.map((lot) => ({
+        ...lot,
+        bars: lot.barIds.map((id) => barMap.get(id)).filter((b): b is NonNullable<typeof b> => b != null),
+      })),
+    };
   }
 }
