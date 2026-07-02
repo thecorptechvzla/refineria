@@ -55,7 +55,7 @@ function ProcessDetailView({
   const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
-  const [savedG, setSavedG] = useState<Record<string, boolean>>({});
+  const [editingG, setEditingG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const [actaUrls, setActaUrls] = useState<Record<string, string>>({});
@@ -64,6 +64,7 @@ function ProcessDetailView({
   const [sortBy, setSortBy] = useState<'lot-asc' | 'lot-desc'>('lot-asc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
   const [showLeyAgWarning, setShowLeyAgWarning] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const availableLotNumbers = useMemo(() => {
     const lots = new Set<string>();
@@ -100,7 +101,7 @@ function ProcessDetailView({
     }
     setLotG(initial);
     setSavingG({});
-    setSavedG({});
+    setEditingG({});
     setSavingLeyAg({});
     setEditingLeyAg({});
     setLotLeyAg({});
@@ -202,10 +203,10 @@ function ProcessDetailView({
       if (isOpen) {
         await onMarkComplete();
       }
-      setSavedG((prev) => ({ ...prev, [lotId]: true }));
-      setTimeout(() => {
-        setSavedG((prev) => ({ ...prev, [lotId]: false }));
-      }, 3000);
+      setEditingG((prev) => ({ ...prev, [lotId]: false }));
+      const lotGNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
+      setSuccessMessage(`Peso fino recuperado guardado correctamente para el Lote #${lotGNum}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       setErrorMessage('Error al guardar el peso recuperado');
       setShakeKey((k) => k + 1);
@@ -242,6 +243,9 @@ function ProcessDetailView({
     try {
       await saveLotBarsLeyAg(processDetail.id, lotId, entries);
       setEditingLeyAg((prev) => ({ ...prev, [lotId]: false }));
+      const lotLeyAgNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
+      setSuccessMessage(`Ley Ag guardada correctamente para el Lote #${lotLeyAgNum}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       setErrorMessage('Error al guardar Ley Ag');
       setShakeKey((k) => k + 1);
@@ -275,6 +279,15 @@ function ProcessDetailView({
         setTimeout(() => setCloseWarning(''), 5000);
         return;
       }
+    }
+
+    const anyLotMissingLeyAg = processDetail.lotDetails.some((lot) =>
+      lot.bars.every((bar) => bar.leyAg == null && bar.analyticalAg == null),
+    );
+    if (anyLotMissingLeyAg) {
+      setCloseWarning('Todos los lotes deben tener Ley Ag ingresada antes de cerrar el proceso.');
+      setTimeout(() => setCloseWarning(''), 5000);
+      return;
     }
 
     if (!actaUrls.recepcion || !actaUrls.fundicion || !actaUrls.conformidad) {
@@ -573,20 +586,33 @@ function ProcessDetailView({
                               }
                             }}
                             placeholder="0,00"
-                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
+                            disabled={!editingG[lot.id] && getLotG(lot.id) !== null}
+                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
         {(isOpen || isInProgress) && (
                           <button
-                            onClick={() => handleSaveLotG(lot.id)}
-                            disabled={savingG[lot.id] || getLotG(lot.id) === null}
-                            className="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                            onClick={() => {
+                              if (!editingG[lot.id] && getLotG(lot.id) !== null) {
+                                setEditingG((prev) => ({ ...prev, [lot.id]: true }));
+                              } else {
+                                handleSaveLotG(lot.id);
+                              }
+                            }}
+                            disabled={savingG[lot.id] || (!editingG[lot.id] && getLotG(lot.id) === null)}
+                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                              !editingG[lot.id] && getLotG(lot.id) !== null
+                                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                                : savingG[lot.id]
+                                ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 opacity-50 cursor-not-allowed'
+                                : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {savingG[lot.id] ? (
                               <Save className="w-3 h-3 animate-spin" />
-                            ) : savedG[lot.id] ? (
+                            ) : !editingG[lot.id] && getLotG(lot.id) !== null ? (
                               <span className="flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Guardado
+                                <Save className="w-3 h-3" />
+                                Editar
                               </span>
                             ) : (
                               <span className="flex items-center gap-1">
@@ -964,6 +990,21 @@ function ProcessDetailView({
           </div>
         </div>
       )}
+
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="glass-panel p-6 max-w-sm w-full mx-4 text-center">
+            <CheckCircle className="w-8 h-8 text-gold-500 mx-auto mb-3" />
+            <p className="text-sm text-slate-300 mb-4">{successMessage}</p>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="px-5 py-2 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -976,6 +1017,7 @@ export default function ProcesosPage() {
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
   const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [closeSuccessMessage, setCloseSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
 
@@ -1130,10 +1172,7 @@ export default function ProcesosPage() {
     try {
       const proc = processes.find((p) => p.id === managingProcessId);
       await closeProcessWithActas(managingProcessId, actas);
-      setSuccessMessage(`Proceso #${proc?.number} cerrado con actas`);
-      setManagingProcessId(null);
-      setView('list');
-      setTimeout(() => setSuccessMessage(''), 4000);
+      setCloseSuccessMessage(`Proceso #${proc?.number} cerrado exitosamente`);
     } catch (err) {
       console.error('Error cerrando proceso con actas:', err);
       const msg = err instanceof Error ? err.message : 'Error desconocido';
@@ -1510,6 +1549,21 @@ export default function ProcesosPage() {
           suppliers={suppliers}
           onClose={() => setViewingProcessId(null)}
         />
+      )}
+
+      {closeSuccessMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="glass-panel p-6 max-w-sm w-full mx-4 text-center">
+            <CheckCircle className="w-8 h-8 text-gold-500 mx-auto mb-3" />
+            <p className="text-sm text-slate-300 mb-4">{closeSuccessMessage}</p>
+            <button
+              onClick={() => { setCloseSuccessMessage(''); setManagingProcessId(null); setView('list'); }}
+              className="px-5 py-2 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
