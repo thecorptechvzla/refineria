@@ -9,6 +9,7 @@ interface LotRow {
   g: number;
   pct: number;
   dif: number;
+  totalAg: number;
 }
 
 function thinBorder() {
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
   const totalE = rows.reduce((s, r) => s + r.e, 0);
   const totalF = rows.reduce((s, r) => s + r.f, 0);
   const totalG = rows.reduce((s, r) => s + r.g, 0);
+  const totalAg = rows.reduce((s, r) => s + r.totalAg, 0);
   const totalPct = totalE > 0 ? (totalG / totalE) * 100 : 0;
   const totalDif = totalG - totalF;
 
@@ -47,6 +49,7 @@ export async function POST(req: NextRequest) {
     { key: 'recup', width: 20 },
     { key: 'pct', width: 16 },
     { key: 'dif', width: 14 },
+    { key: 'plata', width: 20 },
   ];
 
   const HEADER_ROW = 5;
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
   supplierRow.getCell(3).value = supplierName;
   supplierRow.getCell(3).font = { bold: true };
   supplierRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(4, 3, 4, 9);
+  ws.mergeCells(4, 3, 4, 10);
   supplierRow.height = 24;
 
   const headerCells = [
@@ -72,6 +75,7 @@ export async function POST(req: NextRequest) {
     { col: 7, val: 'PESO FINO\nRECUPERADO (g)' },
     { col: 8, val: '% \nRECUPERACIÓN' },
     { col: 9, val: 'DIFERENCIA' },
+    { col: 10, val: 'PESO PLATA\nRECUPERADO (g)' },
   ];
 
   const hRow = ws.getRow(HEADER_ROW);
@@ -104,6 +108,7 @@ export async function POST(req: NextRequest) {
       { col: 7, val: r.g },
       { col: 8, val: r.pct },
       { col: 9, val: r.dif },
+      { col: 10, val: r.totalAg },
     ];
 
     for (const d of dataCols) {
@@ -135,6 +140,7 @@ export async function POST(req: NextRequest) {
     { col: 7, val: totalG },
     { col: 8, val: totalPct },
     { col: 9, val: totalDif },
+    { col: 10, val: totalAg },
   ];
 
   for (const d of totalDataCols) {

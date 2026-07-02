@@ -6,23 +6,29 @@ interface LotRow {
   g: number;
   pct: number;
   dif: number;
+  totalAg: number;
 }
 
 function computeLotDetail(
   lot: { id: string; number: number; barIds: string[]; recovered?: number | null },
-  bars: { id: string; grossWeight: number; analytical: number; expected: number; recovered: number }[],
+  bars: { id: string; grossWeight: number; analytical: number; expected: number; recovered: number; analyticalAg?: number | null; leyAg?: number | null }[],
 ) {
   const lotBars = bars.filter((b) => lot.barIds.includes(b.id));
   const grossWeight = lotBars.reduce((s, b) => s + b.grossWeight, 0);
   const e = lotBars.reduce((s, b) => s + b.analytical, 0);
   const f = lotBars.reduce((s, b) => s + b.expected, 0);
   const g = lot.recovered ?? lotBars.reduce((s, b) => s + b.recovered, 0);
-  return { grossWeight, e, f, g, pct: e > 0 ? (g / e) * 100 : 0, dif: g - f };
+  const totalAg = lotBars.reduce((s, b) => {
+    if (b.analyticalAg != null) return s + b.analyticalAg;
+    if (b.leyAg != null) return s + b.grossWeight * b.leyAg / 1000;
+    return s;
+  }, 0);
+  return { grossWeight, e, f, g, pct: e > 0 ? (g / e) * 100 : 0, dif: g - f, totalAg };
 }
 
 export async function exportConsolidado(
   supplierName: string,
-  processes: { lots: { id: string; number: number; barIds: string[]; recovered?: number | null }[]; allBars: { id: string; grossWeight: number; analytical: number; expected: number; recovered: number }[] }[],
+  processes: { lots: { id: string; number: number; barIds: string[]; recovered?: number | null }[]; allBars: { id: string; grossWeight: number; analytical: number; expected: number; recovered: number; analyticalAg?: number | null; leyAg?: number | null }[] }[],
 ) {
   const rows: LotRow[] = [];
   let counter = 1;
