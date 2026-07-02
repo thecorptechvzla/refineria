@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
-  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield,
+  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -34,7 +34,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [selectOpen]);
 
-  const [selectedPeriod, setSelectedPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('last_two');
+  const [selectedPeriod, setSelectedPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('current');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [periodOpen, setPeriodOpen] = useState(false);
@@ -394,8 +394,40 @@ export default function DashboardPage() {
                           </span>
                         )}
                         <ChevronDown className={`w-3 h-3 text-slate-600 transition-transform ${isSupplierExpanded ? 'rotate-180' : ''}`} />
-                      </div>
-                    </div>
+          </div>
+
+          <div className="border-t border-blue-500/10" />
+
+          <div className="grid grid-cols-3 gap-3 p-4 sm:p-5">
+            <div className="glass-panel p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
+                <Settings className="w-3.5 h-3.5 text-blue-500" />
+              </div>
+              <p className="hud-number text-lg text-white">{metrics?.processCounts.inProgress ?? 0}</p>
+              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">En curso</p>
+              <div className="mt-2 h-[2px] w-full bg-blue-500/30" />
+            </div>
+            <div className="glass-panel p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+              </div>
+              <p className="hud-number text-lg text-white">{metrics?.processCounts.open ?? 0}</p>
+              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">Listos para cerrar</p>
+              <div className="mt-2 h-[2px] w-full bg-green-500/30" />
+            </div>
+            <div className="glass-panel p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
+                <Crosshair className="w-3.5 h-3.5 text-gold-500" />
+              </div>
+              <p className="hud-number text-lg text-white">{metrics?.processCounts.closed ?? 0}</p>
+              <p className="text-[9px] text-slate-600 mt-0.5 uppercase tracking-wider">Procesos finalizados</p>
+              <div className="mt-2 h-[2px] w-full bg-gold-500/30" />
+            </div>
+          </div>
+        </div>
                     {isSupplierExpanded && (
                       <div className="border-t border-blue-500/10 pt-2 pb-1 px-3 space-y-1.5">
                         {supplierProcessMap.length > 0 ? (
