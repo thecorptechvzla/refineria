@@ -54,10 +54,6 @@ export default function DashboardPage() {
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
   const [statusModalOpen, setStatusModalOpen] = useState<'in_progress' | 'open' | 'closed' | null>(null);
-  const filteredProcessList = useMemo(() => {
-    if (!statusModalOpen || !metrics?.processSummary) return [];
-    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusModalOpen);
-  }, [statusModalOpen, metrics?.processSummary]);
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -85,6 +81,11 @@ export default function DashboardPage() {
   const { data: metrics, isLoading: metricsLoading, isError: metricsError, refetch: refetchMetrics } =
     useDashboardMetrics(params, !!user && !authLoading);
   const { data: processDetail, isLoading: detailLoading } = useProcessDetail(viewingProcessId);
+
+  const filteredProcessList = useMemo(() => {
+    if (!statusModalOpen || !metrics?.processSummary) return [];
+    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusModalOpen);
+  }, [statusModalOpen, metrics?.processSummary]);
 
   const processBySupplier = useMemo(() => {
     if (!suppliers || !metrics?.processSummary) return [];
