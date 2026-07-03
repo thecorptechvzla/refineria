@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteProcess, useRemoveBarsFromLot } from '@/lib/hooks/useProcesses';
-import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
+import { getSupplierName, parseLocaleNumber, formatNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import {
   Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
@@ -50,12 +50,13 @@ function ProcessDetailView({
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
   const [closeWarning, setCloseWarning] = useState('');
+  const [closeError, setCloseError] = useState<string | null>(null);
   const [assignWarning, setAssignWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [lotG, setLotG] = useState<Record<string, string>>({});
   const [savingG, setSavingG] = useState<Record<string, boolean>>({});
-  const [savedG, setSavedG] = useState<Record<string, boolean>>({});
+  const [editingG, setEditingG] = useState<Record<string, boolean>>({});
   const [expandedLots, setExpandedLots] = useState<Record<string, boolean>>({});
   const [confirmDeleteBarId, setConfirmDeleteBarId] = useState<string | null>(null);
   const [actaUrls, setActaUrls] = useState<Record<string, string>>({});
@@ -64,6 +65,7 @@ function ProcessDetailView({
   const [sortBy, setSortBy] = useState<'lot-asc' | 'lot-desc'>('lot-asc');
   const [filterLot, setFilterLot] = useState<string | null>(null);
   const [showLeyAgWarning, setShowLeyAgWarning] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const availableLotNumbers = useMemo(() => {
     const lots = new Set<string>();
@@ -100,7 +102,11 @@ function ProcessDetailView({
     }
     setLotG(initial);
     setSavingG({});
-    setSavedG({});
+    const editingInitial: Record<string, boolean> = {};
+    for (const lot of processDetail.lotDetails) {
+      editingInitial[lot.id] = !(lot.recovered != null && lot.recovered > 0);
+    }
+    setEditingG(editingInitial);
     setSavingLeyAg({});
     setEditingLeyAg({});
     setLotLeyAg({});
@@ -173,8 +179,8 @@ function ProcessDetailView({
 
     if (totalWeight < 2000 || avgLey < 900) {
       const reasons: string[] = [];
-      if (totalWeight < 2000) reasons.push(`peso mínimo de 2.000 g (faltan ${(2000 - totalWeight).toFixed(2)} g)`);
-      if (avgLey < 900) reasons.push(`ley promedio de 900 (actual: ${avgLey.toFixed(2)})`);
+      if (totalWeight < 2000) reasons.push(`peso mínimo de 2.000 g (faltan ${formatNumber(2000 - totalWeight)} g)`);
+      if (avgLey < 900) reasons.push(`ley promedio de 900 (actual: ${formatNumber(avgLey)})`);
       warnings.push(`Las barras seleccionadas no cumplen: ${reasons.join(' y ')}.`);
     }
 
@@ -202,10 +208,10 @@ function ProcessDetailView({
       if (isOpen) {
         await onMarkComplete();
       }
-      setSavedG((prev) => ({ ...prev, [lotId]: true }));
-      setTimeout(() => {
-        setSavedG((prev) => ({ ...prev, [lotId]: false }));
-      }, 3000);
+      setEditingG((prev) => ({ ...prev, [lotId]: false }));
+      const lotGNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
+      setSuccessMessage(`Peso fino recuperado guardado correctamente para el Lote #${lotGNum}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       setErrorMessage('Error al guardar el peso recuperado');
       setShakeKey((k) => k + 1);
@@ -242,6 +248,9 @@ function ProcessDetailView({
     try {
       await saveLotBarsLeyAg(processDetail.id, lotId, entries);
       setEditingLeyAg((prev) => ({ ...prev, [lotId]: false }));
+      const lotLeyAgNum = processDetail.lotDetails.find((l) => l.id === lotId)?.number;
+      setSuccessMessage(`Ley Ag guardada correctamente para el Lote #${lotLeyAgNum}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       setErrorMessage('Error al guardar Ley Ag');
       setShakeKey((k) => k + 1);
@@ -257,13 +266,11 @@ function ProcessDetailView({
   const handleCloseClick = async () => {
     if (!hasBars) {
       setCloseWarning('No se puede cerrar el proceso porque no contiene barras asignadas.');
-      setTimeout(() => setCloseWarning(''), 4000);
       return;
     }
 
     if (anyLotBlocked) {
-      setCloseWarning('Advertencia: Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900. Puede cerrar el proceso de todas formas.');
-      setTimeout(() => setCloseWarning(''), 5000);
+      setCloseWarning('Hay lotes que no cumplen con el peso mínimo de 2.000 g o la ley promedio de 900.');
     }
 
     if (isInProgress) {
@@ -272,14 +279,24 @@ function ProcessDetailView({
       );
       if (missingG) {
         setCloseWarning('Debe ingresar el Peso Fino Recuperado para todos los lotes antes de cerrar el proceso.');
-        setTimeout(() => setCloseWarning(''), 5000);
         return;
       }
     }
 
+    const missingLots = processDetail.lotDetails
+      .filter((lot) =>
+        lot.bars.some((bar) => bar.leyAg == null),
+      )
+      .map((lot) => lot.number);
+
+    if (missingLots.length > 0) {
+      const lotList = missingLots.map((n) => `Lote #${n}`).join(', ');
+      setCloseError(`No se puede cerrar el proceso. Faltan barras por asignarles la Ley de Plata (Ley Ag) en los siguientes lotes: ${lotList}.`);
+      return;
+    }
+
     if (!actaUrls.recepcion || !actaUrls.fundicion || !actaUrls.conformidad) {
       setCloseWarning('Debe subir las 3 actas de validación (Recepción, Fundición y Conformidad) antes de cerrar el proceso.');
-      setTimeout(() => setCloseWarning(''), 5000);
       return;
     }
 
@@ -429,7 +446,7 @@ function ProcessDetailView({
                   return (
                     <div className="space-y-1">
                       <div className={`px-3 py-2 text-[10px] font-mono border ${selValid ? 'border-emerald-500/20 text-emerald-400' : 'border-yellow-500/20 text-yellow-400'}`}>
-                        Σ Peso: {formatLocaleNumber(selWeight)} g &middot; Ley prom: {selAvgLey.toFixed(1)} &permil;
+                        Σ Peso: {formatLocaleNumber(selWeight)} g &middot; Ley prom: {formatNumber(selAvgLey, 1)} &permil;
                         {!selValid && <span className="ml-1">→ Advertencia de Ley/Peso</span>}
                       </div>
                       {processVal.errors.length > 0 && (
@@ -567,26 +584,43 @@ function ProcessDetailView({
                             value={lotG[lot.id] ?? ''}
                             onChange={(e) => setLotG((prev) => ({ ...prev, [lot.id]: formatInputNumber(e.target.value) }))}
                             onKeyDown={(e) => {
+                              const ctrl = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter'];
+                              if (ctrl.includes(e.key)) return;
+                              if (e.key === ',' || e.key === '.') return;
+                              if (e.key >= '0' && e.key <= '9') return;
+                              e.preventDefault();
                               if (e.key === 'Enter' && (isOpen || isInProgress)) {
-                                e.preventDefault();
                                 handleSaveLotG(lot.id);
                               }
                             }}
                             placeholder="0,00"
-                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700"
+                            disabled={!editingG[lot.id]}
+                            className="w-28 px-2.5 py-1.5 bg-midnight-900 border border-gold-500/20 text-slate-200 text-sm font-mono text-right outline-none transition-all focus:border-gold-500/50 placeholder-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
         {(isOpen || isInProgress) && (
                           <button
-                            onClick={() => handleSaveLotG(lot.id)}
-                            disabled={savingG[lot.id] || getLotG(lot.id) === null}
-                            className="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                            onClick={() => {
+                              if (!editingG[lot.id]) {
+                                setEditingG((prev) => ({ ...prev, [lot.id]: true }));
+                              } else {
+                                handleSaveLotG(lot.id);
+                              }
+                            }}
+                            disabled={savingG[lot.id]}
+                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                              !editingG[lot.id]
+                              ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                              : savingG[lot.id]
+                              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 opacity-50 cursor-not-allowed'
+                              : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {savingG[lot.id] ? (
                               <Save className="w-3 h-3 animate-spin" />
-                            ) : savedG[lot.id] ? (
+                            ) : !editingG[lot.id] ? (
                               <span className="flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Guardado
+                                <Save className="w-3 h-3" />
+                                Editar
                               </span>
                             ) : (
                               <span className="flex items-center gap-1">
@@ -601,7 +635,7 @@ function ProcessDetailView({
                         <div>
                           <span className="text-[10px] text-slate-500 uppercase tracking-wider block -mb-0.5">% Recup.</span>
                           <span className="font-bold" style={{ color: pct !== null ? (pct < 100 ? '#EF4444' : '#22C55E') : '#64748B' }}>
-                            {pct !== null ? `${pct.toFixed(2)}%` : '—'}
+                            {pct !== null ? `${formatNumber(pct)}%` : '—'}
                           </span>
                         </div>
                         <div>
@@ -661,8 +695,15 @@ function ProcessDetailView({
                                         value={leyAgVal}
                                         onChange={(e) => setLotLeyAg((prev) => ({
                                           ...prev,
-                                          [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: e.target.value },
+                                          [lot.id]: { ...(prev[lot.id] || {}), [bar.id]: formatInputNumber(e.target.value) },
                                         }))}
+                                        onKeyDown={(e) => {
+                                          const ctrl = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                                          if (ctrl.includes(e.key)) return;
+                                          if (e.key === ',' || e.key === '.') return;
+                                          if (e.key >= '0' && e.key <= '9') return;
+                                          e.preventDefault();
+                                        }}
                                         disabled={lot.bars.every((b) => b.leyAg != null) && !editingLeyAg[lot.id]}
                                         className="w-16 px-1.5 py-0.5 bg-midnight-900 border border-blue-500/20 text-slate-200 text-[11px] font-mono text-center outline-none text-right disabled:opacity-50 disabled:cursor-not-allowed"
                                         placeholder="—"
@@ -923,8 +964,21 @@ function ProcessDetailView({
                 <ShakeAlert message={errorMessage} shakeKey={shakeKey} type="error" />
               )}
               {closeWarning && (
-                <div className="bg-red-500/10 border border-red-500/30 p-3 flex items-center gap-2">
-                  <span className="text-red-400 text-xs font-medium">{closeWarning}</span>
+                <div className="bg-red-500/10 border border-red-500/30 p-3">
+                  <p className="text-xs text-red-400">{closeWarning}</p>
+                </div>
+              )}
+              {closeError && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                  <div className="glass-panel p-6 max-w-sm w-full mx-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Ley Ag pendiente</span>
+                      <button onClick={() => setCloseError(null)} className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-300">{closeError}</p>
+                  </div>
                 </div>
               )}
 
@@ -964,6 +1018,21 @@ function ProcessDetailView({
           </div>
         </div>
       )}
+
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="glass-panel p-6 max-w-sm w-full mx-4 text-center">
+            <CheckCircle className="w-8 h-8 text-gold-500 mx-auto mb-3" />
+            <p className="text-sm text-slate-300 mb-4">{successMessage}</p>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="px-5 py-2 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -976,6 +1045,7 @@ export default function ProcesosPage() {
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
   const [newProcessSupplierId, setNewProcessSupplierId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [closeSuccessMessage, setCloseSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
 
@@ -1130,10 +1200,7 @@ export default function ProcesosPage() {
     try {
       const proc = processes.find((p) => p.id === managingProcessId);
       await closeProcessWithActas(managingProcessId, actas);
-      setSuccessMessage(`Proceso #${proc?.number} cerrado con actas`);
-      setManagingProcessId(null);
-      setView('list');
-      setTimeout(() => setSuccessMessage(''), 4000);
+      setCloseSuccessMessage(`Proceso #${proc?.number} cerrado exitosamente`);
     } catch (err) {
       console.error('Error cerrando proceso con actas:', err);
       const msg = err instanceof Error ? err.message : 'Error desconocido';
@@ -1505,11 +1572,25 @@ export default function ProcesosPage() {
 
       {viewingProcess && (
         <ProcessModal
-          process={viewingProcess}
-          allBars={goldBars}
+          detail={buildProcessDetail(viewingProcess, goldBars)}
           suppliers={suppliers}
           onClose={() => setViewingProcessId(null)}
         />
+      )}
+
+      {closeSuccessMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="glass-panel p-6 max-w-sm w-full mx-4 text-center">
+            <CheckCircle className="w-8 h-8 text-gold-500 mx-auto mb-3" />
+            <p className="text-sm text-slate-300 mb-4">{closeSuccessMessage}</p>
+            <button
+              onClick={() => { setCloseSuccessMessage(''); setManagingProcessId(null); setView('list'); }}
+              className="px-5 py-2 bg-gold-500 text-black text-xs font-bold uppercase tracking-wider hover:bg-gold-400 transition-all"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

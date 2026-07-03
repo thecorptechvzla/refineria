@@ -9,7 +9,9 @@ import {
   useDeleteSupplyItem,
   useSupplyHistory,
 } from '@/lib/hooks/useSupplies';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGold } from '@/lib/GoldContext';
+import SupplyItemForm from '@/components/inventory/SupplyItemForm';
 import type { SupplyItem, SupplyCategory, SupplyTransactionType } from '@/types';
 import {
   Package,
@@ -39,8 +41,9 @@ export default function InsumosPage() {
   const { user } = useGold();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
   const tableBodyRef = useRef<HTMLDivElement>(null);
+  const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
   const [bulkPageSize, setBulkPageSize] = useState(20);
-  const { data: items } = useSupplyItems(category ?? undefined);
+  const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(category ?? undefined);
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
   const createBulkTx = useCreateBulkSupplyTransaction();
@@ -48,7 +51,7 @@ export default function InsumosPage() {
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkType, setBulkType] = useState<SupplyTransactionType>('IN');
-  const [gridMode, setGridMode] = useState<'existing' | 'new'>('new');
+  const [gridMode] = useState<'existing' | 'new'>('existing');
   const [bulkDestination, setBulkDestination] = useState('');
   const [bulkRows, setBulkRows] = useState<{
     key: number;
@@ -63,6 +66,15 @@ export default function InsumosPage() {
   const [bulkError, setBulkError] = useState('');
   const [bulkShake, setBulkShake] = useState(0);
   const [bulkPage, setBulkPage] = useState(0);
+  const [showBulkCreateOverlay, setShowBulkCreateOverlay] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [historyPage, setHistoryPage] = useState(0);
+  const historyPageSize = 10;
+
+  const queryClient = useQueryClient();
+  const allowedRoles = useMemo(() => ['SUPERADMIN', 'OWNER', 'ADMIN'], []);
+  const canAct = user && allowedRoles.includes(user.role);
 
   useLayoutEffect(() => {
     if (!bulkOpen || !tableBodyRef.current) return;
@@ -71,16 +83,28 @@ export default function InsumosPage() {
     const available = container.clientHeight;
     const pages = Math.max(5, Math.floor(available / rowHeight));
     setBulkPageSize(pages);
+
+    const onResize = () => {
+      if (!tableBodyRef.current) return;
+      const available = tableBodyRef.current.clientHeight;
+      setBulkPageSize(Math.max(5, Math.floor(available / rowHeight)));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, [bulkOpen]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newCode, setNewCode] = useState('');
-  const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState<SupplyCategory>('OPERATIONS');
-  const [newUnit, setNewUnit] = useState('UNIDAD');
-  const [newCritical, setNewCritical] = useState('1');
   const [createError, setCreateError] = useState('');
-  const [createShake, setCreateShake] = useState(0);
+
+  const filteredItems = useMemo(() => {
+    if (!items) return undefined;
+    let result = items;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((i) => i.code.toLowerCase().includes(q) || i.name.toLowerCase().includes(q));
+    }
+    return result;
+  }, [items, searchQuery]);
 
   const [txModal, setTxModal] = useState<{
     item: SupplyItem;
@@ -95,39 +119,58 @@ export default function InsumosPage() {
   const { data: historyTxs, isLoading: historyLoading } = useSupplyHistory(historyItemId);
   const historyItem = historyItemId && items ? items.find((i) => i.id === historyItemId) : null;
 
-  const resetCreateForm = () => {
-    setNewCode('');
-    setNewName('');
-    setNewCategory('OPERATIONS');
-    setNewUnit('UNIDAD');
-    setNewCritical('1');
-    setCreateError('');
-  };
-
-  const handleCreateSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleCreateSubmit = async (data: {
+    code: string;
+    name: string;
+    category: SupplyCategory;
+    unit: string;
+    criticalLevel: number;
+  }) => {
     setCreateError('');
 
     try {
-      await createItem.mutateAsync({
-        code: newCode.trim(),
-        name: newName.trim(),
-        category: newCategory,
-        unit: newUnit.trim() || 'UNIDAD',
-        criticalLevel: parseInt(newCritical, 10) || 1,
-      });
+      await createItem.mutateAsync(data);
       setShowCreateModal(false);
-      resetCreateForm();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear insumo';
-      setCreateShake((k) => k + 1);
       setCreateError(msg);
     }
   };
 
+  const handleBulkCreateSubmit = async (data: {
+    code: string;
+    name: string;
+    category: SupplyCategory;
+    unit: string;
+    criticalLevel: number;
+    quantity?: number;
+  }) => {
+    const { quantity = 1, ...itemData } = data;
+    const newItem = await createItem.mutateAsync(itemData);
+    queryClient.setQueryData<SupplyItem[]>(
+      ['supplies', 'items', category ?? undefined],
+      (old) => (old ? [...old, newItem] : [newItem]),
+    );
+    const nextKey = bulkRowKey + 1;
+    setBulkRowKey(nextKey);
+    setBulkRows((prev) => [
+      ...prev,
+      {
+        key: nextKey,
+        itemId: newItem.id,
+        name: newItem.name,
+        category: newItem.category,
+        unit: newItem.unit,
+        criticalLevel: String(newItem.criticalLevel),
+        quantity: String(quantity),
+      },
+    ]);
+    setShowBulkCreateOverlay(false);
+    bulkNewInsumoBtnRef.current?.focus();
+  };
+
   const resetBulkForm = () => {
     setBulkType('IN');
-    setGridMode('new');
     setBulkDestination('');
     setBulkRows([]);
     setBulkRowKey(0);
@@ -137,7 +180,6 @@ export default function InsumosPage() {
 
   const handleBulkTypeChange = (newType: SupplyTransactionType) => {
     setBulkType(newType);
-    setGridMode(newType === 'OUT' ? 'existing' : 'new');
     initBulkRows();
     setBulkError('');
   };
@@ -201,18 +243,14 @@ export default function InsumosPage() {
     setBulkPage(0);
   };
 
-  const handleGridModeChange = (mode: 'existing' | 'new') => {
-    setGridMode(mode);
-    initBulkRows();
-  };
-
   const totalBulkPages = useMemo(
     () => Math.max(1, Math.ceil(bulkRows.length / bulkPageSize)),
     [bulkRows.length, bulkPageSize]
   );
+  const safeBulkPage = Math.min(bulkPage, totalBulkPages - 1);
   const pageRows = useMemo(
-    () => bulkRows.slice(bulkPage * bulkPageSize, (bulkPage + 1) * bulkPageSize),
-    [bulkRows, bulkPage, bulkPageSize]
+    () => bulkRows.slice(safeBulkPage * bulkPageSize, (safeBulkPage + 1) * bulkPageSize),
+    [bulkRows, safeBulkPage, bulkPageSize]
   );
   const filledCount = useMemo(
     () => bulkRows.filter((r) => {
@@ -221,12 +259,6 @@ export default function InsumosPage() {
     }).length,
     [bulkRows, gridMode]
   );
-
-  useEffect(() => {
-    if (bulkPage >= totalBulkPages) {
-      setBulkPage(Math.max(0, totalBulkPages - 1));
-    }
-  }, [bulkRows.length, bulkPage, totalBulkPages]);
 
   useEffect(() => {
     if (!bulkOpen) return;
@@ -241,10 +273,7 @@ export default function InsumosPage() {
     e.preventDefault();
     setBulkError('');
 
-    const filledRows = bulkRows.filter((r) => {
-      if (gridMode === 'existing') return r.itemId && r.itemId !== '';
-      return r.name && r.name.trim() !== '';
-    });
+    const filledRows = bulkRows.filter((r) => r.itemId && r.itemId !== '');
 
     if (filledRows.length === 0) {
       setBulkShake((k) => k + 1);
@@ -252,23 +281,12 @@ export default function InsumosPage() {
       return;
     }
 
-    const items = filledRows.map((r) => {
-      if (gridMode === 'existing') {
-        return { itemId: r.itemId || '', quantity: parseInt(r.quantity, 10) };
-      }
-      return {
-        name: r.name || '',
-        category: (r.category || 'OPERATIONS') as SupplyCategory,
-        unit: r.unit || 'UNIDAD',
-        criticalLevel: parseInt(r.criticalLevel || '1', 10),
-        quantity: parseInt(r.quantity, 10),
-      };
-    });
+    const items = filledRows.map((r) => ({
+      itemId: r.itemId || '',
+      quantity: parseInt(r.quantity, 10),
+    }));
 
-    const invalid = items.find((r) => {
-      if (gridMode === 'existing') return !r.itemId || r.quantity < 1;
-      return !r.name || !r.category || r.quantity < 1;
-    });
+    const invalid = items.find((r) => !r.itemId || r.quantity < 1);
 
     if (invalid) {
       setBulkShake((k) => k + 1);
@@ -471,34 +489,66 @@ export default function InsumosPage() {
                 </div>
               ))
             ) : historyTxs && historyTxs.length > 0 ? (
-              historyTxs.map((tx) => (
-                <div key={tx.id} className="flex items-center gap-3 p-3 bg-midnight-800/50 border border-blue-500/5">
-                  <span className="text-[10px] font-mono text-slate-500 w-20 flex-shrink-0">
-                    {new Date(tx.date).toLocaleString('es-VE', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border flex-shrink-0 ${
-                      tx.type === 'IN'
-                        ? 'text-green-400 bg-green-500/10 border-green-500/20'
-                        : 'text-red-400 bg-red-500/10 border-red-500/20'
-                    }`}
-                  >
-                    {tx.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
-                  </span>
-                  <span className="text-xs font-mono font-bold text-slate-200 w-10 flex-shrink-0 text-right">
-                    {tx.quantity}
-                  </span>
-                  <span className="text-[10px] text-slate-500 truncate flex-1 text-right">
-                    {tx.reference || '—'}
-                  </span>
-                </div>
-              ))
+              (() => {
+                const totalPages = Math.max(1, Math.ceil(historyTxs.length / historyPageSize));
+                const page = Math.min(historyPage, totalPages - 1);
+                const pageTxs = historyTxs.slice(page * historyPageSize, (page + 1) * historyPageSize);
+                return (
+                  <>
+                    {pageTxs.map((tx) => (
+                      <div key={tx.id} className="flex items-center gap-3 p-3 bg-midnight-800/50 border border-blue-500/5">
+                        <span className="text-[10px] font-mono text-slate-500 w-20 flex-shrink-0">
+                          {new Date(tx.date).toLocaleString('es-VE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border flex-shrink-0 ${
+                            tx.type === 'IN'
+                              ? 'text-green-400 bg-green-500/10 border-green-500/20'
+                              : 'text-red-400 bg-red-500/10 border-red-500/20'
+                          }`}
+                        >
+                          {tx.type === 'IN' ? 'ENTRADA' : 'SALIDA'}
+                        </span>
+                        <span className="text-xs font-mono font-bold text-slate-200 w-10 flex-shrink-0 text-right">
+                          {tx.quantity}
+                        </span>
+                        <span className="text-[10px] text-slate-500 truncate flex-1 text-right">
+                          {tx.reference || '—'}
+                        </span>
+                      </div>
+                    ))}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-3 pt-3 border-t border-blue-500/10">
+                        <button
+                          type="button"
+                          disabled={page === 0}
+                          onClick={() => setHistoryPage((p) => Math.max(0, p - 1))}
+                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {page + 1}/{totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={page >= totalPages - 1}
+                          onClick={() => setHistoryPage((p) => Math.min(totalPages - 1, p + 1))}
+                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()
             ) : (
               <p className="text-xs text-slate-500 text-center py-6">No hay movimientos registrados.</p>
             )}
@@ -507,7 +557,8 @@ export default function InsumosPage() {
       )}
 
       {bulkOpen && (
-        <div className="fixed inset-0 z-50 w-screen h-screen flex flex-col bg-midnight-900 animate-slide-up">
+        <div className="fixed inset-0 z-50 w-screen h-screen bg-midnight-900 animate-slide-up">
+          <div className="relative w-full h-full flex flex-col">
           <div className="flex-shrink-0 p-4 border-b border-blue-500/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-5 h-5 text-blue-400" />
@@ -579,37 +630,35 @@ export default function InsumosPage() {
               </div>
             </div>
 
-            {bulkType === 'IN' && (
-              <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-end gap-3">
+              <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                  Modo de Ingreso
+                  &nbsp;
                 </label>
-                <div className="bg-midnight-800 p-1 rounded-md inline-flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleGridModeChange('new')}
-                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
-                      gridMode === 'new'
-                        ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    Crear Nuevos
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleGridModeChange('existing')}
-                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
-                      gridMode === 'existing'
-                        ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    Usar Existentes
-                  </button>
-                </div>
+                <button
+                  ref={bulkNewInsumoBtnRef}
+                  type="button"
+                  onClick={() => setShowBulkCreateOverlay(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Nuevo Insumo
+                </button>
               </div>
-            )}
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+                  &nbsp;
+                </label>
+                <button
+                  type="button"
+                  onClick={() => addBulkRow()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Agregar Fila
+                </button>
+              </div>
+            </div>
 
             <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
 
@@ -629,76 +678,41 @@ export default function InsumosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pageRows.map((row, idx) => (
+                    {pageRows.map((row, idx) => (
                     <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
                       <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
-                        {String(bulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
+                        {String(safeBulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
                       </td>
                       <td className="py-1.5 px-3">
-                        {bulkType === 'OUT' || gridMode === 'existing' ? (
-                          <select
-                            value={row.itemId || ''}
-                            onChange={(e) => handleItemSelect(row.key, e.target.value)}
-                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
-                          >
-                            <option value="">Seleccionar...</option>
-                            {items?.map((it) => (
-                              <option key={it.id} value={it.id}>
-                                {it.code} — {it.name}  [{it.currentStock}]
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type="text"
-                            value={row.name || ''}
-                            onChange={(e) => updateBulkRow(row.key, 'name', e.target.value)}
-                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600 py-2"
-                            placeholder="Nombre del artículo"
-                          />
-                        )}
+                        <select
+                          value={row.itemId || ''}
+                          onChange={(e) => handleItemSelect(row.key, e.target.value)}
+                          className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
+                        >
+                          <option value="">Seleccionar...</option>
+                          {items?.map((it) => (
+                            <option key={it.id} value={it.id}>
+                              {it.code} — {it.name}  [{it.currentStock}]
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="py-1.5 px-3">
-                        {bulkType === 'IN' && gridMode === 'new' ? (
-                          <select
-                            value={row.category || 'OPERATIONS'}
-                            onChange={(e) => updateBulkRow(row.key, 'category', e.target.value)}
-                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
-                          >
-                            <option value="OPERATIONS">Operaciones</option>
-                            <option value="GENERAL_SERVICES">Gral. Servicios</option>
-                          </select>
-                        ) : gridMode === 'existing' && row.itemId ? (
+                        {row.itemId ? (
                           <span className="text-slate-400 text-xs">{row.category}</span>
                         ) : (
                           <span className="text-slate-500">—</span>
                         )}
                       </td>
                       <td className="py-1.5 px-3">
-                        {bulkType === 'IN' && gridMode === 'new' ? (
-                          <input
-                            type="text"
-                            value={row.unit || ''}
-                            onChange={(e) => updateBulkRow(row.key, 'unit', e.target.value)}
-                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 placeholder:text-slate-600"
-                            placeholder="UNIDAD"
-                          />
-                        ) : gridMode === 'existing' && row.itemId ? (
+                        {row.itemId ? (
                           <span className="text-slate-400 text-xs">{row.unit}</span>
                         ) : (
                           <span className="text-slate-500">—</span>
                         )}
                       </td>
                       <td className="py-1.5 px-3 text-center">
-                        {bulkType === 'IN' && gridMode === 'new' ? (
-                          <input
-                            type="number"
-                            min="0"
-                            value={row.criticalLevel || '1'}
-                            onChange={(e) => updateBulkRow(row.key, 'criticalLevel', e.target.value)}
-                            className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
-                          />
-                        ) : gridMode === 'existing' && row.itemId ? (
+                        {row.itemId ? (
                           <span className="text-slate-400 text-xs">{row.criticalLevel}</span>
                         ) : (
                           <span className="text-slate-500">—</span>
@@ -743,7 +757,7 @@ export default function InsumosPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <span className="text-[10px] font-mono text-slate-400 min-w-[40px] text-center">
-                  {bulkPage + 1}/{totalBulkPages}
+                  {safeBulkPage + 1}/{totalBulkPages}
                 </span>
                 <button
                   type="button"
@@ -772,6 +786,37 @@ export default function InsumosPage() {
               </button>
             </div>
           </form>
+
+          {showBulkCreateOverlay && (
+            <div className="absolute inset-0 z-40 bg-midnight-900/95 backdrop-blur-sm flex items-start justify-center pt-12 animate-slide-up">
+              <div className="w-full max-w-md">
+                <div className="glass-panel">
+                  <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Nuevo Insumo</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBulkCreateOverlay(false);
+                        bulkNewInsumoBtnRef.current?.focus();
+                      }}
+                      className="text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <SupplyItemForm
+                    items={items}
+                    isBulkMode
+                    onSubmit={handleBulkCreateSubmit}
+                    isSubmitting={createItem.isPending}
+                    error={createError}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
         </div>
       )}
 
@@ -785,101 +830,18 @@ export default function InsumosPage() {
                   <h2 className="text-sm font-bold text-white uppercase tracking-wider">Nuevo Insumo</h2>
                 </div>
                 <button
-                  onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
+                  onClick={() => { setShowCreateModal(false); setCreateError(''); }}
                   className="text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
-              <form onSubmit={handleCreateSubmit} className="p-4 sm:p-5 space-y-4">
-                {createError && (
-                  <div
-                    key={createShake}
-                    className="bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2"
-                    style={{ animation: 'shake 0.4s ease-in-out' }}
-                  >
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                    <p className="text-xs text-red-400 font-medium">{createError}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Código
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="Ej. R001, S001, F001"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Artículo
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="Nombre del insumo"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Categoría
-                  </label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value as SupplyCategory)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                  >
-                    <option value="OPERATIONS">Operaciones</option>
-                    <option value="GENERAL_SERVICES">Servicios Generales</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Unidad
-                  </label>
-                  <input
-                    type="text"
-                    value={newUnit}
-                    onChange={(e) => setNewUnit(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                    placeholder="UNIDAD"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                    Nivel Crítico
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={newCritical}
-                    onChange={(e) => setNewCritical(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={createItem.isPending}
-                  className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 transition-all"
-                >
-                  {createItem.isPending ? 'Creando...' : 'Crear Insumo'}
-                </button>
-              </form>
+              <SupplyItemForm
+                items={items}
+                onSubmit={handleCreateSubmit}
+                isSubmitting={createItem.isPending}
+                error={createError}
+              />
             </div>
           </div>
         )}
@@ -892,7 +854,7 @@ export default function InsumosPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-                  {String(items?.length ?? 0).padStart(2, '0')}
+                  {String(filteredItems?.length ?? items?.length ?? 0).padStart(2, '0')}
                 </span>
                 <button
                   onClick={() => { initBulkRows(); setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
@@ -901,30 +863,43 @@ export default function InsumosPage() {
                   <ArrowUpDown className="w-3 h-3" />
                   Cargos / Descargos
                 </button>
-                <button
-                  onClick={() => { setShowCreateModal(true); setTxModal(null); setHistoryItemId(null); setBulkOpen(false); }}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all"
-                >
-                  <Plus className="w-3 h-3" />
-                  Nuevo Insumo
-                </button>
+                {canAct && (
+                  <button
+                    onClick={() => { setShowCreateModal(true); setTxModal(null); setHistoryItemId(null); setBulkOpen(false); }}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Nuevo Insumo
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="px-4 sm:px-5 py-3 border-b border-blue-500/10 flex gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.label}
-                  onClick={() => setCategory(tab.value)}
-                  className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
-                    category === tab.value
-                      ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400'
-                      : 'bg-midnight-800/50 border border-blue-500/10 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="px-4 sm:px-5 py-3 border-b border-blue-500/10 flex items-center gap-3 flex-wrap">
+              <div className="flex gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.label}
+                    onClick={() => setCategory(tab.value)}
+                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
+                      category === tab.value
+                        ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400'
+                        : 'bg-midnight-800/50 border border-blue-500/10 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 min-w-[180px] max-w-xs ml-auto">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
+                  placeholder="Buscar por código o nombre..."
+                />
+              </div>
             </div>
 
             <div className="flex-1 overflow-x-auto">
@@ -940,9 +915,29 @@ export default function InsumosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items && items.length > 0 ? (
-                    items.map((item) => {
-                      const isCritical = item.currentStock <= item.criticalLevel;
+                  {itemsLoading ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-10 text-center">
+                        <div className="flex items-center justify-center gap-3">
+                          <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm text-slate-400">Cargando insumos...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : itemsError ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <AlertCircle className="w-5 h-5 text-red-400" />
+                          <p className="text-sm text-red-400 font-medium">Error al cargar los insumos</p>
+                          <p className="text-xs text-slate-500">Verifica la conexión con el servidor.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredItems && filteredItems.length > 0 ? (
+                    filteredItems.map((item) => {
+                      const isCritical = item.criticalLevel > 0 && item.currentStock <= item.criticalLevel;
+                      const isHealthy = !isCritical && (item.criticalLevel === 0 || item.currentStock > item.criticalLevel * 3);
                       return (
                         <tr key={item.id} className="terminal-row">
                           <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{item.code}</td>
@@ -956,49 +951,37 @@ export default function InsumosPage() {
                               {isCritical && (
                                 <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" aria-label="Stock crítico" />
                               )}
-                              {!isCritical && item.currentStock > item.criticalLevel * 3 && (
+                              {isHealthy && (
                                 <CheckCircle className="w-4 h-4 text-green-500/60" />
                               )}
                             </div>
                           </td>
                           <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-500">{item.criticalLevel}</td>
                           <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                onClick={() => { setTxModal({ item, type: 'IN' }); setShowCreateModal(false); setHistoryItemId(null); setBulkOpen(false); }}
-                                className="p-1.5 text-green-500 hover:bg-green-500/10 transition-all rounded-sm"
-                                title="Registrar entrada"
-                              >
-                                <PlusCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => { setTxModal({ item, type: 'OUT' }); setShowCreateModal(false); setHistoryItemId(null); setBulkOpen(false); }}
-                                className="p-1.5 text-red-400 hover:bg-red-500/10 transition-all rounded-sm"
-                                title="Registrar salida"
-                              >
-                                <MinusCircle className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => { setHistoryItemId(item.id); setTxModal(null); setShowCreateModal(false); setBulkOpen(false); }}
-                                className="p-1.5 text-blue-400 hover:bg-blue-500/10 transition-all rounded-sm"
-                                title="Ver historial"
-                              >
-                                <History className="w-4 h-4" />
-                              </button>
-                              {user?.role === 'SUPERADMIN' && (
+                            {canAct && (
+                              <div className="flex items-center justify-center gap-1">
                                 <button
-                                  onClick={() => {
-                                    if (window.confirm('¿Estás seguro de eliminar este insumo? Esta acción no se puede deshacer.')) {
-                                      deleteItem.mutate(item.id);
-                                    }
-                                  }}
-                                  className="p-1.5 text-red-600 hover:bg-red-500/10 transition-all rounded-sm"
-                                  title="Eliminar insumo"
+                                  onClick={() => { setHistoryItemId(item.id); setHistoryPage(0); setTxModal(null); setShowCreateModal(false); setBulkOpen(false); }}
+                                  className="p-1.5 text-blue-400 hover:bg-blue-500/10 transition-all rounded-sm"
+                                  title="Ver historial"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <History className="w-4 h-4" />
                                 </button>
-                              )}
-                            </div>
+                                {user?.role === 'SUPERADMIN' && (
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm('¿Estás seguro de eliminar este insumo? Esta acción no se puede deshacer.')) {
+                                        deleteItem.mutate(item.id);
+                                      }
+                                    }}
+                                    className="p-1.5 text-red-600 hover:bg-red-500/10 transition-all rounded-sm"
+                                    title="Eliminar insumo"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
@@ -1006,7 +989,7 @@ export default function InsumosPage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay insumos registrados.
+                        {searchQuery.trim() ? 'No se encontraron insumos con ese criterio.' : 'No hay insumos registrados.'}
                       </td>
                     </tr>
                   )}

@@ -7,7 +7,7 @@ export default function InsumosLayout({ children }: { children: React.ReactNode 
 
   if (isLoading) return null;
 
-  if (user && user.role !== 'SUPERADMIN') {
+  if (user && !['SUPERADMIN', 'OWNER', 'ADMIN'].includes(user.role)) {
     return (
       <div className="relative min-h-[calc(100vh-10rem)]">
         <div className="pointer-events-none">

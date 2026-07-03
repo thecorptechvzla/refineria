@@ -17,18 +17,9 @@ export function GoldProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const hasAuth = document.cookie.includes('goldtrack_session=');
-
-    if (!hasAuth) {
-      setIsLoading(false);
-      return;
-    }
-
     api<User>('/auth/profile')
       .then((u) => setUser(u))
-      .catch(() => {
-        document.cookie = 'goldtrack_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      })
+      .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, []);
 

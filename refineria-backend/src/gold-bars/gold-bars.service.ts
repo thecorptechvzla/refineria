@@ -67,6 +67,17 @@ export class GoldBarsService {
       const lotVal = row.getCell(5).value;
       const originalLot = lotVal != null ? String(lotVal).trim() : undefined;
 
+      const leyAg = this.parseNumericCell(row.getCell(6));
+      let analyticalAg: number | undefined;
+      if (leyAg != null && leyAg > 0) {
+        analyticalAg = Number((grossWeight * leyAg / 1000).toFixed(2));
+      } else {
+        const rawAnalyticalAg = this.parseNumericCell(row.getCell(7));
+        if (rawAnalyticalAg != null && rawAnalyticalAg > 0) {
+          analyticalAg = rawAnalyticalAg;
+        }
+      }
+
       barsToCreate.push({
         code,
         supplierId,
@@ -76,6 +87,8 @@ export class GoldBarsService {
         expected,
         recovered: 0,
         originalLot: originalLot || undefined,
+        leyAg: leyAg ?? undefined,
+        analyticalAg: analyticalAg ?? undefined,
       });
     }
 
@@ -91,6 +104,8 @@ export class GoldBarsService {
       expected: b.expected,
       recovered: 0,
       originalLot: b.originalLot,
+      leyAg: b.leyAg,
+      analyticalAg: b.analyticalAg,
     }));
 
     const resultCreate = await this.prisma.goldBar.createMany({ data: prismaData });

@@ -22,6 +22,11 @@ instance.interceptors.response.use(
   (res) => res,
   (err) => {
     if (axios.isAxiosError(err)) {
+      if (err.response?.status === 401 && window.location.pathname !== '/login') {
+        document.cookie = 'goldtrack_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        window.location.href = '/login';
+        return Promise.reject(err);
+      }
       const data = err.response?.data as Record<string, unknown> | undefined;
       const message =
         typeof data?.message === 'string'

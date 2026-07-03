@@ -1,3 +1,5 @@
+import { formatNumber } from './utils';
+
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -20,7 +22,7 @@ export function validateProcessBars(
   const totalLowPurityWeight = lowPurityBars.reduce((s, b) => s + b.grossWeight, 0);
   if (totalLowPurityWeight > 5000) {
     errors.push(
-      `El peso bruto total de las barras con ley menor a 850 excede los 5 kg (${totalLowPurityWeight.toFixed(2)} g).`,
+      `El peso bruto total de las barras con ley menor a 850 excede los 5 kg (${formatNumber(totalLowPurityWeight)} g).`,
     );
   }
 

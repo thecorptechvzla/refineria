@@ -5,7 +5,7 @@ import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useClosedProcessesBySupplier } from '@/lib/hooks/useProcesses';
 import { useCreateEgresoLot } from '@/lib/hooks/useTransactions';
 import { useTransactions } from '@/lib/hooks/useTransactions';
-import { formatLocaleNumber, formatDate } from '@/lib/utils';
+import { formatNumber, formatLocaleNumber, formatDate } from '@/lib/utils';
 import { ArrowLeftRight, CheckCircle, Crosshair, Package, ChevronDown } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 import type { ProcessLot, Process } from '@/types/refinery';
@@ -278,7 +278,7 @@ export default function TransaccionesPage() {
                           {formatLocaleNumber(tx.weight)} {tx.weightUnit}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">
-                          {(tx.purity * 100).toFixed(0)}%
+                          {formatNumber(tx.purity * 100, 0)}%
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-xs text-slate-500">
                           {formatDate(tx.date)}

@@ -67,6 +67,16 @@ export class ProcessesController {
     return this.processesService.findClosedBySupplier(supplierId);
   }
 
+  @Get(':id/detail')
+  findDetail(@Param('id') id: string) {
+    return this.processesService.findDetail(id);
+  }
+
+  @Delete('all')
+  removeAll() {
+    return this.processesService.removeAll();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.processesService.remove(id);

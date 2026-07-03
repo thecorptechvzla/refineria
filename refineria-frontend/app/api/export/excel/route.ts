@@ -9,6 +9,8 @@ interface LotRow {
   g: number;
   pct: number;
   dif: number;
+  totalAg: number;
+  leyAg: number;
 }
 
 function thinBorder() {
@@ -31,8 +33,10 @@ export async function POST(req: NextRequest) {
   const totalE = rows.reduce((s, r) => s + r.e, 0);
   const totalF = rows.reduce((s, r) => s + r.f, 0);
   const totalG = rows.reduce((s, r) => s + r.g, 0);
+  const totalAg = rows.reduce((s, r) => s + r.totalAg, 0);
   const totalPct = totalE > 0 ? (totalG / totalE) * 100 : 0;
   const totalDif = totalG - totalF;
+  const totalLeyAg = totalGrossWeight > 0 ? Math.round((totalAg / totalGrossWeight) * 1000 * 100) / 100 : 0;
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('CONSOLIDADO');
@@ -46,6 +50,8 @@ export async function POST(req: NextRequest) {
     { key: 'esperado', width: 20 },
     { key: 'recup', width: 20 },
     { key: 'pct', width: 16 },
+    { key: 'leyAg', width: 16 },
+    { key: 'plata', width: 20 },
     { key: 'dif', width: 14 },
   ];
 
@@ -61,7 +67,7 @@ export async function POST(req: NextRequest) {
   supplierRow.getCell(3).value = supplierName;
   supplierRow.getCell(3).font = { bold: true };
   supplierRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(4, 3, 4, 9);
+  ws.mergeCells(4, 3, 4, 11);
   supplierRow.height = 24;
 
   const headerCells = [
@@ -71,7 +77,9 @@ export async function POST(req: NextRequest) {
     { col: 6, val: 'PESO FINO\n ESPERADO (g) ' },
     { col: 7, val: 'PESO FINO\nRECUPERADO (g)' },
     { col: 8, val: '% \nRECUPERACIÓN' },
-    { col: 9, val: 'DIFERENCIA' },
+    { col: 9, val: 'LEY Ag (‰)' },
+    { col: 10, val: 'PESO FINO\nAg (g)' },
+    { col: 11, val: 'DIFERENCIA' },
   ];
 
   const hRow = ws.getRow(HEADER_ROW);
@@ -103,7 +111,9 @@ export async function POST(req: NextRequest) {
       { col: 6, val: r.f },
       { col: 7, val: r.g },
       { col: 8, val: r.pct },
-      { col: 9, val: r.dif },
+      { col: 9, val: r.leyAg },
+      { col: 10, val: r.totalAg },
+      { col: 11, val: r.dif },
     ];
 
     for (const d of dataCols) {
@@ -134,7 +144,9 @@ export async function POST(req: NextRequest) {
     { col: 6, val: totalF },
     { col: 7, val: totalG },
     { col: 8, val: totalPct },
-    { col: 9, val: totalDif },
+    { col: 9, val: totalLeyAg },
+    { col: 10, val: totalAg },
+    { col: 11, val: totalDif },
   ];
 
   for (const d of totalDataCols) {
