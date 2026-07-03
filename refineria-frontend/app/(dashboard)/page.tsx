@@ -339,10 +339,10 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-amber-400/70 uppercase tracking-widest">Ingresado (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-green-400/70 uppercase tracking-widest">Bóveda (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-blue-400/70 uppercase tracking-widest">Proceso (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-400/70 uppercase tracking-widest">Por Refinar (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,10 +350,12 @@ export default function DashboardPage() {
                     (metrics?.supplierChartData ?? []).map((row) => (
                       <tr key={row.id} className="terminal-row">
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.ingresado)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-green-400">{formatLocaleNumber(row.boveda)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.proceso)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(row.porRefinar)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
+                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.fineIn - row.fineOut) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(row.fineIn - row.fineOut) >= 0 ? '+' : ''}{formatLocaleNumber(row.fineIn - row.fineOut)}
+                        </td>
                       </tr>
                     ))
                   ) : (
