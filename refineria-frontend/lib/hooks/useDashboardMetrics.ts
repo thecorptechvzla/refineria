@@ -14,9 +14,10 @@ export type ProcessSummaryItem = {
 export type SupplierChartRow = {
   id: string;
   name: string;
-  grossIn: number;
-  fineIn: number;
-  fineOut: number;
+  ingresado: number;
+  boveda: number;
+  proceso: number;
+  porRefinar: number;
 };
 
 export type RecentTransactionItem = {

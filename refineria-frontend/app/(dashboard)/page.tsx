@@ -8,7 +8,7 @@ import { useProcessDetail } from '@/lib/hooks/useProcessDetail';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
@@ -309,19 +309,26 @@ export default function DashboardPage() {
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">Volumen por Proveedor</h2>
             </div>
           </div>
-          <div className="p-4 sm:p-5">
-            <div className="h-64 sm:h-72 min-w-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="25%">
+          <div className="p-4 sm:p-5 w-full overflow-x-auto pb-4">
+            <div style={{ minWidth: '700px' }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="20%" barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(59,130,246,0.1)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
-                  <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
                   <Tooltip
                     contentStyle={{ background: '#111827', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 0, fontSize: '12px', color: '#e2e8f0' }}
                     cursor={{ fill: 'rgba(59,130,246,0.05)' }}
                   />
-                  <Bar dataKey="fineIn" name="Oro Fino" fill="#F59E0B" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="fineOut" name="Egresos Finos" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Legend
+                    wrapperStyle={{ fontSize: '10px', color: '#94a3b8', paddingTop: '8px' }}
+                    iconType="rect"
+                    iconSize={10}
+                  />
+                  <Bar dataKey="ingresado" name="Oro Ingresado" fill="#F59E0B" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="boveda" name="Oro en Bóveda" fill="#22C55E" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="proceso" name="Oro en Proceso" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="porRefinar" name="Por Refinar" fill="#64748B" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -332,10 +339,10 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-amber-400/70 uppercase tracking-widest">Ingresado (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-green-400/70 uppercase tracking-widest">Bóveda (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-blue-400/70 uppercase tracking-widest">Proceso (g)</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-400/70 uppercase tracking-widest">Por Refinar (g)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,12 +350,10 @@ export default function DashboardPage() {
                     (metrics?.supplierChartData ?? []).map((row) => (
                       <tr key={row.id} className="terminal-row">
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
-                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.fineIn - row.fineOut) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(row.fineIn - row.fineOut) >= 0 ? '+' : ''}{formatLocaleNumber(row.fineIn - row.fineOut)}
-                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.ingresado)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-green-400">{formatLocaleNumber(row.boveda)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.proceso)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatLocaleNumber(row.porRefinar)}</td>
                       </tr>
                     ))
                   ) : (

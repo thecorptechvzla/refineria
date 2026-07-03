@@ -170,42 +170,33 @@ export class DashboardService {
   }
 
   private async getSupplierChartData(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
-    const where = this.buildTransactionWhere(supplierId, dateRange);
-    const transactions = await this.prisma.transaction.findMany({
+    const where = supplierId ? { id: supplierId } : {};
+    const suppliers = await this.prisma.supplier.findMany({
       where,
-      include: { supplier: { select: { name: true } } },
+      select: { id: true, name: true },
     });
 
-    const map = new Map<string, { id: string; name: string; grossIn: number; fineIn: number; fineOut: number }>();
+    const rows = await Promise.all(
+      suppliers.map(async (s) => {
+        const [ingresado, boveda, proceso, porRefinar] = await Promise.all([
+          this.getOroIngresado(s.id, dateRange),
+          this.getOroEnBoveda(s.id, dateRange),
+          this.getOroEnProceso(s.id, dateRange),
+          this.getOroPorProcesar(s.id, dateRange),
+        ]);
+        return { id: s.id, name: s.name, ingresado, boveda, proceso, porRefinar };
+      }),
+    );
 
-    for (const tx of transactions) {
-      if (!tx.supplierId) continue;
-      const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
-      if (!map.has(tx.supplierId)) {
-        map.set(tx.supplierId, {
-          id: tx.supplierId,
-          name: tx.supplier?.name ?? '',
-          grossIn: 0,
-          fineIn: 0,
-          fineOut: 0,
-        });
-      }
-      const entry = map.get(tx.supplierId)!;
-      if (tx.type === 'IN') {
-        entry.grossIn += grams;
-        entry.fineIn += grams * tx.purity;
-      } else if (tx.type === 'OUT') {
-        entry.fineOut += grams;
-      }
-    }
-
-    return Array.from(map.values())
-      .filter((d) => d.grossIn > 0 || d.fineOut > 0)
-      .map((d) => ({
-        ...d,
-        grossIn: Number(d.grossIn.toFixed(2)),
-        fineIn: Number(d.fineIn.toFixed(2)),
-        fineOut: Number(d.fineOut.toFixed(2)),
+    return rows
+      .filter((r) => r.ingresado > 0 || r.boveda > 0 || r.proceso > 0 || r.porRefinar > 0)
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        ingresado: Number(r.ingresado.toFixed(2)),
+        boveda: Number(r.boveda.toFixed(2)),
+        proceso: Number(r.proceso.toFixed(2)),
+        porRefinar: Number(r.porRefinar.toFixed(2)),
       }));
   }
 
