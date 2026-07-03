@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
-  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle,
+  Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -53,6 +53,8 @@ export default function DashboardPage() {
 
   const [activeStatusFilter, setActiveStatusFilter] = useState<'in_progress' | 'open' | 'closed' | null>(null);
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -85,6 +87,13 @@ export default function DashboardPage() {
     if (!activeStatusFilter || !metrics?.processSummary) return [];
     return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === activeStatusFilter);
   }, [activeStatusFilter, metrics?.processSummary]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProcessList.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedList = useMemo(() => {
+    const start = (safePage - 1) * ITEMS_PER_PAGE;
+    return filteredProcessList.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProcessList, safePage]);
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -272,7 +281,7 @@ export default function DashboardPage() {
               </div>
               <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
               {kpi.subtitle && kpi.subtitle.length > 0 && (
-                <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
+                <p className="text-[10px] text-slate-300 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
               )}
               <div className={`mt-3 h-[2px] w-full ${isGold ? 'bg-gold-500/30' : 'bg-blue-500/30'}`} />
             </div>
@@ -291,7 +300,7 @@ export default function DashboardPage() {
           return (
             <div
               key={card.key}
-              onClick={() => setActiveStatusFilter(isActive ? null : card.key)}
+              onClick={() => { setCurrentPage(1); setActiveStatusFilter(isActive ? null : card.key); }}
               className={`glass-panel p-4 cursor-pointer transition-all duration-200 ${
                 isActive
                   ? `ring-2 ${card.border} shadow-lg ${card.shadow} ${card.bgActive}`
@@ -303,7 +312,7 @@ export default function DashboardPage() {
                 <card.icon className={`w-4 h-4 ${card.textIcon}`} />
               </div>
               <p className="hud-number text-lg sm:text-xl text-white">{card.count}</p>
-              <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">{card.desc}</p>
+              <p className="text-[10px] text-slate-300 mt-1 uppercase tracking-wider">{card.desc}</p>
               <div className={`mt-3 h-[2px] w-full ${card.bar}`} />
             </div>
           );
@@ -322,31 +331,54 @@ export default function DashboardPage() {
                 {activeStatusFilter === 'in_progress' ? 'Procesos en Curso' : activeStatusFilter === 'open' ? 'Procesos Terminados' : 'Procesos Cerrados'}
               </h3>
             </div>
-            <div className="p-3 space-y-2">
-              {filteredProcessList.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { setActiveStatusFilter(null); setViewingProcessId(p.id); }}
-                  className="w-full text-left terminal-row px-3 py-3 cursor-pointer hover:bg-blue-500/10 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono font-bold text-gold-500">#{p.number}</span>
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                      p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
-                      p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
-                      'bg-gray-500/10 text-gray-400'
-                    }`}>
-                      {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-slate-400">{suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}</span>
-                    <span className="text-[10px] text-slate-600">
-                      {formatNumber(p.lotCount, 0)} lote{p.lotCount !== 1 ? 's' : ''} &middot; {formatNumber(p.barCount, 0)} barra{p.barCount !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </button>
-              ))}
+            <div className="p-3 min-h-[340px] flex flex-col">
+              <div className="space-y-2 flex-1">
+                {paginatedList.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setActiveStatusFilter(null); setViewingProcessId(p.id); }}
+                    className="w-full text-left terminal-row px-3 py-3 cursor-pointer hover:bg-blue-500/10 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-mono font-bold text-gold-500">#{p.number}</span>
+                      <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                        p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
+                        p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
+                        'bg-gray-500/10 text-gray-400'
+                      }`}>
+                        {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[11px] text-slate-300">{suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}</span>
+                      <span className="text-[10px] text-slate-300">
+                        {formatNumber(p.lotCount, 0)} lote{p.lotCount !== 1 ? 's' : ''} &middot; {formatNumber(p.barCount, 0)} barra{p.barCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-3 mt-auto">
+                <span className="text-[10px] text-slate-400">
+                  Mostrando {(safePage - 1) * ITEMS_PER_PAGE + 1}&ndash;{Math.min(safePage * ITEMS_PER_PAGE, filteredProcessList.length)} de {formatNumber(filteredProcessList.length, 0)} procesos
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(safePage - 1)}
+                    disabled={safePage <= 1}
+                    className="p-1.5 border border-blue-500/20 text-slate-400 hover:text-slate-200 hover:border-blue-500/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(safePage + 1)}
+                    disabled={safePage >= totalPages}
+                    className="p-1.5 border border-blue-500/20 text-slate-400 hover:text-slate-200 hover:border-blue-500/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
