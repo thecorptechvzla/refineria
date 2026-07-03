@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
-  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle, X,
+  Wallet, Activity, Crosshair, Settings, ChevronDown, Database, Shield, CheckCircle,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -51,9 +51,8 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [periodOpen]);
 
-  const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<'in_progress' | 'open' | 'closed' | null>(null);
   const [viewingProcessId, setViewingProcessId] = useState<string | null>(null);
-  const [statusModalOpen, setStatusModalOpen] = useState<'in_progress' | 'open' | 'closed' | null>(null);
 
   const monthRange = useMemo(() => {
     const now = new Date();
@@ -83,30 +82,9 @@ export default function DashboardPage() {
   const { data: processDetail, isLoading: detailLoading } = useProcessDetail(viewingProcessId);
 
   const filteredProcessList = useMemo(() => {
-    if (!statusModalOpen || !metrics?.processSummary) return [];
-    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === statusModalOpen);
-  }, [statusModalOpen, metrics?.processSummary]);
-
-  const processBySupplier = useMemo(() => {
-    if (!suppliers || !metrics?.processSummary) return [];
-    return suppliers
-      .map((s) => {
-        const sp = metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === s.id);
-        return {
-          id: s.id,
-          name: s.name,
-          open: sp.filter((p) => p.status === 'open').length,
-          inProgress: sp.filter((p) => p.status === 'in_progress').length,
-          closed: sp.filter((p) => p.status === 'closed').length,
-        };
-      })
-      .filter((s) => s.open > 0 || s.inProgress > 0 || s.closed > 0);
-  }, [metrics?.processSummary, suppliers]);
-
-  const supplierProcessMap = useMemo(() => {
-    if (!expandedSupplierId || !metrics?.processSummary) return [];
-    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.supplierId === expandedSupplierId);
-  }, [expandedSupplierId, metrics?.processSummary]);
+    if (!activeStatusFilter || !metrics?.processSummary) return [];
+    return metrics.processSummary.filter((p: ProcessSummaryItem) => p.status === activeStatusFilter);
+  }, [activeStatusFilter, metrics?.processSummary]);
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -302,186 +280,146 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        <div className="lg:col-span-3 glass-panel">
-          <div className="p-4 sm:p-5 border-b border-blue-500/10">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Volumen por Proveedor</h2>
+      {/* Status Cards with Toggle */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+        {([
+          { key: 'in_progress' as const, label: 'ABIERTOS', icon: Settings, count: metrics?.processCounts.inProgress ?? 0, desc: 'Procesos en curso', border: 'border-blue-500/50', shadow: 'shadow-blue-500/20', bgActive: 'bg-blue-500/10', textLabel: 'text-blue-400/70', textIcon: 'text-blue-500', bar: 'bg-blue-500/30' },
+          { key: 'open' as const, label: 'TERMINADOS', icon: CheckCircle, count: metrics?.processCounts.open ?? 0, desc: 'Listos para cerrar', border: 'border-green-500/50', shadow: 'shadow-green-500/20', bgActive: 'bg-green-500/10', textLabel: 'text-green-400/70', textIcon: 'text-green-500', bar: 'bg-green-500/30' },
+          { key: 'closed' as const, label: 'CERRADOS', icon: Crosshair, count: metrics?.processCounts.closed ?? 0, desc: 'Procesos finalizados', border: 'border-gold-500/50', shadow: 'shadow-gold-500/20', bgActive: 'bg-gold-500/10', textLabel: 'text-gold-400/70', textIcon: 'text-gold-500', bar: 'bg-gold-500/30' },
+        ]).map((card) => {
+          const isActive = activeStatusFilter === card.key;
+          return (
+            <div
+              key={card.key}
+              onClick={() => setActiveStatusFilter(isActive ? null : card.key)}
+              className={`glass-panel p-4 cursor-pointer transition-all duration-200 ${
+                isActive
+                  ? `ring-2 ${card.border} shadow-lg ${card.shadow} ${card.bgActive}`
+                  : 'hover:bg-white/5 active:scale-95'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-[10px] font-semibold uppercase tracking-widest ${card.textLabel}`}>{card.label}</span>
+                <card.icon className={`w-4 h-4 ${card.textIcon}`} />
+              </div>
+              <p className="hud-number text-lg sm:text-xl text-white">{card.count}</p>
+              <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">{card.desc}</p>
+              <div className={`mt-3 h-[2px] w-full ${card.bar}`} />
             </div>
-          </div>
-          <div className="p-4 sm:p-5 w-full overflow-x-auto pb-4">
-            <div style={{ minWidth: '700px' }}>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="20%" maxBarSize={35}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(59,130,246,0.1)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} tickFormatter={(v: number) => formatNumber(v, 0)} />
-                  <Tooltip
-                    contentStyle={{ background: '#111827', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 0, fontSize: '12px', color: '#e2e8f0' }}
-                    cursor={{ fill: 'rgba(59,130,246,0.05)' }}
-                    formatter={(v) => [formatNumber(v as number, 2), '']}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: '10px', color: '#94a3b8', paddingTop: '8px' }}
-                    iconType="rect"
-                    iconSize={10}
-                  />
-                  <Bar dataKey="ingresado" name="Oro Ingresado" fill="#F59E0B" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="boveda" name="Oro en Bóveda" fill="#22C55E" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="proceso" name="Oro en Proceso" fill="#3B82F6" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="porRefinar" name="Por Refinar" fill="#64748B" radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="border-t border-blue-500/10 p-4 sm:p-5">
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-blue-500/10">
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(metrics?.supplierChartData ?? []).length > 0 ? (
-                    (metrics?.supplierChartData ?? []).map((row) => (
-                      <tr key={row.id} className="terminal-row">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
-                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${row.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {row.balance >= 0 ? '+' : ''}{formatLocaleNumber(row.balance)}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-500">
-                        No hay datos de proveedores.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 glass-panel">
-          <div className="p-4 sm:p-5 border-b border-blue-500/10">
-            <div className="flex items-center gap-2">
-              <Crosshair className="w-4 h-4 text-blue-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Estado de los Procesos</h2>
-            </div>
-          </div>
-          <div className="p-4 sm:p-5 max-h-[600px] overflow-y-auto space-y-2">
-            {processBySupplier.length > 0 ? (
-              processBySupplier.map((s) => {
-                const isSupplierExpanded = expandedSupplierId === s.id;
-                return (
-                  <div key={s.id}>
-                    <div
-                      onClick={() => setExpandedSupplierId(isSupplierExpanded ? null : s.id)}
-                      className="terminal-row flex items-center justify-between py-2.5 px-3 cursor-pointer select-none"
-                    >
-                      <span className="text-sm font-medium text-slate-300 truncate min-w-0">{s.name}</span>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {s.open > 0 && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                            {s.open} A
-                          </span>
-                        )}
-                        {s.inProgress > 0 && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                            {s.inProgress} T
-                          </span>
-                        )}
-                        {s.closed > 0 && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 text-gray-400">
-                            {s.closed} C
-                          </span>
-                        )}
-                        <ChevronDown className={`w-3 h-3 text-slate-600 transition-transform ${isSupplierExpanded ? 'rotate-180' : ''}`} />
-                      </div>
-                    </div>
-                    {isSupplierExpanded && (
-                      <div className="border-t border-blue-500/10 pt-2 pb-1 px-3 space-y-1.5">
-                        {supplierProcessMap.length > 0 ? (
-                          supplierProcessMap.map((p) => {
-                            return (
-                              <div key={p.id} onClick={() => { if (user.role === 'OWNER') setViewingProcessId(p.id); }} className={`text-[10px] font-mono bg-midnight-900/50 px-2.5 py-1.5 border border-blue-500/10 flex items-center justify-between ${user.role === 'OWNER' ? 'cursor-pointer hover:bg-blue-500/10' : ''}`}>
-                                <span className="text-slate-300">#{p.number}</span>
-                                <div className="flex items-center gap-2 text-slate-500">
-                                  <span>{p.lotCount} lote{p.lotCount !== 1 ? 's' : ''}</span>
-                                  <span>{p.barCount} barra{p.barCount !== 1 ? 's' : ''}</span>
-                                  <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                                    p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
-                                    p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
-                                    'bg-gray-500/10 text-gray-400'
-                                  }`}>
-                                    {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <p className="text-[10px] text-slate-500 py-1">Sin procesos para este proveedor.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-center text-sm text-slate-500 py-6">No hay procesos activos.</p>
-            )}
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-        <div
-          onClick={() => setStatusModalOpen('in_progress')}
-          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400/70">ABIERTOS</span>
-            <Settings className="w-4 h-4 text-blue-500" />
+      {/* In-page Process List — animated slide */}
+      <div
+        className="transition-all duration-300 ease-in-out overflow-hidden"
+        style={{ maxHeight: activeStatusFilter && filteredProcessList.length > 0 ? '600px' : '0' }}
+      >
+        {activeStatusFilter && filteredProcessList.length > 0 && (
+          <div className="glass-panel">
+            <div className="p-4 border-b border-blue-500/10">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                {activeStatusFilter === 'in_progress' ? 'Procesos en Curso' : activeStatusFilter === 'open' ? 'Procesos Terminados' : 'Procesos Cerrados'}
+              </h3>
+            </div>
+            <div className="p-3 space-y-2">
+              {filteredProcessList.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setActiveStatusFilter(null); setViewingProcessId(p.id); }}
+                  className="w-full text-left terminal-row px-3 py-3 cursor-pointer hover:bg-blue-500/10 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-mono font-bold text-gold-500">#{p.number}</span>
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
+                      p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
+                      'bg-gray-500/10 text-gray-400'
+                    }`}>
+                      {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[11px] text-slate-400">{suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}</span>
+                    <span className="text-[10px] text-slate-600">
+                      {formatNumber(p.lotCount, 0)} lote{p.lotCount !== 1 ? 's' : ''} &middot; {formatNumber(p.barCount, 0)} barra{p.barCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.inProgress ?? 0}</p>
-          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos en curso</p>
-          <div className="mt-3 h-[2px] w-full bg-blue-500/30" />
+        )}
+      </div>
+
+      {/* Chart + Supplier Table — Full Width */}
+      <div className="glass-panel">
+        <div className="p-4 sm:p-5 border-b border-blue-500/10">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-blue-400" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Volumen por Proveedor</h2>
+          </div>
         </div>
-        <div
-          onClick={() => setStatusModalOpen('open')}
-          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-green-400/70">TERMINADOS</span>
-            <CheckCircle className="w-4 h-4 text-green-500" />
+        <div className="p-4 sm:p-5 w-full overflow-x-auto pb-4">
+          <div style={{ minWidth: '700px' }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="20%" maxBarSize={35}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(59,130,246,0.1)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} tickFormatter={(v: number) => formatNumber(v, 0)} />
+                <Tooltip
+                  contentStyle={{ background: '#111827', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 0, fontSize: '12px', color: '#e2e8f0' }}
+                  cursor={{ fill: 'rgba(59,130,246,0.05)' }}
+                  formatter={(v) => [formatNumber(v as number, 2), '']}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: '10px', color: '#94a3b8', paddingTop: '8px' }}
+                  iconType="rect"
+                  iconSize={10}
+                />
+                <Bar dataKey="ingresado" name="Oro Ingresado" fill="#F59E0B" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="boveda" name="Oro en Bóveda" fill="#22C55E" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="proceso" name="Oro en Proceso" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="porRefinar" name="Por Refinar" fill="#64748B" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.open ?? 0}</p>
-          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Listos para cerrar</p>
-          <div className="mt-3 h-[2px] w-full bg-green-500/30" />
         </div>
-        <div
-          onClick={() => setStatusModalOpen('closed')}
-          className="glass-panel p-4 cursor-pointer hover:bg-white/5 active:scale-95 transition-all"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-400/70">CERRADOS</span>
-            <Crosshair className="w-4 h-4 text-gold-500" />
+        <div className="border-t border-blue-500/10 p-4 sm:p-5">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-blue-500/10">
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(metrics?.supplierChartData ?? []).length > 0 ? (
+                  (metrics?.supplierChartData ?? []).map((row) => (
+                    <tr key={row.id} className="terminal-row">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
+                      <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${row.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {row.balance >= 0 ? '+' : ''}{formatLocaleNumber(row.balance)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-500">
+                      No hay datos de proveedores.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <p className="hud-number text-lg sm:text-xl text-white">{metrics?.processCounts.closed ?? 0}</p>
-          <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-wider">Procesos finalizados</p>
-          <div className="mt-3 h-[2px] w-full bg-gold-500/30" />
         </div>
       </div>
 
@@ -531,45 +469,6 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
-
-      {statusModalOpen && filteredProcessList.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={() => setStatusModalOpen(null)}>
-          <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto glass-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b border-blue-500/10 flex items-center justify-between sticky top-0 bg-midnight-800/95 backdrop-blur">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                {statusModalOpen === 'in_progress' ? 'Procesos en Curso' : statusModalOpen === 'open' ? 'Procesos Terminados' : 'Procesos Cerrados'}
-              </h3>
-              <button onClick={() => setStatusModalOpen(null)} className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-3 space-y-2">
-              {filteredProcessList.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { setStatusModalOpen(null); setViewingProcessId(p.id); }}
-                  className="w-full text-left terminal-row px-3 py-3 cursor-pointer hover:bg-blue-500/10 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono font-bold text-gold-500">#{p.number}</span>
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                      p.status === 'open' ? 'bg-blue-500/10 text-blue-400' :
-                      p.status === 'in_progress' ? 'bg-orange-500/10 text-orange-400' :
-                      'bg-gray-500/10 text-gray-400'
-                    }`}>
-                      {p.status === 'open' ? 'A' : p.status === 'in_progress' ? 'T' : 'C'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-slate-400">{suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}</span>
-                    <span className="text-[10px] text-slate-600">{p.lotCount} lote{p.lotCount !== 1 ? 's' : ''} &middot; {p.barCount} barra{p.barCount !== 1 ? 's' : ''}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {viewingProcessId && !detailLoading && enrichedDetail && (
         <ProcessModal
