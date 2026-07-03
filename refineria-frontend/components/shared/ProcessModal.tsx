@@ -3,7 +3,7 @@
 import { useState, Fragment } from 'react';
 import { getSupplierName, formatNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
-import { ChevronDown, Crosshair, X, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Crosshair, X, FileText } from 'lucide-react';
 
 export type LotDetail = ProcessLot & {
   bars: GoldBar[];
@@ -85,12 +85,15 @@ export function ProcessModal({
   detail,
   suppliers,
   onClose,
+  variant = 'default',
 }: {
   detail: ProcessDetail;
   suppliers: { id: string; name: string }[] | undefined;
   onClose: () => void;
+  variant?: 'dashboard' | 'default';
 }) {
   const [expandedLotId, setExpandedLotId] = useState<string | null>(null);
+  const [lotsOpen, setLotsOpen] = useState(false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
@@ -175,77 +178,176 @@ export function ProcessModal({
                 </tr>
               </thead>
               <tbody>
-                {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
-                  const isExpanded = expandedLotId === lot.id;
-                  return (
-                    <Fragment key={lot.id}>
-                      <tr
-                        onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
-                        className="terminal-row cursor-pointer select-none"
-                      >
-                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
-                          <span className="inline-flex items-center gap-1.5">
-                            <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
-                            <span>#{lot.number}</span>
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.grossWeight)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.e, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.f, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.g, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(lot.pct)}%</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                          {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.leyAg)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.totalAg)}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
-                        </td>
-                      </tr>
-                      {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
-                        const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
-                        const barDif = bar.recovered - bar.expected;
-                        const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
-                        return (
-                          <tr key={bar.id} className="bg-midnight-900/40 border-b border-blue-500/5">
-                            <td className="px-3 py-2 whitespace-nowrap text-[11px] font-mono text-slate-500">
-                              <span className="inline-flex items-center gap-1.5 pl-6">
-                                <span className="w-1 h-1 rounded-full bg-slate-600 inline-block shrink-0" />
-                                <span>{bar.code}</span>
+                {variant === 'dashboard' ? (
+                  <>
+                    <tr
+                      onClick={() => setLotsOpen(!lotsOpen)}
+                      className="border-t border-gold-500/20 bg-gold-500/10 cursor-pointer select-none"
+                    >
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">
+                        <span className="inline-flex items-center gap-1.5">
+                          {lotsOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          <span>Total</span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalGrossWeight)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalE, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalF, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalG, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{formatNumber(detail.totalPct)}%</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
+                        {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalLeyAg)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalAg)}</td>
+                      <td />
+                    </tr>
+                    <tr>
+                      <td colSpan={10} className="p-0">
+                        <div
+                          className="transition-all duration-300 ease-in-out overflow-hidden"
+                          style={{ maxHeight: lotsOpen ? `${detail.lotDetails.length * 120}px` : '0' }}
+                        >
+                          <table className="min-w-full">
+                            <tbody>
+                              {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
+                                const isExpanded = expandedLotId === lot.id;
+                                return (
+                                  <Fragment key={lot.id}>
+                                    <tr
+                                      onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
+                                      className="terminal-row cursor-pointer select-none"
+                                    >
+                                      <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
+                                        <span className="inline-flex items-center gap-1.5">
+                                          <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                          <span>#{lot.number}</span>
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.grossWeight)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.e, 1)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.f, 1)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.g, 1)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(lot.pct)}%</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                                        {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
+                                      </td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.leyAg)}</td>
+                                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.totalAg)}</td>
+                                      <td className="px-3 py-3 text-right">
+                                        <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
+                                      </td>
+                                    </tr>
+                                    {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                                      const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
+                                      const barDif = bar.recovered - bar.expected;
+                                      const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
+                                      return (
+                                        <tr key={bar.id} className="bg-midnight-900/40 border-b border-blue-500/5">
+                                          <td className="px-3 py-2 whitespace-nowrap text-[11px] font-mono text-slate-500">
+                                            <span className="inline-flex items-center gap-1.5 pl-6">
+                                              <span className="w-1 h-1 rounded-full bg-slate-600 inline-block shrink-0" />
+                                              <span>{bar.code}</span>
+                                            </span>
+                                          </td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.grossWeight)}</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.analytical, 1)}</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.expected, 1)}</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.recovered, 1)}</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(barPct)}%</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
+                                            {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
+                                          </td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? formatNumber(bar.leyAg) : '—'}</td>
+                                          <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? formatNumber(barAgG) : '—'}</td>
+                                          <td />
+                                        </tr>
+                                      );
+                                    })}
+                                  </Fragment>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  </>
+                ) : (
+                  <>
+                    {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
+                      const isExpanded = expandedLotId === lot.id;
+                      return (
+                        <Fragment key={lot.id}>
+                          <tr
+                            onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
+                            className="terminal-row cursor-pointer select-none"
+                          >
+                            <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
+                              <span className="inline-flex items-center gap-1.5">
+                                <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                <span>#{lot.number}</span>
                               </span>
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.grossWeight)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.analytical, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.expected, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.recovered, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(barPct)}%</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
-                              {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.grossWeight)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.e, 1)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.f, 1)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.g, 1)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(lot.pct)}%</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                              {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? formatNumber(bar.leyAg) : '—'}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? formatNumber(barAgG) : '—'}</td>
-                            <td />
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.leyAg)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.totalAg)}</td>
+                            <td className="px-3 py-3 text-right">
+                              <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
+                            </td>
                           </tr>
-                        );
-                      })}
-                    </Fragment>
-                  );
-                })}
-                <tr className="border-t border-gold-500/20 bg-gold-500/5">
-                  <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalGrossWeight)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalE, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalF, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalG, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{formatNumber(detail.totalPct)}%</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
-                    {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalLeyAg)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalAg)}</td>
-                  <td />
-                </tr>
+                          {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                            const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
+                            const barDif = bar.recovered - bar.expected;
+                            const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
+                            return (
+                              <tr key={bar.id} className="bg-midnight-900/40 border-b border-blue-500/5">
+                                <td className="px-3 py-2 whitespace-nowrap text-[11px] font-mono text-slate-500">
+                                  <span className="inline-flex items-center gap-1.5 pl-6">
+                                    <span className="w-1 h-1 rounded-full bg-slate-600 inline-block shrink-0" />
+                                    <span>{bar.code}</span>
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.grossWeight)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.analytical, 1)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.expected, 1)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.recovered, 1)}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(barPct)}%</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
+                                  {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? formatNumber(bar.leyAg) : '—'}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? formatNumber(barAgG) : '—'}</td>
+                                <td />
+                              </tr>
+                            );
+                          })}
+                        </Fragment>
+                      );
+                    })}
+                    <tr className="border-t border-gold-500/20 bg-gold-500/5">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalGrossWeight)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalE, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalF, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalG, 1)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{formatNumber(detail.totalPct)}%</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
+                        {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalLeyAg)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalAg)}</td>
+                      <td />
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
           </div>

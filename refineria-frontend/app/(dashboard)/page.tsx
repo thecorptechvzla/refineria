@@ -475,6 +475,7 @@ export default function DashboardPage() {
           detail={enrichedDetail}
           suppliers={suppliers}
           onClose={() => setViewingProcessId(null)}
+          variant="dashboard"
         />
       )}
     </div>
