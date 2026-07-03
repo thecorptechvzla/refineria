@@ -1,7 +1,10 @@
-const localeFormatter = new Intl.NumberFormat('es-VE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+export function formatNumber(value: number | string | null | undefined, decimals: number = 2): string {
+  if (value === null || value === undefined || isNaN(Number(value))) return `0,${'0'.repeat(decimals)}`;
+  return new Intl.NumberFormat('de-DE', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Number(value));
+}
 
 export function formatInputNumber(v: string): string {
   const raw = v.replace(/[^\d,]/g, '');
@@ -22,11 +25,11 @@ export function parseLocaleNumber(value: string): number {
 }
 
 export function formatLocaleNumber(value: number): string {
-  return localeFormatter.format(value);
+  return formatNumber(value, 2);
 }
 
 export function formatLocaleWeight(value: number): string {
-  return `${localeFormatter.format(value)} g`;
+  return `${formatNumber(value, 2)} g`;
 }
 
 export function gramsToKg(grams: number): number {
@@ -43,17 +46,17 @@ export function toGrams(weight: number, unit: string): number {
 
 export function formatWeight(weight: number, unit?: string): string {
   if (unit === 'g' || (!unit && weight < 1000)) {
-    return `${localeFormatter.format(weight)} g`;
+    return `${formatNumber(weight, 2)} g`;
   }
   const kg = unit === 'kg' ? weight : weight / 1000;
-  return `${kg.toFixed(2)} kg`;
+  return `${formatNumber(kg, 2)} kg`;
 }
 
 export function formatWeightShort(grams: number): string {
   if (grams >= 1000) {
-    return `${(grams / 1000).toFixed(2)} kg`;
+    return `${formatNumber(grams / 1000, 2)} kg`;
   }
-  return `${grams} g`;
+  return `${formatNumber(grams, 0)} g`;
 }
 
 export function calculateFineWeight(weight: number, purity: number): number {

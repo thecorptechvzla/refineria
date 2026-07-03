@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const totalAg = rows.reduce((s, r) => s + r.totalAg, 0);
   const totalPct = totalE > 0 ? (totalG / totalE) * 100 : 0;
   const totalDif = totalG - totalF;
-  const totalLeyAg = totalGrossWeight > 0 ? Number(((totalAg / totalGrossWeight) * 1000).toFixed(2)) : 0;
+  const totalLeyAg = totalGrossWeight > 0 ? Math.round((totalAg / totalGrossWeight) * 1000 * 100) / 100 : 0;
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('CONSOLIDADO');

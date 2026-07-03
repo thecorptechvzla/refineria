@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import { getSupplierName, formatLocaleNumber } from '@/lib/utils';
+import { getSupplierName, formatNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import { ChevronDown, Crosshair, X, FileText } from 'lucide-react';
 
@@ -29,18 +29,22 @@ export type ProcessDetail = Process & {
   totalLeyAg: number;
 };
 
+function round2(v: number): number {
+  return Math.round(v * 100) / 100;
+}
+
 function computeLotDetail(lot: ProcessLot, allBars: GoldBar[]): LotDetail {
   const bars = allBars.filter((b) => lot.barIds.includes(b.id));
-  const grossWeight = Number(bars.reduce((s, b) => s + b.grossWeight, 0).toFixed(2));
-  const e = Number(bars.reduce((s, b) => s + b.analytical, 0).toFixed(2));
-  const f = Number(bars.reduce((s, b) => s + b.expected, 0).toFixed(2));
-  const g = Number((lot.recovered ?? bars.reduce((s, b) => s + b.recovered, 0)).toFixed(2));
-  const totalAg = Number(bars.reduce((s, b) => {
+  const grossWeight = round2(bars.reduce((s, b) => s + b.grossWeight, 0));
+  const e = round2(bars.reduce((s, b) => s + b.analytical, 0));
+  const f = round2(bars.reduce((s, b) => s + b.expected, 0));
+  const g = round2(lot.recovered ?? bars.reduce((s, b) => s + b.recovered, 0));
+  const totalAg = round2(bars.reduce((s, b) => {
     if (b.analyticalAg != null) return s + b.analyticalAg;
     if (b.leyAg != null) return s + b.grossWeight * b.leyAg / 1000;
     return s;
-  }, 0).toFixed(2));
-  const leyAg = grossWeight > 0 ? Number(((totalAg / grossWeight) * 1000).toFixed(2)) : 0;
+  }, 0));
+  const leyAg = grossWeight > 0 ? round2((totalAg / grossWeight) * 1000) : 0;
   return {
     ...lot,
     bars,
@@ -61,8 +65,8 @@ export function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetai
   const totalE = lotDetails.reduce((s, l) => s + l.e, 0);
   const totalF = lotDetails.reduce((s, l) => s + l.f, 0);
   const totalG = lotDetails.reduce((s, l) => s + l.g, 0);
-  const totalAg = Number(lotDetails.reduce((s, l) => s + l.totalAg, 0).toFixed(2));
-  const totalLeyAg = totalGrossWeight > 0 ? Number(((totalAg / totalGrossWeight) * 1000).toFixed(2)) : 0;
+  const totalAg = round2(lotDetails.reduce((s, l) => s + l.totalAg, 0));
+  const totalLeyAg = totalGrossWeight > 0 ? round2((totalAg / totalGrossWeight) * 1000) : 0;
   return {
     ...p,
     lotDetails,
@@ -185,16 +189,16 @@ export function ProcessModal({
                             <span>#{lot.number}</span>
                           </span>
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.grossWeight.toFixed(2)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.e.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.f.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{lot.g.toFixed(1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{lot.pct.toFixed(2)}%</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.grossWeight)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.e, 1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.f, 1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.g, 1)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(lot.pct)}%</td>
                         <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                          {lot.dif >= 0 ? '+' : ''}{lot.dif.toFixed(1)}
+                          {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.leyAg.toFixed(2)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{lot.totalAg.toFixed(2)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.leyAg)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.totalAg)}</td>
                         <td className="px-3 py-3 text-right">
                           <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
                         </td>
@@ -211,16 +215,16 @@ export function ProcessModal({
                                 <span>{bar.code}</span>
                               </span>
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.grossWeight.toFixed(2)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.analytical.toFixed(1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.expected.toFixed(1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.recovered.toFixed(1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barPct.toFixed(2)}%</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.grossWeight)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.analytical, 1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.expected, 1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.recovered, 1)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(barPct)}%</td>
                             <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
-                              {barDif >= 0 ? '+' : ''}{barDif.toFixed(1)}
+                              {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
                             </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? bar.leyAg.toFixed(2) : '—'}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? barAgG.toFixed(2) : '—'}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? formatNumber(bar.leyAg) : '—'}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? formatNumber(barAgG) : '—'}</td>
                             <td />
                           </tr>
                         );
@@ -230,16 +234,16 @@ export function ProcessModal({
                 })}
                 <tr className="border-t border-gold-500/20 bg-gold-500/5">
                   <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalGrossWeight.toFixed(2)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalE.toFixed(1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalF.toFixed(1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalG.toFixed(1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{detail.totalPct.toFixed(2)}%</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalGrossWeight)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalE, 1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalF, 1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalG, 1)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{formatNumber(detail.totalPct)}%</td>
                   <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
-                    {detail.totalDif >= 0 ? '+' : ''}{detail.totalDif.toFixed(1)}
+                    {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalLeyAg.toFixed(2)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{detail.totalAg.toFixed(2)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalLeyAg)}</td>
+                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalAg)}</td>
                   <td />
                 </tr>
               </tbody>

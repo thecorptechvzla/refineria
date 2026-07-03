@@ -44,7 +44,7 @@ export default function IngresoPage() {
 
   useEffect(() => {
     if (pBruto > 0 && pLey > 0) {
-      const e = Number((pBruto * pLey / 1000).toFixed(2));
+      const e = Math.round(pBruto * pLey / 1000 * 100) / 100;
       const f = e * 0.99;
       setAnalitico(formatLocaleNumber(e));
       setEsperado(formatLocaleNumber(f));

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { exportConsolidado } from '@/lib/exportExcel';
-import { getSupplierName } from '@/lib/utils';
+import { getSupplierName, formatNumber } from '@/lib/utils';
 import { FileDown, Download, Search, X } from 'lucide-react';
 
 function computeLotDetail(lot: { id: string; number: number; barIds: string[]; recovered?: number | null }, bars: { id: string; grossWeight: number; analytical: number; expected: number; recovered: number }[]) {
@@ -219,13 +219,13 @@ export default function ExportarPage() {
                       {suppliers ? getSupplierName(suppliers, p.supplierId) : '—'}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{p.lotDetails.length}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{p.totalGrossWeight.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{p.totalE.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{p.totalF.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{p.totalG.toFixed(1)}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{p.totalPct.toFixed(2)}%</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(p.totalGrossWeight, 1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(p.totalE, 1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(p.totalF, 1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(p.totalG, 1)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(p.totalPct)}%</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-semibold" style={{ color: p.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
-                      {p.totalDif >= 0 ? '+' : ''}{p.totalDif.toFixed(1)}
+                      {p.totalDif >= 0 ? '+' : ''}{formatNumber(p.totalDif, 1)}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-right text-xs font-mono text-slate-600">
                       {p.closedAt ? new Date(p.closedAt).toLocaleDateString('es-PE') : '—'}

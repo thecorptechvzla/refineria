@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteProcess, useRemoveBarsFromLot } from '@/lib/hooks/useProcesses';
-import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
+import { getSupplierName, parseLocaleNumber, formatNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
 import {
   Settings, Package, Crosshair, CheckCircle, Plus, ArrowLeft,
@@ -179,8 +179,8 @@ function ProcessDetailView({
 
     if (totalWeight < 2000 || avgLey < 900) {
       const reasons: string[] = [];
-      if (totalWeight < 2000) reasons.push(`peso mínimo de 2.000 g (faltan ${(2000 - totalWeight).toFixed(2)} g)`);
-      if (avgLey < 900) reasons.push(`ley promedio de 900 (actual: ${avgLey.toFixed(2)})`);
+      if (totalWeight < 2000) reasons.push(`peso mínimo de 2.000 g (faltan ${formatNumber(2000 - totalWeight)} g)`);
+      if (avgLey < 900) reasons.push(`ley promedio de 900 (actual: ${formatNumber(avgLey)})`);
       warnings.push(`Las barras seleccionadas no cumplen: ${reasons.join(' y ')}.`);
     }
 
@@ -446,7 +446,7 @@ function ProcessDetailView({
                   return (
                     <div className="space-y-1">
                       <div className={`px-3 py-2 text-[10px] font-mono border ${selValid ? 'border-emerald-500/20 text-emerald-400' : 'border-yellow-500/20 text-yellow-400'}`}>
-                        Σ Peso: {formatLocaleNumber(selWeight)} g &middot; Ley prom: {selAvgLey.toFixed(1)} &permil;
+                        Σ Peso: {formatLocaleNumber(selWeight)} g &middot; Ley prom: {formatNumber(selAvgLey, 1)} &permil;
                         {!selValid && <span className="ml-1">→ Advertencia de Ley/Peso</span>}
                       </div>
                       {processVal.errors.length > 0 && (
@@ -635,7 +635,7 @@ function ProcessDetailView({
                         <div>
                           <span className="text-[10px] text-slate-500 uppercase tracking-wider block -mb-0.5">% Recup.</span>
                           <span className="font-bold" style={{ color: pct !== null ? (pct < 100 ? '#EF4444' : '#22C55E') : '#64748B' }}>
-                            {pct !== null ? `${pct.toFixed(2)}%` : '—'}
+                            {pct !== null ? `${formatNumber(pct)}%` : '—'}
                           </span>
                         </div>
                         <div>

@@ -6,7 +6,7 @@ import { useDashboardMetrics, type ProcessSummaryItem } from '@/lib/hooks/useDas
 import { useProcessDetail } from '@/lib/hooks/useProcessDetail';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
+import { getSupplierName, formatDate, formatNumber, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -110,25 +110,26 @@ export default function DashboardPage() {
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
+    const round2 = (v: number) => Math.round(v * 100) / 100;
     const lotDetails = processDetail.lotDetails.map((lot) => {
-      const grossWeight = Number(lot.bars.reduce((s, b) => s + b.grossWeight, 0).toFixed(2));
-      const e = Number(lot.bars.reduce((s, b) => s + b.analytical, 0).toFixed(2));
-      const f = Number(lot.bars.reduce((s, b) => s + b.expected, 0).toFixed(2));
-      const g = Number((lot.recovered ?? lot.bars.reduce((s, b) => s + b.recovered, 0)).toFixed(2));
-      const totalAg = Number(lot.bars.reduce((s, b) => {
+      const grossWeight = round2(lot.bars.reduce((s, b) => s + b.grossWeight, 0));
+      const e = round2(lot.bars.reduce((s, b) => s + b.analytical, 0));
+      const f = round2(lot.bars.reduce((s, b) => s + b.expected, 0));
+      const g = round2(lot.recovered ?? lot.bars.reduce((s, b) => s + b.recovered, 0));
+      const totalAg = round2(lot.bars.reduce((s, b) => {
         if (b.analyticalAg != null) return s + b.analyticalAg;
         if (b.leyAg != null) return s + b.grossWeight * b.leyAg / 1000;
         return s;
-      }, 0).toFixed(2));
-      const leyAg = grossWeight > 0 ? Number(((totalAg / grossWeight) * 1000).toFixed(2)) : 0;
+      }, 0));
+      const leyAg = grossWeight > 0 ? round2((totalAg / grossWeight) * 1000) : 0;
       return { ...lot, grossWeight, e, f, g, pct: e > 0 ? (g / e) * 100 : 0, dif: g - f, totalAg, leyAg } as LotDetail;
     });
     const totalGrossWeight = lotDetails.reduce((s, l) => s + l.grossWeight, 0);
     const totalE = lotDetails.reduce((s, l) => s + l.e, 0);
     const totalF = lotDetails.reduce((s, l) => s + l.f, 0);
     const totalG = lotDetails.reduce((s, l) => s + l.g, 0);
-    const totalAg = Number(lotDetails.reduce((s, l) => s + l.totalAg, 0).toFixed(2));
-    const totalLeyAg = totalGrossWeight > 0 ? Number(((totalAg / totalGrossWeight) * 1000).toFixed(2)) : 0;
+    const totalAg = round2(lotDetails.reduce((s, l) => s + l.totalAg, 0));
+    const totalLeyAg = totalGrossWeight > 0 ? round2((totalAg / totalGrossWeight) * 1000) : 0;
     return {
       ...processDetail,
       lotDetails,
@@ -184,10 +185,10 @@ export default function DashboardPage() {
   }
 
   const kpiCards = metrics ? [
-    { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${metrics.totalBarCount} barras registradas` },
+    { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas` },
     { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados' },
     { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos' },
-    { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${metrics.availableBarCount} barras sin procesar` },
+    { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar` },
   ] : [];
 
   return (
@@ -315,10 +316,11 @@ export default function DashboardPage() {
                 <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="20%" maxBarSize={35}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(59,130,246,0.1)" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} tickFormatter={(v: number) => formatNumber(v, 0)} />
                   <Tooltip
                     contentStyle={{ background: '#111827', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 0, fontSize: '12px', color: '#e2e8f0' }}
                     cursor={{ fill: 'rgba(59,130,246,0.05)' }}
+                    formatter={(v) => [formatNumber(v as number, 2), '']}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: '10px', color: '#94a3b8', paddingTop: '8px' }}
@@ -518,7 +520,7 @@ export default function DashboardPage() {
                     {formatLocaleNumber(tx.weight)} {tx.weightUnit}
                   </td>
                   <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">
-                    {(tx.purity * 100).toFixed(0)}%
+                    {formatNumber(tx.purity * 100, 0)}%
                   </td>
                   <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-xs text-slate-500">
                     {formatDate(tx.date)}
