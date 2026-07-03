@@ -3,7 +3,7 @@
 import { useState, Fragment } from 'react';
 import { getSupplierName, formatNumber } from '@/lib/utils';
 import type { Process, ProcessLot, GoldBar } from '@/types/refinery';
-import { ChevronDown, Crosshair, X, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Crosshair, X, FileText } from 'lucide-react';
 
 export type LotDetail = ProcessLot & {
   bars: GoldBar[];
@@ -81,178 +81,290 @@ export function buildProcessDetail(p: Process, allBars: GoldBar[]): ProcessDetai
   };
 }
 
+const TH = 'px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest';
+const TH_LEFT = `${TH.replace('text-right', 'text-left')} sticky left-0 z-20 bg-midnight-800 border-r border-blue-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]`;
+const TD = 'px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono';
+const TD_LEFT = `${TD.replace('text-right', 'text-left').replace('px-2 sm:px-3 py-2 sm:py-3', 'sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-2 sm:py-3 border-r border-blue-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]')}`;
+const BAR_TD = 'px-2 sm:px-3 py-1 whitespace-nowrap text-right text-[11px] font-mono';
+const BAR_TD_LEFT = `${BAR_TD.replace('text-right', 'text-left').replace('px-2 sm:px-3 py-1', 'sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-1 border-r border-blue-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]')}`;
+
 export function ProcessModal({
   detail,
   suppliers,
   onClose,
+  variant = 'default',
 }: {
   detail: ProcessDetail;
   suppliers: { id: string; name: string }[] | undefined;
   onClose: () => void;
+  variant?: 'dashboard' | 'default';
 }) {
   const [expandedLotId, setExpandedLotId] = useState<string | null>(null);
+  const [lotsOpen, setLotsOpen] = useState(false);
+
+  const sortedLots = [...detail.lotDetails].sort((a, b) => a.number - b.number);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="p-5 border-b border-blue-500/10 flex items-center justify-between sticky top-0 bg-midnight-800/95 backdrop-blur">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-2 sm:p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-800/95 backdrop-blur z-30">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
               <Crosshair className="w-4 h-4 text-blue-400" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">
-                Proceso #{detail.number} — {suppliers ? getSupplierName(suppliers, detail.supplierId) : '—'}
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-bold text-white tracking-tight truncate">
+                Proceso #{detail.number} &mdash; {suppliers ? getSupplierName(suppliers, detail.supplierId) : '\u2014'}
               </h2>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400">
                   CERRADO
                 </span>
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px] text-slate-400">
                   {detail.lotDetails.length} lote{detail.lotDetails.length !== 1 ? 's' : ''}
                 </span>
                 {detail.closedAt && (
-                  <span className="text-[10px] text-slate-600">
+                  <span className="text-[10px] text-slate-400">
                     Cerrado el {new Date(detail.closedAt).toLocaleDateString('es-PE')}
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="p-2 text-slate-500 hover:text-slate-300 transition-colors shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-6">
-          {/* Documentos de Validación — moved to top */}
-          <div className="border border-blue-500/10 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-blue-400" />
-              <h3 className="text-[11px] font-bold text-white uppercase tracking-wider">Documentos de Validaci&oacute;n</h3>
-            </div>
-            {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { type: 'recepcion', label: 'Acta de Recepci&oacute;n', url: detail.actaRecepcion },
-                  { type: 'fundicion', label: 'Acta de Fundici&oacute;n', url: detail.actaFundicion },
-                  { type: 'conformidad', label: 'Acta de Conformidad', url: detail.actaConformidad },
-                ].map((acta) => (
-                  acta.url ? (
-                    <a
-                      key={acta.label}
-                      href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${detail.id}/actas/${acta.type}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
-                    >
-                      <FileText className="w-3 h-3 text-blue-400 shrink-0" />
-                      <span>{acta.label}</span>
-                    </a>
-                  ) : null
-                ))}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-5 space-y-4 sm:space-y-6">
+            {/* Documentos de Validacion */}
+            <div className="border border-blue-500/10 p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-blue-400" />
+                <h3 className="text-[11px] font-bold text-white uppercase tracking-wider">Documentos de Validaci&oacute;n</h3>
               </div>
-            ) : (
-              <p className="text-[10px] text-slate-500">No hay documentos de validaci&oacute;n asociados.</p>
-            )}
-          </div>
-
-          {/* Tabla colapsable de Lotes / Barras */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-blue-500/10">
-                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote / Barra</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recup.</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Dif (g)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">LEY Ag (‰)</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
-                  <th className="px-3 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {[...detail.lotDetails].sort((a, b) => a.number - b.number).map((lot) => {
-                  const isExpanded = expandedLotId === lot.id;
-                  return (
-                    <Fragment key={lot.id}>
-                      <tr
-                        onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
-                        className="terminal-row cursor-pointer select-none"
+              {detail.actaRecepcion || detail.actaFundicion || detail.actaConformidad ? (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { type: 'recepcion', label: 'Acta de Recepci\u00f3n', url: detail.actaRecepcion },
+                    { type: 'fundicion', label: 'Acta de Fundici\u00f3n', url: detail.actaFundicion },
+                    { type: 'conformidad', label: 'Acta de Conformidad', url: detail.actaConformidad },
+                  ].map((acta) => (
+                    acta.url ? (
+                      <a
+                        key={acta.label}
+                        href={`${process.env.NEXT_PUBLIC_API_URL || '/api'}/processes/${detail.id}/actas/${acta.type}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 text-[10px] font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
                       >
-                        <td className="px-3 py-3 whitespace-nowrap text-sm font-mono font-bold text-gold-500">
-                          <span className="inline-flex items-center gap-1.5">
-                            <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
-                            <span>#{lot.number}</span>
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.grossWeight)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.e, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.f, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-200">{formatNumber(lot.g, 1)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500 font-semibold">{formatNumber(lot.pct)}%</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono" style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
-                          {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
-                        </td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.leyAg)}</td>
-                        <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono text-slate-400">{formatNumber(lot.totalAg)}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="text-[10px] text-slate-500 font-mono">{lot.bars.length} barra{lot.bars.length !== 1 ? 's' : ''}</span>
-                        </td>
-                      </tr>
-                      {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
-                        const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
-                        const barDif = bar.recovered - bar.expected;
-                        const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
-                        return (
-                          <tr key={bar.id} className="bg-midnight-900/40 border-b border-blue-500/5">
-                            <td className="px-3 py-2 whitespace-nowrap text-[11px] font-mono text-slate-500">
-                              <span className="inline-flex items-center gap-1.5 pl-6">
-                                <span className="w-1 h-1 rounded-full bg-slate-600 inline-block shrink-0" />
-                                <span>{bar.code}</span>
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.grossWeight)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.analytical, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.expected, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(bar.recovered, 1)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{formatNumber(barPct)}%</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono" style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
-                              {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{bar.leyAg != null ? formatNumber(bar.leyAg) : '—'}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-right text-[11px] font-mono text-slate-500">{barAgG != null ? formatNumber(barAgG) : '—'}</td>
-                            <td />
-                          </tr>
-                        );
-                      })}
-                    </Fragment>
-                  );
-                })}
-                <tr className="border-t border-gold-500/20 bg-gold-500/5">
-                  <td className="px-3 py-3 whitespace-nowrap text-sm font-bold text-gold-500">Total</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalGrossWeight)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalE, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalF, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalG, 1)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-gold-400">{formatNumber(detail.totalPct)}%</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold" style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
-                    {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalLeyAg)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-mono font-bold text-slate-100">{formatNumber(detail.totalAg)}</td>
-                  <td />
-                </tr>
-              </tbody>
-            </table>
+                        <FileText className="w-3 h-3 text-blue-400 shrink-0" />
+                        <span>{acta.label}</span>
+                      </a>
+                    ) : null
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-500">No hay documentos de validaci&oacute;n asociados.</p>
+              )}
+            </div>
+
+            {/* Tabla con scroll horizontal y primera columna sticky */}
+            <div className="relative">
+              <div className="overflow-x-auto overflow-y-hidden">
+                <table className="min-w-full text-xs sm:text-sm">
+                  <thead>
+                    <tr className="border-b border-blue-500/10">
+                      <th className={TH_LEFT}>Lote / Barra</th>
+                      <th className={TH}><span className="hidden sm:inline">Bruto</span><span className="sm:hidden">BRU.</span></th>
+                      <th className={TH}>E</th>
+                      <th className={TH}>F</th>
+                      <th className={TH}>G</th>
+                      <th className={`${TH} text-blue-400`}><span className="hidden sm:inline">% Recup.</span><span className="sm:hidden">%REC</span></th>
+                      <th className={`${TH} text-blue-400`}>Dif</th>
+                      <th className={`${TH} whitespace-nowrap`}><span className="hidden sm:inline">Ley Ag</span><span className="sm:hidden">AG (g)</span></th>
+                      <th className={TH}>Ag</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variant === 'dashboard' ? (
+                      <>
+                        <tr
+                          onClick={() => setLotsOpen(!lotsOpen)}
+                          className="border-t border-gold-500/20 bg-gold-500/10 cursor-pointer select-none border-b-2 border-gold-500/30"
+                        >
+                          <td className={`${TD_LEFT} bg-gold-500/10 font-bold text-gold-500`}>
+                            <span className="inline-flex items-center gap-1.5">
+                              {lotsOpen ? <ChevronUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                              <span>Total</span>
+                            </span>
+                          </td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalGrossWeight)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalE, 1)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalF, 1)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalG, 1)}</td>
+                          <td className={`${TD} font-bold text-gold-400`}>{formatNumber(detail.totalPct)}%</td>
+                          <td className={`${TD} font-bold`} style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
+                            {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
+                          </td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalLeyAg)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalAg)}</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={9} className="p-0">
+                            <div
+                              className="transition-all duration-300 ease-in-out overflow-hidden"
+                              style={{ maxHeight: lotsOpen ? `${detail.lotDetails.length * 120}px` : '0' }}
+                            >
+                              <table className="min-w-full">
+                                <thead>
+                                  <tr className="border-b border-blue-500/5">
+                                    <th className="sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-1.5 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest border-r border-blue-500/10" />
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}><span className="hidden sm:inline">Bruto</span><span className="sm:hidden">BRU.</span></th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>E</th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>F</th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>G</th>
+                                    <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} text-blue-400`}><span className="hidden sm:inline">% Recup.</span><span className="sm:hidden">%REC</span></th>
+                                    <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} text-blue-400`}>Dif</th>
+                                    <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} whitespace-nowrap`}><span className="hidden sm:inline">Ley Ag</span><span className="sm:hidden">AG (g)</span></th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>Ag</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {sortedLots.map((lot) => {
+                                    const isExpanded = expandedLotId === lot.id;
+                                    return (
+                                      <Fragment key={lot.id}>
+                                        <tr
+                                          onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
+                                          className="terminal-row cursor-pointer select-none"
+                                        >
+                                          <td className={`${TD_LEFT} bg-midnight-900/80 font-bold text-gold-500`}>
+                                            <span className="inline-flex items-center gap-1.5">
+                                              <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                              <span>#{lot.number}</span>
+                                            </span>
+                                          </td>
+                                          <td className={TD}>{formatNumber(lot.grossWeight)}</td>
+                                          <td className={TD}>{formatNumber(lot.e, 1)}</td>
+                                          <td className={TD}>{formatNumber(lot.f, 1)}</td>
+                                          <td className={TD}>{formatNumber(lot.g, 1)}</td>
+                                          <td className={`${TD} text-gold-500 font-semibold`}>{formatNumber(lot.pct)}%</td>
+                                          <td className={TD} style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                                            {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
+                                          </td>
+                                          <td className={`${TD} text-slate-400`}>{formatNumber(lot.leyAg)}</td>
+                                          <td className={`${TD} text-slate-400`}>{formatNumber(lot.totalAg)}</td>
+                                        </tr>
+                                        {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                                          const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
+                                          const barDif = bar.recovered - bar.expected;
+                                          const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
+                                          return (
+                                            <tr key={bar.id} className="bg-midnight-900/40">
+                                              <td className={`${BAR_TD_LEFT} bg-midnight-900/40 text-slate-400`}>
+                                                <span className="truncate max-w-[80px] sm:max-w-none">{bar.code}</span>
+                                              </td>
+                                              <td className={BAR_TD}>{formatNumber(bar.grossWeight)}</td>
+                                              <td className={BAR_TD}>{formatNumber(bar.analytical, 1)}</td>
+                                              <td className={BAR_TD}>{formatNumber(bar.expected, 1)}</td>
+                                              <td className={BAR_TD}>{formatNumber(bar.recovered, 1)}</td>
+                                              <td className={BAR_TD}>{formatNumber(barPct)}%</td>
+                                              <td className={BAR_TD} style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
+                                                {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
+                                              </td>
+                                              <td className={BAR_TD}>{bar.leyAg != null ? formatNumber(bar.leyAg) : '\u2014'}</td>
+                                              <td className={BAR_TD}>{barAgG != null ? formatNumber(barAgG) : '\u2014'}</td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </Fragment>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      </>
+                    ) : (
+                      <>
+                        {sortedLots.map((lot) => {
+                          const isExpanded = expandedLotId === lot.id;
+                          return (
+                            <Fragment key={lot.id}>
+                              <tr
+                                onClick={() => setExpandedLotId(isExpanded ? null : lot.id)}
+                                className="terminal-row cursor-pointer select-none"
+                              >
+                                <td className={`${TD_LEFT} bg-midnight-900/80 font-bold text-gold-500`}>
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                    <span>#{lot.number}</span>
+                                  </span>
+                                </td>
+                                <td className={TD}>{formatNumber(lot.grossWeight)}</td>
+                                <td className={TD}>{formatNumber(lot.e, 1)}</td>
+                                <td className={TD}>{formatNumber(lot.f, 1)}</td>
+                                <td className={TD}>{formatNumber(lot.g, 1)}</td>
+                                <td className={`${TD} text-gold-500 font-semibold`}>{formatNumber(lot.pct)}%</td>
+                                <td className={TD} style={{ color: lot.dif < 0 ? '#EF4444' : '#22C55E' }}>
+                                  {lot.dif >= 0 ? '+' : ''}{formatNumber(lot.dif, 1)}
+                                </td>
+                                <td className={`${TD} text-slate-400`}>{formatNumber(lot.leyAg)}</td>
+                                <td className={`${TD} text-slate-400`}>{formatNumber(lot.totalAg)}</td>
+                              </tr>
+                              {isExpanded && [...lot.bars].sort((a, b) => a.grossWeight - b.grossWeight).map((bar) => {
+                                const barPct = bar.analytical > 0 ? (bar.recovered / bar.analytical) * 100 : 0;
+                                const barDif = bar.recovered - bar.expected;
+                                const barAgG = bar.analyticalAg != null ? bar.analyticalAg : (bar.leyAg != null ? bar.grossWeight * bar.leyAg / 1000 : null);
+                                return (
+                                  <tr key={bar.id} className="bg-midnight-900/40">
+                                    <td className={`${BAR_TD_LEFT} bg-midnight-900/40 text-slate-400`}>
+                                      <span className="truncate max-w-[80px] sm:max-w-none">{bar.code}</span>
+                                    </td>
+                                    <td className={BAR_TD}>{formatNumber(bar.grossWeight)}</td>
+                                    <td className={BAR_TD}>{formatNumber(bar.analytical, 1)}</td>
+                                    <td className={BAR_TD}>{formatNumber(bar.expected, 1)}</td>
+                                    <td className={BAR_TD}>{formatNumber(bar.recovered, 1)}</td>
+                                    <td className={BAR_TD}>{formatNumber(barPct)}%</td>
+                                    <td className={BAR_TD} style={{ color: barDif < 0 ? '#EF444488' : '#22C55E88' }}>
+                                      {barDif >= 0 ? '+' : ''}{formatNumber(barDif, 1)}
+                                    </td>
+                                    <td className={BAR_TD}>{bar.leyAg != null ? formatNumber(bar.leyAg) : '\u2014'}</td>
+                                    <td className={BAR_TD}>{barAgG != null ? formatNumber(barAgG) : '\u2014'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </Fragment>
+                          );
+                        })}
+                        <tr className="border-t border-gold-500/20 bg-gold-500/5 border-b-2 border-gold-500/30">
+                          <td className={`${TD_LEFT} bg-gold-500/5 font-bold text-gold-500`}>Total</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalGrossWeight)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalE, 1)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalF, 1)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalG, 1)}</td>
+                          <td className={`${TD} font-bold text-gold-400`}>{formatNumber(detail.totalPct)}%</td>
+                          <td className={`${TD} font-bold`} style={{ color: detail.totalDif < 0 ? '#EF4444' : '#22C55E' }}>
+                            {detail.totalDif >= 0 ? '+' : ''}{formatNumber(detail.totalDif, 1)}
+                          </td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalLeyAg)}</td>
+                          <td className={`${TD} font-bold text-slate-100`}>{formatNumber(detail.totalAg)}</td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-midnight-900/70 to-transparent z-10" />
+            </div>
           </div>
         </div>
 
-        <div className="p-5 border-t border-blue-500/10 flex justify-end">
-          <button onClick={onClose} className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
+        <div className="sticky bottom-0 z-30 p-4 sm:p-5 border-t border-blue-500/10 bg-midnight-800/80 backdrop-blur flex sm:justify-end shrink-0">
+          <button onClick={onClose} className="w-full sm:w-auto px-5 py-3 sm:py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
             Cerrar
           </button>
         </div>
