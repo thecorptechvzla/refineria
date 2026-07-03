@@ -8,7 +8,7 @@ import { useProcessDetail } from '@/lib/hooks/useProcessDetail';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { getSupplierName, formatDate, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  Bar, Line, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
@@ -312,7 +312,7 @@ export default function DashboardPage() {
           <div className="p-4 sm:p-5 w-full overflow-x-auto pb-4">
             <div style={{ minWidth: '700px' }}>
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={(metrics?.supplierChartData ?? [])} barCategoryGap="20%" barGap={4}>
+                <ComposedChart data={(metrics?.supplierChartData ?? [])}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(59,130,246,0.1)" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: 'rgba(59,130,246,0.15)' }} />
@@ -325,11 +325,11 @@ export default function DashboardPage() {
                     iconType="rect"
                     iconSize={10}
                   />
-                  <Bar dataKey="ingresado" name="Oro Ingresado" fill="#F59E0B" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="boveda" name="Oro en Bóveda" fill="#22C55E" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="proceso" name="Oro en Proceso" fill="#3B82F6" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="porRefinar" name="Por Refinar" fill="#64748B" radius={[2, 2, 0, 0]} />
-                </BarChart>
+                  <Line type="monotone" dataKey="ingresado" name="Oro Ingresado" stroke="#F59E0B" strokeWidth={2} dot={{ fill: '#F59E0B', r: 3 }} />
+                  <Bar dataKey="boveda" name="Oro en Bóveda" fill="#22C55E" stackId="a" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="proceso" name="Oro en Proceso" fill="#3B82F6" stackId="a" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="porRefinar" name="Por Refinar" fill="#64748B" stackId="a" radius={[0, 0, 0, 0]} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
