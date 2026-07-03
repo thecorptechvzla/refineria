@@ -353,8 +353,8 @@ export default function DashboardPage() {
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
-                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${(row.fineIn - row.fineOut) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(row.fineIn - row.fineOut) >= 0 ? '+' : ''}{formatLocaleNumber(row.fineIn - row.fineOut)}
+                        <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${row.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {row.balance >= 0 ? '+' : ''}{formatLocaleNumber(row.balance)}
                         </td>
                       </tr>
                     ))

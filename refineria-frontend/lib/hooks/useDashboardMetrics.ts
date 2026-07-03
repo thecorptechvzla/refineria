@@ -21,6 +21,7 @@ export type SupplierChartRow = {
   grossIn: number;
   fineIn: number;
   fineOut: number;
+  balance: number;
 };
 
 export type RecentTransactionItem = {

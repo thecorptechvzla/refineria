@@ -195,6 +195,9 @@ export class DashboardService {
       .filter((r) => r.ingresado > 0 || r.boveda > 0 || r.proceso > 0 || r.porRefinar > 0)
       .map((r) => {
         const tx = transactionMap.get(r.id);
+        const grossIn = Number((tx?.grossIn ?? 0).toFixed(2));
+        const fineIn = Number((tx?.fineIn ?? 0).toFixed(2));
+        const fineOut = Number((tx?.fineOut ?? 0).toFixed(2));
         return {
           id: r.id,
           name: r.name,
@@ -202,9 +205,10 @@ export class DashboardService {
           boveda: Number(r.boveda.toFixed(2)),
           proceso: Number(r.proceso.toFixed(2)),
           porRefinar: Number(r.porRefinar.toFixed(2)),
-          grossIn: Number((tx?.grossIn ?? 0).toFixed(2)),
-          fineIn: Number((tx?.fineIn ?? 0).toFixed(2)),
-          fineOut: Number((tx?.fineOut ?? 0).toFixed(2)),
+          grossIn,
+          fineIn,
+          fineOut,
+          balance: Number((fineIn - fineOut).toFixed(2)),
         };
       });
   }
