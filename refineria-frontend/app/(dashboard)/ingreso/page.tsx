@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useMemo } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
-import { useDeleteGoldBar, useBulkUpload, type BulkUploadResult } from '@/lib/hooks/useGoldBars';
+import { useDeleteGoldBar, useBulkUpload } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
-import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download } from 'lucide-react';
+import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
 export default function IngresoPage() {
@@ -32,6 +32,7 @@ export default function IngresoPage() {
   const [bulkError, setBulkError] = useState('');
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const bulkUpload = useBulkUpload();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const parseNum = (v: string) => parseLocaleNumber(v);
   const pBruto = parseNum(pesoBruto);
@@ -223,6 +224,27 @@ export default function IngresoPage() {
     if (filterAvailable === 'in_lot' && b.available) return false;
     return true;
   });
+
+  const extractCodeNumber = (code: string): number => {
+    const match = code.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  const sortedBars = useMemo(() => {
+    return [...filteredBars].sort((a, b) => extractCodeNumber(a.code) - extractCodeNumber(b.code));
+  }, [filteredBars]);
+
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.max(1, Math.ceil(sortedBars.length / ITEMS_PER_PAGE));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const paginatedBars = sortedBars.slice((currentPageSafe - 1) * ITEMS_PER_PAGE, currentPageSafe * ITEMS_PER_PAGE);
+
+  const totals = useMemo(() => ({
+    grossWeight: filteredBars.reduce((s, b) => s + b.grossWeight, 0),
+    analytical: filteredBars.reduce((s, b) => s + b.analytical, 0),
+    expected: filteredBars.reduce((s, b) => s + b.expected, 0),
+    recovered: filteredBars.reduce((s, b) => s + b.recovered, 0),
+  }), [filteredBars]);
 
   return (
     <div className="space-y-5">
@@ -561,8 +583,8 @@ export default function IngresoPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBars.length > 0 ? (
-                    filteredBars.map((bar) => (
+                  {paginatedBars.length > 0 ? (
+                    paginatedBars.map((bar) => (
                       <tr key={bar.id} className="terminal-row">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
@@ -615,13 +637,49 @@ export default function IngresoPage() {
                   ) : (
                     <tr>
                       <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay barras registradas para este proveedor.
+                        No hay barras registradas.
                       </td>
                     </tr>
                   )}
                 </tbody>
+                {filteredBars.length > 0 && (
+                  <tfoot>
+                    <tr className="border-t border-blue-500/10 bg-midnight-800/50">
+                      <td colSpan={2} className="px-4 sm:px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Totales</td>
+                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.grossWeight)}</td>
+                      <td className="px-4 sm:px-5 py-3"></td>
+                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.analytical)}</td>
+                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.expected)}</td>
+                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.recovered)}</td>
+                      <td colSpan={4}></td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
+            {totalPages > 1 && (
+              <div className="px-4 sm:px-5 py-3 border-t border-blue-500/10 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500">
+                  Página {currentPageSafe} de {totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPageSafe <= 1}
+                    className="p-1.5 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPageSafe >= totalPages}
+                    className="p-1.5 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
