@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import { useGoldBars, useUpdateGoldBar, useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { getSupplierName, formatLocaleNumber, parseLocaleNumber } from '@/lib/utils';
@@ -22,6 +22,38 @@ export default function AdminBarrasPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
+
+  const availableBarIds = useMemo(() => {
+    if (!goldBars) return [];
+    return goldBars.filter((b) => b.available).map((b) => b.id);
+  }, [goldBars]);
+
+  const allSelected = availableBarIds.length > 0 && availableBarIds.every((id) => selectedBarIds.includes(id));
+  const selectedWeight = useMemo(() => {
+    if (!goldBars || selectedBarIds.length === 0) return 0;
+    return goldBars
+      .filter((b) => selectedBarIds.includes(b.id))
+      .reduce((s, b) => s + b.grossWeight, 0);
+  }, [goldBars, selectedBarIds]);
+
+  const toggleBar = (barId: string) => {
+    setSelectedBarIds((prev) =>
+      prev.includes(barId) ? prev.filter((id) => id !== barId) : [...prev, barId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedBarIds((prev) => prev.filter((id) => !availableBarIds.includes(id)));
+    } else {
+      setSelectedBarIds((prev) => {
+        const existing = new Set(prev);
+        for (const id of availableBarIds) existing.add(id);
+        return [...existing];
+      });
+    }
+  };
 
   const resetForm = () => {
     setEditId(null);
@@ -159,6 +191,15 @@ export default function AdminBarrasPage() {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-blue-500/10">
+                  <th className="w-10 px-2 sm:px-3 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 accent-gold-500 cursor-pointer"
+                      title={allSelected ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+                    />
+                  </th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
@@ -172,6 +213,18 @@ export default function AdminBarrasPage() {
                 {goldBars && goldBars.length > 0 ? (
                   goldBars.map((b) => (
                     <tr key={b.id} className="terminal-row">
+                      <td className="px-2 sm:px-3 py-3 whitespace-nowrap">
+                        {b.available ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedBarIds.includes(b.id)}
+                            onChange={() => toggleBar(b.id)}
+                            className="w-4 h-4 accent-gold-500 cursor-pointer"
+                          />
+                        ) : (
+                          <span className="inline-block w-4 h-4" />
+                        )}
+                      </td>
                       <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{b.code}</td>
                       <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
                         {suppliers ? getSupplierName(suppliers, b.supplierId) : '—'}
@@ -213,11 +266,29 @@ export default function AdminBarrasPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-sm text-slate-500">No hay barras registradas.</td>
+                    <td colSpan={8} className="px-5 py-8 text-center text-sm text-slate-500">No hay barras registradas.</td>
                   </tr>
                 )}
               </tbody>
             </table>
+            {selectedBarIds.length > 0 && (
+              <div className="sticky bottom-0 left-0 right-0 border-t border-blue-500/10 bg-midnight-800/95 backdrop-blur px-4 sm:px-5 py-2.5 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <span className="text-xs text-slate-400">
+                    <span className="text-slate-200 font-semibold">{selectedBarIds.length}</span> barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Peso total: <span className="text-slate-200 font-mono font-semibold">{formatLocaleNumber(selectedWeight)} g</span>
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedBarIds([])}
+                  className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  Limpiar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
