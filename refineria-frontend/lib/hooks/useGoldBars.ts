@@ -64,6 +64,21 @@ export function useDeleteGoldBar() {
   });
 }
 
+export function useBulkDeleteGoldBars() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api<{ count: number }>('/gold-bars/bulk-delete', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gold-bars'] });
+    },
+  });
+}
+
 export type BulkUploadResult = {
   created: number;
   skipped: number;

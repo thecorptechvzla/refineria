@@ -166,4 +166,10 @@ export class GoldBarsService {
     await this.findById(id);
     return this.prisma.goldBar.delete({ where: { id } });
   }
+
+  async bulkRemove(ids: string[]) {
+    return this.prisma.goldBar.deleteMany({
+      where: { id: { in: ids } },
+    });
+  }
 }

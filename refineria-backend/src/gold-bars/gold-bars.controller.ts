@@ -68,4 +68,12 @@ export class GoldBarsController {
   remove(@Param('id') id: string) {
     return this.goldBarsService.remove(id);
   }
+
+  @Post('bulk-delete')
+  bulkRemove(@Body('ids') ids: string[]) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestException('Debe proporcionar al menos un ID');
+    }
+    return this.goldBarsService.bulkRemove(ids);
+  }
 }
