@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, FormEvent } from 'react';
-import { useGoldBars, useUpdateGoldBar, useDeleteGoldBar } from '@/lib/hooks/useGoldBars';
+import { useGoldBars, useUpdateGoldBar, useDeleteGoldBar, useBulkDeleteGoldBars } from '@/lib/hooks/useGoldBars';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { getSupplierName, formatLocaleNumber, parseLocaleNumber } from '@/lib/utils';
 import { Package, CheckCircle, AlertCircle, Trash2, Edit3, X, Crosshair } from 'lucide-react';
@@ -11,6 +11,7 @@ export default function AdminBarrasPage() {
   const { data: suppliers } = useSuppliers();
   const updateGoldBar = useUpdateGoldBar();
   const deleteGoldBar = useDeleteGoldBar();
+  const bulkDeleteGoldBars = useBulkDeleteGoldBars();
 
   const [editId, setEditId] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -22,6 +23,7 @@ export default function AdminBarrasPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteBatchConfirm, setDeleteBatchConfirm] = useState(false);
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
 
   const availableBarIds = useMemo(() => {
@@ -104,6 +106,18 @@ export default function AdminBarrasPage() {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       setErrorMessage('No se pudo eliminar la barra.');
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    try {
+      await bulkDeleteGoldBars.mutateAsync(selectedBarIds);
+      setDeleteBatchConfirm(false);
+      setSelectedBarIds([]);
+      setSuccessMessage(`${selectedBarIds.length} barra${selectedBarIds.length !== 1 ? 's' : ''} eliminada${selectedBarIds.length !== 1 ? 's' : ''}.`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch {
+      setErrorMessage('No se pudieron eliminar las barras seleccionadas.');
     }
   };
 
@@ -281,12 +295,36 @@ export default function AdminBarrasPage() {
                     Peso total: <span className="text-slate-200 font-mono font-semibold">{formatLocaleNumber(selectedWeight)} g</span>
                   </span>
                 </div>
-                <button
-                  onClick={() => setSelectedBarIds([])}
-                  className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  Limpiar
-                </button>
+                <div className="flex items-center gap-2">
+                  {deleteBatchConfirm ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={handleBatchDelete}
+                        disabled={bulkDeleteGoldBars.isPending}
+                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-50 transition-all"
+                      >
+                        {bulkDeleteGoldBars.isPending ? 'Eliminando...' : `Confirmar (${selectedBarIds.length})`}
+                      </button>
+                      <button onClick={() => setDeleteBatchConfirm(false)} className="p-1 text-slate-500 hover:text-slate-300">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteBatchConfirm(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Eliminar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setSelectedBarIds([]); setDeleteBatchConfirm(false); }}
+                    className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    Limpiar
+                  </button>
+                </div>
               </div>
             )}
           </div>
