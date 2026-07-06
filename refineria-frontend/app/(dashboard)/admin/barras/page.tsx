@@ -65,14 +65,10 @@ export default function AdminBarrasPage() {
   };
 
   const handleSelectAll = () => {
-    if (allPageSelected) {
-      setSelectedBarIds((prev) => prev.filter((id) => !allPageIds.includes(id)));
+    if (allSelected) {
+      setSelectedBarIds([]);
     } else {
-      setSelectedBarIds((prev) => {
-        const existing = new Set(prev);
-        for (const id of allPageIds) existing.add(id);
-        return [...existing];
-      });
+      setSelectedBarIds(goldBars?.map((b) => b.id) ?? []);
     }
   };
 
@@ -157,15 +153,15 @@ export default function AdminBarrasPage() {
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-blue-500/10">
-                <th className="w-10 px-2 sm:px-3 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={allPageSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 accent-gold-500 cursor-pointer"
-                    title={allPageSelected ? 'Deseleccionar página' : 'Seleccionar página'}
-                  />
-                </th>
+                  <th className="w-10 px-2 sm:px-3 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 accent-gold-500 cursor-pointer"
+                      title={allSelected ? 'Deseleccionar todo' : `Seleccionar todo (${goldBars?.length ?? 0} barras)`}
+                    />
+                  </th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
@@ -268,22 +264,53 @@ export default function AdminBarrasPage() {
           {selectedBarIds.length > 0 && (
             <div className="sticky bottom-0 left-0 right-0 z-[100] border-t border-red-500/50 bg-red-500/10 backdrop-blur-md px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3 sm:gap-5">
-                <span className="text-xs text-red-300 font-semibold uppercase tracking-wider">
-                  <span className="text-white text-sm">{selectedBarIds.length}</span> barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
-                </span>
+                {allSelected ? (
+                  <span className="text-xs text-gold-400 font-bold uppercase tracking-wider">
+                    <span className="text-gold-300 text-sm">¡TODAS LAS BARRAS SELECCIONADAS ({selectedBarIds.length})!</span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-red-300 font-semibold uppercase tracking-wider">
+                    <span className="text-white text-sm">{selectedBarIds.length}</span> barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
+                  </span>
+                )}
                 <span className="text-xs text-red-300/70">
                   Peso total: <span className="text-white font-mono font-semibold">{formatLocaleNumber(selectedWeight)} g</span>
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 {deleteBatchConfirm ? (
-                  <button
-                    onClick={handleBatchDelete}
-                    disabled={bulkDeleteGoldBars.isPending}
-                    className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
-                  >
-                    {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
-                  </button>
+                  selectedBarIds.length > 50 ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 animate-pulse">
+                        ⚠ ACCIÓN IRREVERSIBLE — {selectedBarIds.length} barras serán eliminadas permanentemente
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleBatchDelete}
+                          disabled={bulkDeleteGoldBars.isPending}
+                          className="px-4 py-2 bg-red-900 hover:bg-red-800 disabled:bg-red-950 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
+                        >
+                          {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
+                        </button>
+                        <button onClick={() => setDeleteBatchConfirm(false)} className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors">
+                          CANCELAR
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleBatchDelete}
+                        disabled={bulkDeleteGoldBars.isPending}
+                        className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
+                      >
+                        {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
+                      </button>
+                      <button onClick={() => setDeleteBatchConfirm(false)} className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors">
+                        CANCELAR
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <button
                     onClick={() => setDeleteBatchConfirm(true)}
@@ -293,12 +320,14 @@ export default function AdminBarrasPage() {
                     ELIMINAR {selectedBarIds.length} BARRA{selectedBarIds.length !== 1 ? 'S' : ''}
                   </button>
                 )}
-                <button
-                  onClick={() => { setSelectedBarIds([]); setDeleteBatchConfirm(false); }}
-                  className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors"
-                >
-                  CANCELAR
-                </button>
+                {!deleteBatchConfirm && (
+                  <button
+                    onClick={() => { setSelectedBarIds([]); setDeleteBatchConfirm(false); }}
+                    className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors"
+                  >
+                    CANCELAR
+                  </button>
+                )}
               </div>
             </div>
           )}
