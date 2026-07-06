@@ -25,7 +25,7 @@ export default function AdminBarrasPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [deleteBatchConfirm, setDeleteBatchConfirm] = useState(false);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [page, setPage] = useState(0);
 
@@ -50,7 +50,7 @@ export default function AdminBarrasPage() {
     return goldBars.filter((b) => b.available).map((b) => b.id);
   }, [goldBars]);
 
-  const allSelected = (goldBars?.length ?? 0) > 0 && selectedBarIds.length === goldBars?.length;
+  const allAvailableSelected = availableBarIds.length > 0 && availableBarIds.every((id) => selectedBarIds.includes(id));
   const selectedWeight = useMemo(() => {
     if (!goldBars || selectedBarIds.length === 0) return 0;
     return goldBars
@@ -65,10 +65,10 @@ export default function AdminBarrasPage() {
   };
 
   const handleSelectAll = () => {
-    if (allSelected) {
+    if (allAvailableSelected) {
       setSelectedBarIds([]);
     } else {
-      setSelectedBarIds(goldBars?.map((b) => b.id) ?? []);
+      setSelectedBarIds(availableBarIds);
     }
   };
 
@@ -127,7 +127,7 @@ export default function AdminBarrasPage() {
   const handleBatchDelete = async () => {
     try {
       await bulkDeleteGoldBars.mutateAsync(selectedBarIds);
-      setDeleteBatchConfirm(false);
+      setAuditModalOpen(false);
       setSelectedBarIds([]);
       setSuccessMessage(`${selectedBarIds.length} barra${selectedBarIds.length !== 1 ? 's' : ''} eliminada${selectedBarIds.length !== 1 ? 's' : ''}.`);
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -156,10 +156,10 @@ export default function AdminBarrasPage() {
                   <th className="w-10 px-2 sm:px-3 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={allSelected}
+                      checked={allAvailableSelected}
                       onChange={handleSelectAll}
                       className="w-4 h-4 accent-gold-500 cursor-pointer"
-                      title={allSelected ? 'Deseleccionar todo' : `Seleccionar todo (${goldBars?.length ?? 0} barras)`}
+                      title={allAvailableSelected ? 'Deseleccionar todo' : `Seleccionar disponibles (${availableBarIds.length})`}
                     />
                   </th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
@@ -188,9 +188,9 @@ export default function AdminBarrasPage() {
                           onChange={() => toggleBar(b.id)}
                           className="w-4 h-4 accent-gold-500 cursor-pointer"
                         />
-                      ) : (
-                        <span className="inline-block w-4 h-4" />
-                      )}
+                        ) : (
+                          <input type="checkbox" disabled checked={false} className="w-4 h-4 accent-gold-500 opacity-30 cursor-not-allowed" />
+                        )}
                     </td>
                     <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{b.code}</td>
                     <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
@@ -264,9 +264,9 @@ export default function AdminBarrasPage() {
           {selectedBarIds.length > 0 && (
             <div className="sticky bottom-0 left-0 right-0 z-[100] border-t border-red-500/50 bg-red-500/10 backdrop-blur-md px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3 sm:gap-5">
-                {allSelected ? (
+                {allAvailableSelected ? (
                   <span className="text-xs text-gold-400 font-bold uppercase tracking-wider">
-                    <span className="text-gold-300 text-sm">¡TODAS LAS BARRAS SELECCIONADAS ({selectedBarIds.length})!</span>
+                    <span className="text-gold-300 text-sm">¡TODAS LAS BARRAS DISPONIBLES SELECCIONADAS ({selectedBarIds.length})!</span>
                   </span>
                 ) : (
                   <span className="text-xs text-red-300 font-semibold uppercase tracking-wider">
@@ -278,56 +278,19 @@ export default function AdminBarrasPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {deleteBatchConfirm ? (
-                  selectedBarIds.length > 50 ? (
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-400 animate-pulse">
-                        ⚠ ACCIÓN IRREVERSIBLE — {selectedBarIds.length} barras serán eliminadas permanentemente
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={handleBatchDelete}
-                          disabled={bulkDeleteGoldBars.isPending}
-                          className="px-4 py-2 bg-red-900 hover:bg-red-800 disabled:bg-red-950 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
-                        >
-                          {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
-                        </button>
-                        <button onClick={() => setDeleteBatchConfirm(false)} className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors">
-                          CANCELAR
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleBatchDelete}
-                        disabled={bulkDeleteGoldBars.isPending}
-                        className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
-                      >
-                        {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
-                      </button>
-                      <button onClick={() => setDeleteBatchConfirm(false)} className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors">
-                        CANCELAR
-                      </button>
-                    </div>
-                  )
-                ) : (
-                  <button
-                    onClick={() => setDeleteBatchConfirm(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold uppercase tracking-widest transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    ELIMINAR {selectedBarIds.length} BARRA{selectedBarIds.length !== 1 ? 'S' : ''}
-                  </button>
-                )}
-                {!deleteBatchConfirm && (
-                  <button
-                    onClick={() => { setSelectedBarIds([]); setDeleteBatchConfirm(false); }}
-                    className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors"
-                  >
-                    CANCELAR
-                  </button>
-                )}
+                <button
+                  onClick={() => setAuditModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold uppercase tracking-widest transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  ELIMINAR {selectedBarIds.length} BARRA{selectedBarIds.length !== 1 ? 'S' : ''}
+                </button>
+                <button
+                  onClick={() => { setSelectedBarIds([]); setAuditModalOpen(false); }}
+                  className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors"
+                >
+                  CANCELAR
+                </button>
               </div>
             </div>
           )}
@@ -396,6 +359,78 @@ export default function AdminBarrasPage() {
                 {updateGoldBar.isPending ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {auditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={() => setAuditModalOpen(false)}>
+          <div className="glass-panel w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-blue-500/10 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Revisión de Eliminación</h2>
+              </div>
+              <button onClick={() => setAuditModalOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-1">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                {selectedBarIds.length} barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
+              </div>
+              {goldBars?.filter((b) => selectedBarIds.includes(b.id)).map((b) => (
+                <div key={b.id} className="flex items-center justify-between py-1.5 px-2 bg-midnight-800/50 border border-blue-500/5">
+                  <span className="text-xs font-mono text-slate-200">{b.code}</span>
+                  <span className="text-xs font-mono text-slate-400">{formatLocaleNumber(b.grossWeight)} g</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-blue-500/10 space-y-3 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Total:</span>
+                <span className="text-sm font-mono font-semibold text-white">
+                  {formatLocaleNumber(selectedWeight)} g &mdash; {selectedBarIds.length} barra{selectedBarIds.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {selectedBarIds.length > 50 && (
+                <div className="bg-red-900/30 border border-red-500/30 p-2 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span className="text-[10px] font-bold text-red-300 uppercase tracking-wider">
+                    ACCIÓN IRREVERSIBLE &mdash; {selectedBarIds.length} barras serán eliminadas permanentemente
+                  </span>
+                </div>
+              )}
+
+              <div className="bg-red-500/10 border border-red-500/20 p-3">
+                <p className="text-[11px] text-red-300 text-center">
+                  Vas a eliminar permanentemente estas barras del inventario. Esta acción no se puede deshacer.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={() => setAuditModalOpen(false)}
+                  className="px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                >
+                  Volver
+                </button>
+                <button
+                  onClick={handleBatchDelete}
+                  disabled={bulkDeleteGoldBars.isPending}
+                  className={`px-4 py-2 text-white text-[11px] font-bold uppercase tracking-widest transition-all ${
+                    selectedBarIds.length > 50
+                      ? 'bg-red-900 hover:bg-red-800 animate-pulse'
+                      : 'bg-red-700 hover:bg-red-600'
+                  } disabled:opacity-50`}
+                >
+                  {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : 'CONFIRMAR ELIMINACIÓN PERMANENTE'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
