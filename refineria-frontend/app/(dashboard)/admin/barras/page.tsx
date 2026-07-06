@@ -31,7 +31,7 @@ export default function AdminBarrasPage() {
     return goldBars.filter((b) => b.available).map((b) => b.id);
   }, [goldBars]);
 
-  const allSelected = availableBarIds.length > 0 && availableBarIds.every((id) => selectedBarIds.includes(id));
+  const allSelected = (goldBars?.length ?? 0) > 0 && selectedBarIds.length === goldBars?.length;
   const selectedWeight = useMemo(() => {
     if (!goldBars || selectedBarIds.length === 0) return 0;
     return goldBars
@@ -45,15 +45,11 @@ export default function AdminBarrasPage() {
     );
   };
 
-  const toggleSelectAll = () => {
+  const handleSelectAll = () => {
     if (allSelected) {
-      setSelectedBarIds((prev) => prev.filter((id) => !availableBarIds.includes(id)));
+      setSelectedBarIds([]);
     } else {
-      setSelectedBarIds((prev) => {
-        const existing = new Set(prev);
-        for (const id of availableBarIds) existing.add(id);
-        return [...existing];
-      });
+      setSelectedBarIds(goldBars?.map((b) => b.id) ?? []);
     }
   };
 
@@ -209,7 +205,7 @@ export default function AdminBarrasPage() {
                     <input
                       type="checkbox"
                       checked={allSelected}
-                      onChange={toggleSelectAll}
+                      onChange={handleSelectAll}
                       className="w-4 h-4 accent-gold-500 cursor-pointer"
                       title={allSelected ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
                     />
@@ -286,43 +282,38 @@ export default function AdminBarrasPage() {
               </tbody>
             </table>
             {selectedBarIds.length > 0 && (
-              <div className="sticky bottom-0 left-0 right-0 border-t border-blue-500/10 bg-midnight-800/95 backdrop-blur px-4 sm:px-5 py-2.5 flex items-center justify-between shrink-0">
+              <div className="sticky bottom-0 left-0 right-0 z-[100] border-t border-red-500/50 bg-red-500/10 backdrop-blur-md px-4 sm:px-5 py-3 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3 sm:gap-5">
-                  <span className="text-xs text-slate-400">
-                    <span className="text-slate-200 font-semibold">{selectedBarIds.length}</span> barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
+                  <span className="text-xs text-red-300 font-semibold uppercase tracking-wider">
+                    <span className="text-white text-sm">{selectedBarIds.length}</span> barra{selectedBarIds.length !== 1 ? 's' : ''} seleccionada{selectedBarIds.length !== 1 ? 's' : ''}
                   </span>
-                  <span className="text-xs text-slate-400">
-                    Peso total: <span className="text-slate-200 font-mono font-semibold">{formatLocaleNumber(selectedWeight)} g</span>
+                  <span className="text-xs text-red-300/70">
+                    Peso total: <span className="text-white font-mono font-semibold">{formatLocaleNumber(selectedWeight)} g</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {deleteBatchConfirm ? (
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={handleBatchDelete}
-                        disabled={bulkDeleteGoldBars.isPending}
-                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-50 transition-all"
-                      >
-                        {bulkDeleteGoldBars.isPending ? 'Eliminando...' : `Confirmar (${selectedBarIds.length})`}
-                      </button>
-                      <button onClick={() => setDeleteBatchConfirm(false)} className="p-1 text-slate-500 hover:text-slate-300">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleBatchDelete}
+                      disabled={bulkDeleteGoldBars.isPending}
+                      className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-800 disabled:opacity-50 text-white text-[11px] font-bold uppercase tracking-widest animate-pulse transition-all"
+                    >
+                      {bulkDeleteGoldBars.isPending ? 'ELIMINANDO...' : '¿CONFIRMAR ELIMINACIÓN?'}
+                    </button>
                   ) : (
                     <button
                       onClick={() => setDeleteBatchConfirm(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold uppercase tracking-widest transition-all"
                     >
-                      <Trash2 className="w-3 h-3" />
-                      Eliminar
+                      <Trash2 className="w-3.5 h-3.5" />
+                      ELIMINAR {selectedBarIds.length} BARRA{selectedBarIds.length !== 1 ? 'S' : ''}
                     </button>
                   )}
                   <button
                     onClick={() => { setSelectedBarIds([]); setDeleteBatchConfirm(false); }}
-                    className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+                    className="px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-red-300/70 hover:text-white transition-colors"
                   >
-                    Limpiar
+                    CANCELAR
                   </button>
                 </div>
               </div>
