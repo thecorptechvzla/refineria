@@ -27,31 +27,31 @@ export type AggregateSupplier = {
 export type SupplierMinAggregateOutputType = {
   id: string | null
   name: string | null
-  rif: string | null
   contactInfo: string | null
   registrationDate: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  rif: string | null
 }
 
 export type SupplierMaxAggregateOutputType = {
   id: string | null
   name: string | null
-  rif: string | null
   contactInfo: string | null
   registrationDate: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  rif: string | null
 }
 
 export type SupplierCountAggregateOutputType = {
   id: number
   name: number
-  rif: number
   contactInfo: number
   registrationDate: number
   createdAt: number
   updatedAt: number
+  rif: number
   _all: number
 }
 
@@ -59,31 +59,31 @@ export type SupplierCountAggregateOutputType = {
 export type SupplierMinAggregateInputType = {
   id?: true
   name?: true
-  rif?: true
   contactInfo?: true
   registrationDate?: true
   createdAt?: true
   updatedAt?: true
+  rif?: true
 }
 
 export type SupplierMaxAggregateInputType = {
   id?: true
   name?: true
-  rif?: true
   contactInfo?: true
   registrationDate?: true
   createdAt?: true
   updatedAt?: true
+  rif?: true
 }
 
 export type SupplierCountAggregateInputType = {
   id?: true
   name?: true
-  rif?: true
   contactInfo?: true
   registrationDate?: true
   createdAt?: true
   updatedAt?: true
+  rif?: true
   _all?: true
 }
 
@@ -162,11 +162,11 @@ export type SupplierGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type SupplierGroupByOutputType = {
   id: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate: Date
   createdAt: Date
   updatedAt: Date
+  rif: string
   _count: SupplierCountAggregateOutputType | null
   _min: SupplierMinAggregateOutputType | null
   _max: SupplierMaxAggregateOutputType | null
@@ -193,23 +193,27 @@ export type SupplierWhereInput = {
   NOT?: Prisma.SupplierWhereInput | Prisma.SupplierWhereInput[]
   id?: Prisma.StringFilter<"Supplier"> | string
   name?: Prisma.StringFilter<"Supplier"> | string
-  rif?: Prisma.StringFilter<"Supplier"> | string
   contactInfo?: Prisma.StringFilter<"Supplier"> | string
   registrationDate?: Prisma.DateTimeFilter<"Supplier"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Supplier"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Supplier"> | Date | string
+  rif?: Prisma.StringFilter<"Supplier"> | string
   transactions?: Prisma.TransactionListRelationFilter
+  goldBars?: Prisma.GoldBarListRelationFilter
+  processes?: Prisma.ProcessListRelationFilter
 }
 
 export type SupplierOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  rif?: Prisma.SortOrder
   contactInfo?: Prisma.SortOrder
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  rif?: Prisma.SortOrder
   transactions?: Prisma.TransactionOrderByRelationAggregateInput
+  goldBars?: Prisma.GoldBarOrderByRelationAggregateInput
+  processes?: Prisma.ProcessOrderByRelationAggregateInput
 }
 
 export type SupplierWhereUniqueInput = Prisma.AtLeast<{
@@ -224,16 +228,18 @@ export type SupplierWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Supplier"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Supplier"> | Date | string
   transactions?: Prisma.TransactionListRelationFilter
+  goldBars?: Prisma.GoldBarListRelationFilter
+  processes?: Prisma.ProcessListRelationFilter
 }, "id" | "rif">
 
 export type SupplierOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  rif?: Prisma.SortOrder
   contactInfo?: Prisma.SortOrder
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  rif?: Prisma.SortOrder
   _count?: Prisma.SupplierCountOrderByAggregateInput
   _max?: Prisma.SupplierMaxOrderByAggregateInput
   _min?: Prisma.SupplierMinOrderByAggregateInput
@@ -245,120 +251,133 @@ export type SupplierScalarWhereWithAggregatesInput = {
   NOT?: Prisma.SupplierScalarWhereWithAggregatesInput | Prisma.SupplierScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Supplier"> | string
   name?: Prisma.StringWithAggregatesFilter<"Supplier"> | string
-  rif?: Prisma.StringWithAggregatesFilter<"Supplier"> | string
   contactInfo?: Prisma.StringWithAggregatesFilter<"Supplier"> | string
   registrationDate?: Prisma.DateTimeWithAggregatesFilter<"Supplier"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Supplier"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Supplier"> | Date | string
+  rif?: Prisma.StringWithAggregatesFilter<"Supplier"> | string
 }
 
 export type SupplierCreateInput = {
   id?: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  rif: string
   transactions?: Prisma.TransactionCreateNestedManyWithoutSupplierInput
+  goldBars?: Prisma.GoldBarCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessCreateNestedManyWithoutSupplierInput
 }
 
 export type SupplierUncheckedCreateInput = {
   id?: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  rif: string
   transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutSupplierInput
+  goldBars?: Prisma.GoldBarUncheckedCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessUncheckedCreateNestedManyWithoutSupplierInput
 }
 
 export type SupplierUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
   transactions?: Prisma.TransactionUpdateManyWithoutSupplierNestedInput
+  goldBars?: Prisma.GoldBarUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUpdateManyWithoutSupplierNestedInput
 }
 
 export type SupplierUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
   transactions?: Prisma.TransactionUncheckedUpdateManyWithoutSupplierNestedInput
+  goldBars?: Prisma.GoldBarUncheckedUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUncheckedUpdateManyWithoutSupplierNestedInput
 }
 
 export type SupplierCreateManyInput = {
   id?: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  rif: string
 }
 
 export type SupplierUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type SupplierUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type SupplierCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  rif?: Prisma.SortOrder
   contactInfo?: Prisma.SortOrder
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  rif?: Prisma.SortOrder
 }
 
 export type SupplierMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  rif?: Prisma.SortOrder
   contactInfo?: Prisma.SortOrder
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  rif?: Prisma.SortOrder
 }
 
 export type SupplierMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  rif?: Prisma.SortOrder
   contactInfo?: Prisma.SortOrder
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  rif?: Prisma.SortOrder
 }
 
 export type SupplierNullableScalarRelationFilter = {
   is?: Prisma.SupplierWhereInput | null
   isNot?: Prisma.SupplierWhereInput | null
+}
+
+export type SupplierScalarRelationFilter = {
+  is?: Prisma.SupplierWhereInput
+  isNot?: Prisma.SupplierWhereInput
 }
 
 export type SupplierCreateNestedOneWithoutTransactionsInput = {
@@ -377,24 +396,56 @@ export type SupplierUpdateOneWithoutTransactionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SupplierUpdateToOneWithWhereWithoutTransactionsInput, Prisma.SupplierUpdateWithoutTransactionsInput>, Prisma.SupplierUncheckedUpdateWithoutTransactionsInput>
 }
 
+export type SupplierCreateNestedOneWithoutGoldBarsInput = {
+  create?: Prisma.XOR<Prisma.SupplierCreateWithoutGoldBarsInput, Prisma.SupplierUncheckedCreateWithoutGoldBarsInput>
+  connectOrCreate?: Prisma.SupplierCreateOrConnectWithoutGoldBarsInput
+  connect?: Prisma.SupplierWhereUniqueInput
+}
+
+export type SupplierUpdateOneRequiredWithoutGoldBarsNestedInput = {
+  create?: Prisma.XOR<Prisma.SupplierCreateWithoutGoldBarsInput, Prisma.SupplierUncheckedCreateWithoutGoldBarsInput>
+  connectOrCreate?: Prisma.SupplierCreateOrConnectWithoutGoldBarsInput
+  upsert?: Prisma.SupplierUpsertWithoutGoldBarsInput
+  connect?: Prisma.SupplierWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SupplierUpdateToOneWithWhereWithoutGoldBarsInput, Prisma.SupplierUpdateWithoutGoldBarsInput>, Prisma.SupplierUncheckedUpdateWithoutGoldBarsInput>
+}
+
+export type SupplierCreateNestedOneWithoutProcessesInput = {
+  create?: Prisma.XOR<Prisma.SupplierCreateWithoutProcessesInput, Prisma.SupplierUncheckedCreateWithoutProcessesInput>
+  connectOrCreate?: Prisma.SupplierCreateOrConnectWithoutProcessesInput
+  connect?: Prisma.SupplierWhereUniqueInput
+}
+
+export type SupplierUpdateOneRequiredWithoutProcessesNestedInput = {
+  create?: Prisma.XOR<Prisma.SupplierCreateWithoutProcessesInput, Prisma.SupplierUncheckedCreateWithoutProcessesInput>
+  connectOrCreate?: Prisma.SupplierCreateOrConnectWithoutProcessesInput
+  upsert?: Prisma.SupplierUpsertWithoutProcessesInput
+  connect?: Prisma.SupplierWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SupplierUpdateToOneWithWhereWithoutProcessesInput, Prisma.SupplierUpdateWithoutProcessesInput>, Prisma.SupplierUncheckedUpdateWithoutProcessesInput>
+}
+
 export type SupplierCreateWithoutTransactionsInput = {
   id?: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  rif: string
+  goldBars?: Prisma.GoldBarCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessCreateNestedManyWithoutSupplierInput
 }
 
 export type SupplierUncheckedCreateWithoutTransactionsInput = {
   id?: string
   name: string
-  rif: string
   contactInfo: string
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  rif: string
+  goldBars?: Prisma.GoldBarUncheckedCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessUncheckedCreateNestedManyWithoutSupplierInput
 }
 
 export type SupplierCreateOrConnectWithoutTransactionsInput = {
@@ -416,21 +467,153 @@ export type SupplierUpdateToOneWithWhereWithoutTransactionsInput = {
 export type SupplierUpdateWithoutTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  goldBars?: Prisma.GoldBarUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUpdateManyWithoutSupplierNestedInput
 }
 
 export type SupplierUncheckedUpdateWithoutTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  rif?: Prisma.StringFieldUpdateOperationsInput | string
   contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  goldBars?: Prisma.GoldBarUncheckedUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUncheckedUpdateManyWithoutSupplierNestedInput
+}
+
+export type SupplierCreateWithoutGoldBarsInput = {
+  id?: string
+  name: string
+  contactInfo: string
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  rif: string
+  transactions?: Prisma.TransactionCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessCreateNestedManyWithoutSupplierInput
+}
+
+export type SupplierUncheckedCreateWithoutGoldBarsInput = {
+  id?: string
+  name: string
+  contactInfo: string
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  rif: string
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutSupplierInput
+  processes?: Prisma.ProcessUncheckedCreateNestedManyWithoutSupplierInput
+}
+
+export type SupplierCreateOrConnectWithoutGoldBarsInput = {
+  where: Prisma.SupplierWhereUniqueInput
+  create: Prisma.XOR<Prisma.SupplierCreateWithoutGoldBarsInput, Prisma.SupplierUncheckedCreateWithoutGoldBarsInput>
+}
+
+export type SupplierUpsertWithoutGoldBarsInput = {
+  update: Prisma.XOR<Prisma.SupplierUpdateWithoutGoldBarsInput, Prisma.SupplierUncheckedUpdateWithoutGoldBarsInput>
+  create: Prisma.XOR<Prisma.SupplierCreateWithoutGoldBarsInput, Prisma.SupplierUncheckedCreateWithoutGoldBarsInput>
+  where?: Prisma.SupplierWhereInput
+}
+
+export type SupplierUpdateToOneWithWhereWithoutGoldBarsInput = {
+  where?: Prisma.SupplierWhereInput
+  data: Prisma.XOR<Prisma.SupplierUpdateWithoutGoldBarsInput, Prisma.SupplierUncheckedUpdateWithoutGoldBarsInput>
+}
+
+export type SupplierUpdateWithoutGoldBarsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  transactions?: Prisma.TransactionUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUpdateManyWithoutSupplierNestedInput
+}
+
+export type SupplierUncheckedUpdateWithoutGoldBarsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutSupplierNestedInput
+  processes?: Prisma.ProcessUncheckedUpdateManyWithoutSupplierNestedInput
+}
+
+export type SupplierCreateWithoutProcessesInput = {
+  id?: string
+  name: string
+  contactInfo: string
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  rif: string
+  transactions?: Prisma.TransactionCreateNestedManyWithoutSupplierInput
+  goldBars?: Prisma.GoldBarCreateNestedManyWithoutSupplierInput
+}
+
+export type SupplierUncheckedCreateWithoutProcessesInput = {
+  id?: string
+  name: string
+  contactInfo: string
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  rif: string
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutSupplierInput
+  goldBars?: Prisma.GoldBarUncheckedCreateNestedManyWithoutSupplierInput
+}
+
+export type SupplierCreateOrConnectWithoutProcessesInput = {
+  where: Prisma.SupplierWhereUniqueInput
+  create: Prisma.XOR<Prisma.SupplierCreateWithoutProcessesInput, Prisma.SupplierUncheckedCreateWithoutProcessesInput>
+}
+
+export type SupplierUpsertWithoutProcessesInput = {
+  update: Prisma.XOR<Prisma.SupplierUpdateWithoutProcessesInput, Prisma.SupplierUncheckedUpdateWithoutProcessesInput>
+  create: Prisma.XOR<Prisma.SupplierCreateWithoutProcessesInput, Prisma.SupplierUncheckedCreateWithoutProcessesInput>
+  where?: Prisma.SupplierWhereInput
+}
+
+export type SupplierUpdateToOneWithWhereWithoutProcessesInput = {
+  where?: Prisma.SupplierWhereInput
+  data: Prisma.XOR<Prisma.SupplierUpdateWithoutProcessesInput, Prisma.SupplierUncheckedUpdateWithoutProcessesInput>
+}
+
+export type SupplierUpdateWithoutProcessesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  transactions?: Prisma.TransactionUpdateManyWithoutSupplierNestedInput
+  goldBars?: Prisma.GoldBarUpdateManyWithoutSupplierNestedInput
+}
+
+export type SupplierUncheckedUpdateWithoutProcessesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  contactInfo?: Prisma.StringFieldUpdateOperationsInput | string
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rif?: Prisma.StringFieldUpdateOperationsInput | string
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutSupplierNestedInput
+  goldBars?: Prisma.GoldBarUncheckedUpdateManyWithoutSupplierNestedInput
 }
 
 
@@ -440,10 +623,14 @@ export type SupplierUncheckedUpdateWithoutTransactionsInput = {
 
 export type SupplierCountOutputType = {
   transactions: number
+  goldBars: number
+  processes: number
 }
 
 export type SupplierCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   transactions?: boolean | SupplierCountOutputTypeCountTransactionsArgs
+  goldBars?: boolean | SupplierCountOutputTypeCountGoldBarsArgs
+  processes?: boolean | SupplierCountOutputTypeCountProcessesArgs
 }
 
 /**
@@ -463,52 +650,70 @@ export type SupplierCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime
   where?: Prisma.TransactionWhereInput
 }
 
+/**
+ * SupplierCountOutputType without action
+ */
+export type SupplierCountOutputTypeCountGoldBarsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GoldBarWhereInput
+}
+
+/**
+ * SupplierCountOutputType without action
+ */
+export type SupplierCountOutputTypeCountProcessesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProcessWhereInput
+}
+
 
 export type SupplierSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  rif?: boolean
   contactInfo?: boolean
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  rif?: boolean
   transactions?: boolean | Prisma.Supplier$transactionsArgs<ExtArgs>
+  goldBars?: boolean | Prisma.Supplier$goldBarsArgs<ExtArgs>
+  processes?: boolean | Prisma.Supplier$processesArgs<ExtArgs>
   _count?: boolean | Prisma.SupplierCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["supplier"]>
 
 export type SupplierSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  rif?: boolean
   contactInfo?: boolean
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  rif?: boolean
 }, ExtArgs["result"]["supplier"]>
 
 export type SupplierSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  rif?: boolean
   contactInfo?: boolean
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  rif?: boolean
 }, ExtArgs["result"]["supplier"]>
 
 export type SupplierSelectScalar = {
   id?: boolean
   name?: boolean
-  rif?: boolean
   contactInfo?: boolean
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  rif?: boolean
 }
 
-export type SupplierOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "rif" | "contactInfo" | "registrationDate" | "createdAt" | "updatedAt", ExtArgs["result"]["supplier"]>
+export type SupplierOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "contactInfo" | "registrationDate" | "createdAt" | "updatedAt" | "rif", ExtArgs["result"]["supplier"]>
 export type SupplierInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   transactions?: boolean | Prisma.Supplier$transactionsArgs<ExtArgs>
+  goldBars?: boolean | Prisma.Supplier$goldBarsArgs<ExtArgs>
+  processes?: boolean | Prisma.Supplier$processesArgs<ExtArgs>
   _count?: boolean | Prisma.SupplierCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SupplierIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -518,15 +723,17 @@ export type $SupplierPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Supplier"
   objects: {
     transactions: Prisma.$TransactionPayload<ExtArgs>[]
+    goldBars: Prisma.$GoldBarPayload<ExtArgs>[]
+    processes: Prisma.$ProcessPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
-    rif: string
     contactInfo: string
     registrationDate: Date
     createdAt: Date
     updatedAt: Date
+    rif: string
   }, ExtArgs["result"]["supplier"]>
   composites: {}
 }
@@ -922,6 +1129,8 @@ readonly fields: SupplierFieldRefs;
 export interface Prisma__SupplierClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   transactions<T extends Prisma.Supplier$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Supplier$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  goldBars<T extends Prisma.Supplier$goldBarsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Supplier$goldBarsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GoldBarPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  processes<T extends Prisma.Supplier$processesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Supplier$processesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProcessPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -953,11 +1162,11 @@ export interface Prisma__SupplierClient<T, Null = never, ExtArgs extends runtime
 export interface SupplierFieldRefs {
   readonly id: Prisma.FieldRef<"Supplier", 'String'>
   readonly name: Prisma.FieldRef<"Supplier", 'String'>
-  readonly rif: Prisma.FieldRef<"Supplier", 'String'>
   readonly contactInfo: Prisma.FieldRef<"Supplier", 'String'>
   readonly registrationDate: Prisma.FieldRef<"Supplier", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Supplier", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Supplier", 'DateTime'>
+  readonly rif: Prisma.FieldRef<"Supplier", 'String'>
 }
     
 
@@ -1372,6 +1581,54 @@ export type Supplier$transactionsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
+}
+
+/**
+ * Supplier.goldBars
+ */
+export type Supplier$goldBarsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GoldBar
+   */
+  select?: Prisma.GoldBarSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GoldBar
+   */
+  omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
+  where?: Prisma.GoldBarWhereInput
+  orderBy?: Prisma.GoldBarOrderByWithRelationInput | Prisma.GoldBarOrderByWithRelationInput[]
+  cursor?: Prisma.GoldBarWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GoldBarScalarFieldEnum | Prisma.GoldBarScalarFieldEnum[]
+}
+
+/**
+ * Supplier.processes
+ */
+export type Supplier$processesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Process
+   */
+  select?: Prisma.ProcessSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Process
+   */
+  omit?: Prisma.ProcessOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProcessInclude<ExtArgs> | null
+  where?: Prisma.ProcessWhereInput
+  orderBy?: Prisma.ProcessOrderByWithRelationInput | Prisma.ProcessOrderByWithRelationInput[]
+  cursor?: Prisma.ProcessWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProcessScalarFieldEnum | Prisma.ProcessScalarFieldEnum[]
 }
 
 /**

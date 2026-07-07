@@ -223,6 +223,7 @@ export type ProcessWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Process"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Process"> | Date | string
   lots?: Prisma.ProcessLotListRelationFilter
+  supplier?: Prisma.XOR<Prisma.SupplierScalarRelationFilter, Prisma.SupplierWhereInput>
 }
 
 export type ProcessOrderByWithRelationInput = {
@@ -237,6 +238,7 @@ export type ProcessOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   lots?: Prisma.ProcessLotOrderByRelationAggregateInput
+  supplier?: Prisma.SupplierOrderByWithRelationInput
 }
 
 export type ProcessWhereUniqueInput = Prisma.AtLeast<{
@@ -254,6 +256,7 @@ export type ProcessWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Process"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Process"> | Date | string
   lots?: Prisma.ProcessLotListRelationFilter
+  supplier?: Prisma.XOR<Prisma.SupplierScalarRelationFilter, Prisma.SupplierWhereInput>
 }, "id">
 
 export type ProcessOrderByWithAggregationInput = {
@@ -291,7 +294,6 @@ export type ProcessScalarWhereWithAggregatesInput = {
 export type ProcessCreateInput = {
   id?: string
   number: string
-  supplierId: string
   status?: $Enums.ProcessStatus
   closedAt?: Date | string | null
   actaRecepcion?: string | null
@@ -300,6 +302,7 @@ export type ProcessCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   lots?: Prisma.ProcessLotCreateNestedManyWithoutProcessInput
+  supplier: Prisma.SupplierCreateNestedOneWithoutProcessesInput
 }
 
 export type ProcessUncheckedCreateInput = {
@@ -319,7 +322,6 @@ export type ProcessUncheckedCreateInput = {
 export type ProcessUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   number?: Prisma.StringFieldUpdateOperationsInput | string
-  supplierId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -328,6 +330,7 @@ export type ProcessUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lots?: Prisma.ProcessLotUpdateManyWithoutProcessNestedInput
+  supplier?: Prisma.SupplierUpdateOneRequiredWithoutProcessesNestedInput
 }
 
 export type ProcessUncheckedUpdateInput = {
@@ -360,7 +363,6 @@ export type ProcessCreateManyInput = {
 export type ProcessUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   number?: Prisma.StringFieldUpdateOperationsInput | string
-  supplierId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -381,6 +383,16 @@ export type ProcessUncheckedUpdateManyInput = {
   actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ProcessListRelationFilter = {
+  every?: Prisma.ProcessWhereInput
+  some?: Prisma.ProcessWhereInput
+  none?: Prisma.ProcessWhereInput
+}
+
+export type ProcessOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type ProcessCountOrderByAggregateInput = {
@@ -427,6 +439,48 @@ export type ProcessScalarRelationFilter = {
   isNot?: Prisma.ProcessWhereInput
 }
 
+export type ProcessCreateNestedManyWithoutSupplierInput = {
+  create?: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput> | Prisma.ProcessCreateWithoutSupplierInput[] | Prisma.ProcessUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.ProcessCreateOrConnectWithoutSupplierInput | Prisma.ProcessCreateOrConnectWithoutSupplierInput[]
+  createMany?: Prisma.ProcessCreateManySupplierInputEnvelope
+  connect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+}
+
+export type ProcessUncheckedCreateNestedManyWithoutSupplierInput = {
+  create?: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput> | Prisma.ProcessCreateWithoutSupplierInput[] | Prisma.ProcessUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.ProcessCreateOrConnectWithoutSupplierInput | Prisma.ProcessCreateOrConnectWithoutSupplierInput[]
+  createMany?: Prisma.ProcessCreateManySupplierInputEnvelope
+  connect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+}
+
+export type ProcessUpdateManyWithoutSupplierNestedInput = {
+  create?: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput> | Prisma.ProcessCreateWithoutSupplierInput[] | Prisma.ProcessUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.ProcessCreateOrConnectWithoutSupplierInput | Prisma.ProcessCreateOrConnectWithoutSupplierInput[]
+  upsert?: Prisma.ProcessUpsertWithWhereUniqueWithoutSupplierInput | Prisma.ProcessUpsertWithWhereUniqueWithoutSupplierInput[]
+  createMany?: Prisma.ProcessCreateManySupplierInputEnvelope
+  set?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  disconnect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  delete?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  connect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  update?: Prisma.ProcessUpdateWithWhereUniqueWithoutSupplierInput | Prisma.ProcessUpdateWithWhereUniqueWithoutSupplierInput[]
+  updateMany?: Prisma.ProcessUpdateManyWithWhereWithoutSupplierInput | Prisma.ProcessUpdateManyWithWhereWithoutSupplierInput[]
+  deleteMany?: Prisma.ProcessScalarWhereInput | Prisma.ProcessScalarWhereInput[]
+}
+
+export type ProcessUncheckedUpdateManyWithoutSupplierNestedInput = {
+  create?: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput> | Prisma.ProcessCreateWithoutSupplierInput[] | Prisma.ProcessUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.ProcessCreateOrConnectWithoutSupplierInput | Prisma.ProcessCreateOrConnectWithoutSupplierInput[]
+  upsert?: Prisma.ProcessUpsertWithWhereUniqueWithoutSupplierInput | Prisma.ProcessUpsertWithWhereUniqueWithoutSupplierInput[]
+  createMany?: Prisma.ProcessCreateManySupplierInputEnvelope
+  set?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  disconnect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  delete?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  connect?: Prisma.ProcessWhereUniqueInput | Prisma.ProcessWhereUniqueInput[]
+  update?: Prisma.ProcessUpdateWithWhereUniqueWithoutSupplierInput | Prisma.ProcessUpdateWithWhereUniqueWithoutSupplierInput[]
+  updateMany?: Prisma.ProcessUpdateManyWithWhereWithoutSupplierInput | Prisma.ProcessUpdateManyWithWhereWithoutSupplierInput[]
+  deleteMany?: Prisma.ProcessScalarWhereInput | Prisma.ProcessScalarWhereInput[]
+}
+
 export type EnumProcessStatusFieldUpdateOperationsInput = {
   set?: $Enums.ProcessStatus
 }
@@ -449,10 +503,9 @@ export type ProcessUpdateOneRequiredWithoutLotsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProcessUpdateToOneWithWhereWithoutLotsInput, Prisma.ProcessUpdateWithoutLotsInput>, Prisma.ProcessUncheckedUpdateWithoutLotsInput>
 }
 
-export type ProcessCreateWithoutLotsInput = {
+export type ProcessCreateWithoutSupplierInput = {
   id?: string
   number: string
-  supplierId: string
   status?: $Enums.ProcessStatus
   closedAt?: Date | string | null
   actaRecepcion?: string | null
@@ -460,6 +513,75 @@ export type ProcessCreateWithoutLotsInput = {
   actaConformidad?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  lots?: Prisma.ProcessLotCreateNestedManyWithoutProcessInput
+}
+
+export type ProcessUncheckedCreateWithoutSupplierInput = {
+  id?: string
+  number: string
+  status?: $Enums.ProcessStatus
+  closedAt?: Date | string | null
+  actaRecepcion?: string | null
+  actaFundicion?: string | null
+  actaConformidad?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lots?: Prisma.ProcessLotUncheckedCreateNestedManyWithoutProcessInput
+}
+
+export type ProcessCreateOrConnectWithoutSupplierInput = {
+  where: Prisma.ProcessWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput>
+}
+
+export type ProcessCreateManySupplierInputEnvelope = {
+  data: Prisma.ProcessCreateManySupplierInput | Prisma.ProcessCreateManySupplierInput[]
+  skipDuplicates?: boolean
+}
+
+export type ProcessUpsertWithWhereUniqueWithoutSupplierInput = {
+  where: Prisma.ProcessWhereUniqueInput
+  update: Prisma.XOR<Prisma.ProcessUpdateWithoutSupplierInput, Prisma.ProcessUncheckedUpdateWithoutSupplierInput>
+  create: Prisma.XOR<Prisma.ProcessCreateWithoutSupplierInput, Prisma.ProcessUncheckedCreateWithoutSupplierInput>
+}
+
+export type ProcessUpdateWithWhereUniqueWithoutSupplierInput = {
+  where: Prisma.ProcessWhereUniqueInput
+  data: Prisma.XOR<Prisma.ProcessUpdateWithoutSupplierInput, Prisma.ProcessUncheckedUpdateWithoutSupplierInput>
+}
+
+export type ProcessUpdateManyWithWhereWithoutSupplierInput = {
+  where: Prisma.ProcessScalarWhereInput
+  data: Prisma.XOR<Prisma.ProcessUpdateManyMutationInput, Prisma.ProcessUncheckedUpdateManyWithoutSupplierInput>
+}
+
+export type ProcessScalarWhereInput = {
+  AND?: Prisma.ProcessScalarWhereInput | Prisma.ProcessScalarWhereInput[]
+  OR?: Prisma.ProcessScalarWhereInput[]
+  NOT?: Prisma.ProcessScalarWhereInput | Prisma.ProcessScalarWhereInput[]
+  id?: Prisma.StringFilter<"Process"> | string
+  number?: Prisma.StringFilter<"Process"> | string
+  supplierId?: Prisma.StringFilter<"Process"> | string
+  status?: Prisma.EnumProcessStatusFilter<"Process"> | $Enums.ProcessStatus
+  closedAt?: Prisma.DateTimeNullableFilter<"Process"> | Date | string | null
+  actaRecepcion?: Prisma.StringNullableFilter<"Process"> | string | null
+  actaFundicion?: Prisma.StringNullableFilter<"Process"> | string | null
+  actaConformidad?: Prisma.StringNullableFilter<"Process"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Process"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Process"> | Date | string
+}
+
+export type ProcessCreateWithoutLotsInput = {
+  id?: string
+  number: string
+  status?: $Enums.ProcessStatus
+  closedAt?: Date | string | null
+  actaRecepcion?: string | null
+  actaFundicion?: string | null
+  actaConformidad?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  supplier: Prisma.SupplierCreateNestedOneWithoutProcessesInput
 }
 
 export type ProcessUncheckedCreateWithoutLotsInput = {
@@ -494,6 +616,19 @@ export type ProcessUpdateToOneWithWhereWithoutLotsInput = {
 export type ProcessUpdateWithoutLotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   number?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  supplier?: Prisma.SupplierUpdateOneRequiredWithoutProcessesNestedInput
+}
+
+export type ProcessUncheckedUpdateWithoutLotsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.StringFieldUpdateOperationsInput | string
   supplierId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -504,10 +639,47 @@ export type ProcessUpdateWithoutLotsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ProcessUncheckedUpdateWithoutLotsInput = {
+export type ProcessCreateManySupplierInput = {
+  id?: string
+  number: string
+  status?: $Enums.ProcessStatus
+  closedAt?: Date | string | null
+  actaRecepcion?: string | null
+  actaFundicion?: string | null
+  actaConformidad?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ProcessUpdateWithoutSupplierInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   number?: Prisma.StringFieldUpdateOperationsInput | string
-  supplierId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lots?: Prisma.ProcessLotUpdateManyWithoutProcessNestedInput
+}
+
+export type ProcessUncheckedUpdateWithoutSupplierInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaFundicion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actaConformidad?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lots?: Prisma.ProcessLotUncheckedUpdateManyWithoutProcessNestedInput
+}
+
+export type ProcessUncheckedUpdateManyWithoutSupplierInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumProcessStatusFieldUpdateOperationsInput | $Enums.ProcessStatus
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   actaRecepcion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -560,6 +732,7 @@ export type ProcessSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   lots?: boolean | Prisma.Process$lotsArgs<ExtArgs>
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.ProcessCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["process"]>
 
@@ -574,6 +747,7 @@ export type ProcessSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   actaConformidad?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["process"]>
 
 export type ProcessSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -587,6 +761,7 @@ export type ProcessSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   actaConformidad?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["process"]>
 
 export type ProcessSelectScalar = {
@@ -605,15 +780,21 @@ export type ProcessSelectScalar = {
 export type ProcessOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "number" | "supplierId" | "status" | "closedAt" | "actaRecepcion" | "actaFundicion" | "actaConformidad" | "createdAt" | "updatedAt", ExtArgs["result"]["process"]>
 export type ProcessInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lots?: boolean | Prisma.Process$lotsArgs<ExtArgs>
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.ProcessCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type ProcessIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type ProcessIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type ProcessIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
+}
+export type ProcessIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
+}
 
 export type $ProcessPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Process"
   objects: {
     lots: Prisma.$ProcessLotPayload<ExtArgs>[]
+    supplier: Prisma.$SupplierPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1021,6 +1202,7 @@ readonly fields: ProcessFieldRefs;
 export interface Prisma__ProcessClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   lots<T extends Prisma.Process$lotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Process$lotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProcessLotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  supplier<T extends Prisma.SupplierDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SupplierDefaultArgs<ExtArgs>>): Prisma.Prisma__SupplierClient<runtime.Types.Result.GetResult<Prisma.$SupplierPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1314,6 +1496,10 @@ export type ProcessCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    */
   data: Prisma.ProcessCreateManyInput | Prisma.ProcessCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProcessIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1384,6 +1570,10 @@ export type ProcessUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many Processes to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProcessIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

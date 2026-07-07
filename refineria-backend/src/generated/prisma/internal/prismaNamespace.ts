@@ -1433,11 +1433,11 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const SupplierScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  rif: 'rif',
   contactInfo: 'contactInfo',
   registrationDate: 'registrationDate',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  rif: 'rif'
 } as const
 
 export type SupplierScalarFieldEnum = (typeof SupplierScalarFieldEnum)[keyof typeof SupplierScalarFieldEnum]
@@ -1498,11 +1498,11 @@ export type ProcessScalarFieldEnum = (typeof ProcessScalarFieldEnum)[keyof typeo
 export const ProcessLotScalarFieldEnum = {
   id: 'id',
   processId: 'processId',
-  number: 'number',
   barIds: 'barIds',
+  creationDate: 'creationDate',
+  number: 'number',
   recovered: 'recovered',
-  egresadoG: 'egresadoG',
-  creationDate: 'creationDate'
+  egresadoG: 'egresadoG'
 } as const
 
 export type ProcessLotScalarFieldEnum = (typeof ProcessLotScalarFieldEnum)[keyof typeof ProcessLotScalarFieldEnum]
