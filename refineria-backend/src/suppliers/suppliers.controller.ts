@@ -34,6 +34,11 @@ export class SuppliersController {
     return this.suppliersService.create(dto, _customFields);
   }
 
+  @Get(':id/impact')
+  getImpact(@Param('id') id: string) {
+    return this.suppliersService.getImpact(id);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.suppliersService.findById(id);

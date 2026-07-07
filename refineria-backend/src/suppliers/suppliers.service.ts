@@ -27,7 +27,6 @@ export class SuppliersService {
   async findById(id: string) {
     const supplier = await this.prisma.supplier.findUnique({
       where: { id },
-      include: { _count: { select: { transactions: true } } },
     });
 
     if (!supplier) {
@@ -36,6 +35,32 @@ export class SuppliersService {
 
     const [merged] = await this.customFields.mergeCustomFields('suppliers', [supplier]);
     return merged;
+  }
+
+  async getImpact(id: string) {
+    const supplier = await this.prisma.supplier.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            transactions: true,
+            goldBars: true,
+            processes: true,
+          },
+        },
+      },
+    });
+
+    if (!supplier) {
+      throw new NotFoundException(`Supplier with id ${id} not found`);
+    }
+
+    return {
+      supplierName: supplier.name,
+      transactions: supplier._count.transactions,
+      goldBars: supplier._count.goldBars,
+      processes: supplier._count.processes,
+    };
   }
 
   async create(dto: CreateSupplierDto, _customFields?: Record<string, string>) {
@@ -75,17 +100,10 @@ export class SuppliersService {
   async remove(id: string) {
     const supplier = await this.prisma.supplier.findUnique({
       where: { id },
-      include: { _count: { select: { transactions: true } } },
     });
 
     if (!supplier) {
       throw new NotFoundException(`Supplier with id ${id} not found`);
-    }
-
-    if (supplier._count.transactions > 0) {
-      throw new ConflictException(
-        `Cannot delete supplier with ${supplier._count.transactions} transaction(s)`,
-      );
     }
 
     return this.prisma.supplier.delete({ where: { id } });

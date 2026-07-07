@@ -15,6 +15,13 @@ export interface Supplier {
   registrationDate: string;
 }
 
+export interface SupplierImpact {
+  supplierName: string;
+  transactions: number;
+  goldBars: number;
+  processes: number;
+}
+
 export type TransactionType = 'IN' | 'OUT';
 
 export type WeightUnit = 'g' | 'kg';
