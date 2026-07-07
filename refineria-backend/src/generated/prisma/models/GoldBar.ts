@@ -320,6 +320,7 @@ export type GoldBarWhereInput = {
   registrationDate?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
+  supplier?: Prisma.XOR<Prisma.SupplierScalarRelationFilter, Prisma.SupplierWhereInput>
 }
 
 export type GoldBarOrderByWithRelationInput = {
@@ -338,6 +339,7 @@ export type GoldBarOrderByWithRelationInput = {
   registrationDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  supplier?: Prisma.SupplierOrderByWithRelationInput
 }
 
 export type GoldBarWhereUniqueInput = Prisma.AtLeast<{
@@ -359,6 +361,7 @@ export type GoldBarWhereUniqueInput = Prisma.AtLeast<{
   registrationDate?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
+  supplier?: Prisma.XOR<Prisma.SupplierScalarRelationFilter, Prisma.SupplierWhereInput>
 }, "id">
 
 export type GoldBarOrderByWithAggregationInput = {
@@ -408,7 +411,6 @@ export type GoldBarScalarWhereWithAggregatesInput = {
 export type GoldBarCreateInput = {
   id?: string
   code: string
-  supplierId: string
   grossWeight: number
   ley?: number | null
   analytical: number
@@ -421,6 +423,7 @@ export type GoldBarCreateInput = {
   registrationDate?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  supplier: Prisma.SupplierCreateNestedOneWithoutGoldBarsInput
 }
 
 export type GoldBarUncheckedCreateInput = {
@@ -444,7 +447,6 @@ export type GoldBarUncheckedCreateInput = {
 export type GoldBarUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  supplierId?: Prisma.StringFieldUpdateOperationsInput | string
   grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   analytical?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -457,6 +459,7 @@ export type GoldBarUpdateInput = {
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  supplier?: Prisma.SupplierUpdateOneRequiredWithoutGoldBarsNestedInput
 }
 
 export type GoldBarUncheckedUpdateInput = {
@@ -498,7 +501,6 @@ export type GoldBarCreateManyInput = {
 export type GoldBarUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  supplierId?: Prisma.StringFieldUpdateOperationsInput | string
   grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   analytical?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -529,6 +531,16 @@ export type GoldBarUncheckedUpdateManyInput = {
   registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GoldBarListRelationFilter = {
+  every?: Prisma.GoldBarWhereInput
+  some?: Prisma.GoldBarWhereInput
+  none?: Prisma.GoldBarWhereInput
+}
+
+export type GoldBarOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type GoldBarCountOrderByAggregateInput = {
@@ -605,6 +617,48 @@ export type GoldBarSumOrderByAggregateInput = {
   analyticalAg?: Prisma.SortOrder
 }
 
+export type GoldBarCreateNestedManyWithoutSupplierInput = {
+  create?: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput> | Prisma.GoldBarCreateWithoutSupplierInput[] | Prisma.GoldBarUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.GoldBarCreateOrConnectWithoutSupplierInput | Prisma.GoldBarCreateOrConnectWithoutSupplierInput[]
+  createMany?: Prisma.GoldBarCreateManySupplierInputEnvelope
+  connect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+}
+
+export type GoldBarUncheckedCreateNestedManyWithoutSupplierInput = {
+  create?: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput> | Prisma.GoldBarCreateWithoutSupplierInput[] | Prisma.GoldBarUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.GoldBarCreateOrConnectWithoutSupplierInput | Prisma.GoldBarCreateOrConnectWithoutSupplierInput[]
+  createMany?: Prisma.GoldBarCreateManySupplierInputEnvelope
+  connect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+}
+
+export type GoldBarUpdateManyWithoutSupplierNestedInput = {
+  create?: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput> | Prisma.GoldBarCreateWithoutSupplierInput[] | Prisma.GoldBarUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.GoldBarCreateOrConnectWithoutSupplierInput | Prisma.GoldBarCreateOrConnectWithoutSupplierInput[]
+  upsert?: Prisma.GoldBarUpsertWithWhereUniqueWithoutSupplierInput | Prisma.GoldBarUpsertWithWhereUniqueWithoutSupplierInput[]
+  createMany?: Prisma.GoldBarCreateManySupplierInputEnvelope
+  set?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  disconnect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  delete?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  connect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  update?: Prisma.GoldBarUpdateWithWhereUniqueWithoutSupplierInput | Prisma.GoldBarUpdateWithWhereUniqueWithoutSupplierInput[]
+  updateMany?: Prisma.GoldBarUpdateManyWithWhereWithoutSupplierInput | Prisma.GoldBarUpdateManyWithWhereWithoutSupplierInput[]
+  deleteMany?: Prisma.GoldBarScalarWhereInput | Prisma.GoldBarScalarWhereInput[]
+}
+
+export type GoldBarUncheckedUpdateManyWithoutSupplierNestedInput = {
+  create?: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput> | Prisma.GoldBarCreateWithoutSupplierInput[] | Prisma.GoldBarUncheckedCreateWithoutSupplierInput[]
+  connectOrCreate?: Prisma.GoldBarCreateOrConnectWithoutSupplierInput | Prisma.GoldBarCreateOrConnectWithoutSupplierInput[]
+  upsert?: Prisma.GoldBarUpsertWithWhereUniqueWithoutSupplierInput | Prisma.GoldBarUpsertWithWhereUniqueWithoutSupplierInput[]
+  createMany?: Prisma.GoldBarCreateManySupplierInputEnvelope
+  set?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  disconnect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  delete?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  connect?: Prisma.GoldBarWhereUniqueInput | Prisma.GoldBarWhereUniqueInput[]
+  update?: Prisma.GoldBarUpdateWithWhereUniqueWithoutSupplierInput | Prisma.GoldBarUpdateWithWhereUniqueWithoutSupplierInput[]
+  updateMany?: Prisma.GoldBarUpdateManyWithWhereWithoutSupplierInput | Prisma.GoldBarUpdateManyWithWhereWithoutSupplierInput[]
+  deleteMany?: Prisma.GoldBarScalarWhereInput | Prisma.GoldBarScalarWhereInput[]
+}
+
 export type NullableFloatFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
@@ -615,6 +669,155 @@ export type NullableFloatFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type GoldBarCreateWithoutSupplierInput = {
+  id?: string
+  code: string
+  grossWeight: number
+  ley?: number | null
+  analytical: number
+  expected: number
+  recovered: number
+  leyAg?: number | null
+  analyticalAg?: number | null
+  originalLot?: string | null
+  available?: boolean
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GoldBarUncheckedCreateWithoutSupplierInput = {
+  id?: string
+  code: string
+  grossWeight: number
+  ley?: number | null
+  analytical: number
+  expected: number
+  recovered: number
+  leyAg?: number | null
+  analyticalAg?: number | null
+  originalLot?: string | null
+  available?: boolean
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GoldBarCreateOrConnectWithoutSupplierInput = {
+  where: Prisma.GoldBarWhereUniqueInput
+  create: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput>
+}
+
+export type GoldBarCreateManySupplierInputEnvelope = {
+  data: Prisma.GoldBarCreateManySupplierInput | Prisma.GoldBarCreateManySupplierInput[]
+  skipDuplicates?: boolean
+}
+
+export type GoldBarUpsertWithWhereUniqueWithoutSupplierInput = {
+  where: Prisma.GoldBarWhereUniqueInput
+  update: Prisma.XOR<Prisma.GoldBarUpdateWithoutSupplierInput, Prisma.GoldBarUncheckedUpdateWithoutSupplierInput>
+  create: Prisma.XOR<Prisma.GoldBarCreateWithoutSupplierInput, Prisma.GoldBarUncheckedCreateWithoutSupplierInput>
+}
+
+export type GoldBarUpdateWithWhereUniqueWithoutSupplierInput = {
+  where: Prisma.GoldBarWhereUniqueInput
+  data: Prisma.XOR<Prisma.GoldBarUpdateWithoutSupplierInput, Prisma.GoldBarUncheckedUpdateWithoutSupplierInput>
+}
+
+export type GoldBarUpdateManyWithWhereWithoutSupplierInput = {
+  where: Prisma.GoldBarScalarWhereInput
+  data: Prisma.XOR<Prisma.GoldBarUpdateManyMutationInput, Prisma.GoldBarUncheckedUpdateManyWithoutSupplierInput>
+}
+
+export type GoldBarScalarWhereInput = {
+  AND?: Prisma.GoldBarScalarWhereInput | Prisma.GoldBarScalarWhereInput[]
+  OR?: Prisma.GoldBarScalarWhereInput[]
+  NOT?: Prisma.GoldBarScalarWhereInput | Prisma.GoldBarScalarWhereInput[]
+  id?: Prisma.StringFilter<"GoldBar"> | string
+  code?: Prisma.StringFilter<"GoldBar"> | string
+  supplierId?: Prisma.StringFilter<"GoldBar"> | string
+  grossWeight?: Prisma.FloatFilter<"GoldBar"> | number
+  ley?: Prisma.FloatNullableFilter<"GoldBar"> | number | null
+  analytical?: Prisma.FloatFilter<"GoldBar"> | number
+  expected?: Prisma.FloatFilter<"GoldBar"> | number
+  recovered?: Prisma.FloatFilter<"GoldBar"> | number
+  leyAg?: Prisma.FloatNullableFilter<"GoldBar"> | number | null
+  analyticalAg?: Prisma.FloatNullableFilter<"GoldBar"> | number | null
+  originalLot?: Prisma.StringNullableFilter<"GoldBar"> | string | null
+  available?: Prisma.BoolFilter<"GoldBar"> | boolean
+  registrationDate?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
+  createdAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
+}
+
+export type GoldBarCreateManySupplierInput = {
+  id?: string
+  code: string
+  grossWeight: number
+  ley?: number | null
+  analytical: number
+  expected: number
+  recovered: number
+  leyAg?: number | null
+  analyticalAg?: number | null
+  originalLot?: string | null
+  available?: boolean
+  registrationDate?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GoldBarUpdateWithoutSupplierInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analytical?: Prisma.FloatFieldUpdateOperationsInput | number
+  expected?: Prisma.FloatFieldUpdateOperationsInput | number
+  recovered?: Prisma.FloatFieldUpdateOperationsInput | number
+  leyAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analyticalAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  originalLot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GoldBarUncheckedUpdateWithoutSupplierInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analytical?: Prisma.FloatFieldUpdateOperationsInput | number
+  expected?: Prisma.FloatFieldUpdateOperationsInput | number
+  recovered?: Prisma.FloatFieldUpdateOperationsInput | number
+  leyAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analyticalAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  originalLot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GoldBarUncheckedUpdateManyWithoutSupplierInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  grossWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  ley?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analytical?: Prisma.FloatFieldUpdateOperationsInput | number
+  expected?: Prisma.FloatFieldUpdateOperationsInput | number
+  recovered?: Prisma.FloatFieldUpdateOperationsInput | number
+  leyAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  analyticalAg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  originalLot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  registrationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -635,6 +838,7 @@ export type GoldBarSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["goldBar"]>
 
 export type GoldBarSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -653,6 +857,7 @@ export type GoldBarSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["goldBar"]>
 
 export type GoldBarSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -671,6 +876,7 @@ export type GoldBarSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   registrationDate?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["goldBar"]>
 
 export type GoldBarSelectScalar = {
@@ -692,10 +898,21 @@ export type GoldBarSelectScalar = {
 }
 
 export type GoldBarOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "supplierId" | "grossWeight" | "ley" | "analytical" | "expected" | "recovered" | "leyAg" | "analyticalAg" | "originalLot" | "available" | "registrationDate" | "createdAt" | "updatedAt", ExtArgs["result"]["goldBar"]>
+export type GoldBarInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
+}
+export type GoldBarIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
+}
+export type GoldBarIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  supplier?: boolean | Prisma.SupplierDefaultArgs<ExtArgs>
+}
 
 export type $GoldBarPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "GoldBar"
-  objects: {}
+  objects: {
+    supplier: Prisma.$SupplierPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     code: string
@@ -1106,6 +1323,7 @@ readonly fields: GoldBarFieldRefs;
  */
 export interface Prisma__GoldBarClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  supplier<T extends Prisma.SupplierDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SupplierDefaultArgs<ExtArgs>>): Prisma.Prisma__SupplierClient<runtime.Types.Result.GetResult<Prisma.$SupplierPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1167,6 +1385,10 @@ export type GoldBarFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
+  /**
    * Filter, which GoldBar to fetch.
    */
   where: Prisma.GoldBarWhereUniqueInput
@@ -1185,6 +1407,10 @@ export type GoldBarFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
+  /**
    * Filter, which GoldBar to fetch.
    */
   where: Prisma.GoldBarWhereUniqueInput
@@ -1202,6 +1428,10 @@ export type GoldBarFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
   /**
    * Filter, which GoldBar to fetch.
    */
@@ -1251,6 +1481,10 @@ export type GoldBarFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
+  /**
    * Filter, which GoldBar to fetch.
    */
   where?: Prisma.GoldBarWhereInput
@@ -1298,6 +1532,10 @@ export type GoldBarFindManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
   /**
    * Filter, which GoldBars to fetch.
    */
@@ -1347,6 +1585,10 @@ export type GoldBarCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
+  /**
    * The data needed to create a GoldBar.
    */
   data: Prisma.XOR<Prisma.GoldBarCreateInput, Prisma.GoldBarUncheckedCreateInput>
@@ -1380,6 +1622,10 @@ export type GoldBarCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    */
   data: Prisma.GoldBarCreateManyInput | Prisma.GoldBarCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1394,6 +1640,10 @@ export type GoldBarUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
   /**
    * The data needed to update a GoldBar.
    */
@@ -1446,6 +1696,10 @@ export type GoldBarUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many GoldBars to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1460,6 +1714,10 @@ export type GoldBarUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
   /**
    * The filter to search for the GoldBar to update in case it exists.
    */
@@ -1486,6 +1744,10 @@ export type GoldBarDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
   /**
    * Filter which GoldBar to delete.
    */
@@ -1518,4 +1780,8 @@ export type GoldBarDefaultArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the GoldBar
    */
   omit?: Prisma.GoldBarOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GoldBarInclude<ExtArgs> | null
 }

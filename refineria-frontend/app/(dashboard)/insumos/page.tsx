@@ -12,6 +12,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useGold } from '@/lib/GoldContext';
 import SupplyItemForm from '@/components/inventory/SupplyItemForm';
+import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import type { SupplyItem, SupplyCategory, SupplyTransactionType } from '@/types';
 import {
   Package,
@@ -684,18 +685,12 @@ export default function InsumosPage() {
                         {String(safeBulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
                       </td>
                       <td className="py-1.5 px-3">
-                        <select
+                        <ItemAutocomplete
+                          items={items ?? []}
                           value={row.itemId || ''}
-                          onChange={(e) => handleItemSelect(row.key, e.target.value)}
-                          className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 cursor-pointer appearance-none py-2"
-                        >
-                          <option value="">Seleccionar...</option>
-                          {items?.map((it) => (
-                            <option key={it.id} value={it.id}>
-                              {it.code} — {it.name}  [{it.currentStock}]
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(id) => handleItemSelect(row.key, id)}
+                          placeholder="Buscar insumo..."
+                        />
                       </td>
                       <td className="py-1.5 px-3">
                         {row.itemId ? (

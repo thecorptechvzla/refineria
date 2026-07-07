@@ -7,27 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  ADMIN
-  OWNER
-  SUPERADMIN
-}
-
-enum TransactionType {
-  IN
-  OUT
-}
-
-enum WeightUnit {
-  g
-  kg
-}
-
-enum WorkerStatus {
-  active
-  inactive
-}
-
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -43,45 +22,31 @@ model User {
 model Supplier {
   id               String        @id @default(uuid())
   name             String
-  rif              String        @unique @map("rif")
   contactInfo      String        @map("contact_info")
   registrationDate DateTime      @default(now()) @map("registration_date")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
+  rif              String        @unique @map("rif")
   transactions     Transaction[]
+  goldBars         GoldBar[]
+  processes        Process[]
 
   @@map("suppliers")
 }
 
 model Transaction {
-  id          String          @id @default(uuid())
-  type        TransactionType
-  weight      Float
-  weightUnit  WeightUnit      @map("weight_unit")
-  purity      Float
-  supplierId  String?         @map("supplier_id")
-  date        DateTime        @default(now())
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
-  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  id         String          @id @default(uuid())
+  type       TransactionType
+  weight     Float
+  weightUnit WeightUnit      @map("weight_unit")
+  purity     Float
+  supplierId String?         @map("supplier_id")
+  date       DateTime        @default(now())
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  supplier   Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("transactions")
-}
-
-enum SupplyCategory {
-  OPERATIONS
-  GENERAL_SERVICES
-}
-
-enum SupplyTransactionType {
-  IN
-  OUT
-}
-
-enum ProcessStatus {
-  open
-  in_progress
-  closed
 }
 
 model GoldBar {
@@ -100,6 +65,7 @@ model GoldBar {
   registrationDate DateTime @default(now()) @map("registration_date")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
+  supplier         Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("gold_bars")
 }
@@ -116,6 +82,7 @@ model Process {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   lots            ProcessLot[]
+  supplier        Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("processes")
 }
@@ -123,11 +90,11 @@ model Process {
 model ProcessLot {
   id           String   @id @default(uuid())
   processId    String   @map("process_id")
-  number       Int      @map("number")
   barIds       String[] @map("bar_ids")
+  creationDate DateTime @default(now()) @map("creation_date")
+  number       Int      @map("number")
   recovered    Float?
   egresadoG    Float    @default(0) @map("egresado_g")
-  creationDate DateTime @default(now()) @map("creation_date")
   process      Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
 
   @@map("process_lots")
@@ -146,17 +113,16 @@ model Worker {
 }
 
 model CustomFieldDefinition {
-  id        String   @id @default(uuid())
-  tableName String   @map("table_name")
-  fieldName String   @map("field_name")
-  fieldType String   @map("field_type")
+  id        String             @id @default(uuid())
+  tableName String             @map("table_name")
+  fieldName String             @map("field_name")
+  fieldType String             @map("field_type")
   options   String?
-  required  Boolean  @default(false)
-  order     Int      @default(0)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  values CustomFieldValue[]
+  required  Boolean            @default(false)
+  order     Int                @default(0)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  values    CustomFieldValue[]
 
   @@unique([tableName, fieldName])
   @@map("custom_field_definitions")
@@ -168,7 +134,6 @@ model CustomFieldValue {
   recordId  String                @map("record_id")
   fieldId   String                @map("field_id")
   value     String?
-
   field     CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
   @@unique([tableName, recordId, fieldId])
@@ -184,41 +149,76 @@ model ProcessCounter {
 }
 
 model SupplyItem {
-  id            String                @id @default(uuid())
-  code          String                @unique
+  id            String              @id @default(uuid())
+  code          String              @unique
   name          String
   category      SupplyCategory
-  unit          String                @default("UNIDAD")
-  currentStock  Int                   @default(0)
-  criticalLevel Int                   @default(1)
-  createdAt     DateTime              @default(now()) @map("created_at")
-  updatedAt     DateTime              @updatedAt @map("updated_at")
-
+  unit          String              @default("UNIDAD")
+  currentStock  Int                 @default(0)
+  criticalLevel Int                 @default(1)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
   transactions  SupplyTransaction[]
 
   @@map("supply_items")
 }
 
 model SupplyTransaction {
-  id        String                 @id @default(uuid())
-  itemId    String                 @map("item_id")
+  id        String                @id @default(uuid())
+  itemId    String                @map("item_id")
   type      SupplyTransactionType
   quantity  Int
-  date      DateTime               @default(now())
+  date      DateTime              @default(now())
   reference String?
-
-  item      SupplyItem             @relation(fields: [itemId], references: [id])
+  item      SupplyItem            @relation(fields: [itemId], references: [id])
 
   @@map("supply_transactions")
 }
 
 model Notification {
   id        String   @id @default(uuid())
-  type      String   // "CRITICAL_STOCK"
+  type      String
   title     String
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+enum Role {
+  ADMIN
+  SUPERADMIN
+  OWNER
+}
+
+enum TransactionType {
+  IN
+  OUT
+}
+
+enum WeightUnit {
+  g
+  kg
+}
+
+enum WorkerStatus {
+  active
+  inactive
+}
+
+enum SupplyCategory {
+  OPERATIONS
+  GENERAL_SERVICES
+}
+
+enum SupplyTransactionType {
+  IN
+  OUT
+}
+
+enum ProcessStatus {
+  open
+  closed
+  in_progress
 }

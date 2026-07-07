@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useMemo } from 'react';
+import { useState, FormEvent, useMemo, useRef, useEffect } from 'react';
 import { useSuppliers, useCreateSupplier } from '@/lib/hooks/useSuppliers';
 import { api } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,8 +9,8 @@ import CustomFieldsManager from '@/components/shared/CustomFieldsManager';
 import CustomFieldFormFields from '@/components/shared/CustomFieldFormFields';
 import { CustomFieldTableHeaders } from '@/components/shared/CustomFieldTableCells';
 import { formatDate } from '@/lib/utils';
-import { Building2, Building, CheckCircle, AlertCircle, Edit3, Trash2, X, Phone, FileText, Calendar } from 'lucide-react';
-import type { Supplier } from '@/types';
+import { Building2, Building, CheckCircle, AlertCircle, Edit3, Trash2, X, Phone, FileText, Calendar, AlertTriangle, Loader2, Package, CuboidIcon as Cube, DollarSign } from 'lucide-react';
+import type { Supplier, SupplierImpact } from '@/types';
 
 type SupplierWithCustomFields = Supplier & { _customFields?: Record<string, string | null> };
 
@@ -29,7 +29,12 @@ export default function AdminProveedoresPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [impactModal, setImpactModal] = useState<{ id: string; name: string } | null>(null);
+  const [impactData, setImpactData] = useState<SupplierImpact | null>(null);
+  const [impactLoading, setImpactLoading] = useState(false);
+  const [impactCountdown, setImpactCountdown] = useState(3);
+  const [deleting, setDeleting] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const resetForm = () => {
     setFormMode('create');
@@ -100,16 +105,54 @@ export default function AdminProveedoresPage() {
     setCustomFields(fields);
   };
 
-  const handleDelete = async (id: string) => {
+  useEffect(() => {
+    if (impactModal && impactCountdown > 0) {
+      countdownRef.current = setInterval(() => {
+        setImpactCountdown((c) => c - 1);
+      }, 1000);
+    }
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
+  }, [impactModal, impactCountdown]);
+
+  const handleShowImpact = async (id: string, name: string) => {
+    setImpactModal({ id, name });
+    setImpactData(null);
+    setImpactLoading(true);
+    setImpactCountdown(3);
     try {
-      await api<void>(`/suppliers/${id}`, { method: 'DELETE' });
-      setDeleteConfirm(null);
+      const data = await api<SupplierImpact>(`/suppliers/${id}/impact`);
+      setImpactData(data);
+    } catch {
+      setImpactData(null);
+    } finally {
+      setImpactLoading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!impactModal || !impactData) return;
+    setDeleting(true);
+    try {
+      await api<void>(`/suppliers/${impactModal.id}`, { method: 'DELETE' });
+      setImpactModal(null);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      setSuccessMessage('Proveedor eliminado.');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSuccessMessage('Proveedor y registros asociados eliminados permanentemente.');
+      setTimeout(() => setSuccessMessage(''), 5000);
     } catch {
       setErrorMessage('No se pudo eliminar el proveedor.');
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const closeModal = () => {
+    setImpactModal(null);
+    setImpactCountdown(3);
   };
 
   const colSpan = useMemo(() => {
@@ -271,27 +314,13 @@ export default function AdminProveedoresPage() {
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
-                            {deleteConfirm === s.id ? (
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => handleDelete(s.id)}
-                                  className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all"
-                                >
-                                  Confirmar
-                                </button>
-                                <button onClick={() => setDeleteConfirm(null)} className="p-1 text-slate-500 hover:text-slate-300">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setDeleteConfirm(s.id)}
-                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                                title="Eliminar"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleShowImpact(s.id, s.name)}
+                              className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              title="Eliminar permanentemente"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -309,6 +338,114 @@ export default function AdminProveedoresPage() {
           </div>
         </div>
       </div>
+
+      {impactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-midnight-900/80 backdrop-blur-sm" onClick={closeModal} />
+          <div className="relative w-full max-w-md glass-panel border border-red-500/30 p-0 overflow-hidden">
+            <div className="bg-red-500/10 border-b border-red-500/20 p-4 sm:p-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Eliminación Permanente</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Estás a punto de eliminar a: <span className="text-red-400 font-semibold">{impactModal.name}</span>
+                </p>
+              </div>
+              <button onClick={closeModal} className="ml-auto p-1 text-slate-500 hover:text-slate-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-3">
+              {impactLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                  <span className="ml-2 text-sm text-slate-400">Analizando registros vinculados...</span>
+                </div>
+              ) : impactData ? (
+                <>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-3">
+                    Registros que serán eliminados en cascada:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/10">
+                      <div className="flex items-center gap-2.5">
+                        <Cube className="w-4 h-4 text-gold-400" />
+                        <span className="text-sm text-slate-300">Barras de Oro</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-gold-400">
+                        {impactData.goldBars}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/10">
+                      <div className="flex items-center gap-2.5">
+                        <Package className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-slate-300">Procesos de Refinación</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-blue-400">
+                        {impactData.processes}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/10">
+                      <div className="flex items-center gap-2.5">
+                        <DollarSign className="w-4 h-4 text-emerald-400" />
+                        <span className="text-sm text-slate-300">Transacciones</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-emerald-400">
+                        {impactData.transactions}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-red-500/5 border border-red-500/20">
+                    <p className="text-xs text-red-400 font-medium flex items-start gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      <span>
+                        Esta acción es <strong>irreversible</strong> y afectará el balance histórico del inventario.
+                        Los procesos asociados y sus lotes también serán eliminados.
+                      </span>
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-sm text-red-400">Error al obtener datos de impacto.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-blue-500/10 p-4 sm:p-5 flex items-center justify-end gap-2">
+              <button
+                onClick={closeModal}
+                disabled={deleting}
+                className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-200 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={impactCountdown > 0 || deleting || !impactData}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : impactCountdown > 0 ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Espera {impactCountdown}s
+                  </>
+                ) : (
+                  'SÍ, ELIMINAR TODO'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

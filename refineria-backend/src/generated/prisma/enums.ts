@@ -11,8 +11,8 @@
 
 export const Role = {
   ADMIN: 'ADMIN',
-  OWNER: 'OWNER',
-  SUPERADMIN: 'SUPERADMIN'
+  SUPERADMIN: 'SUPERADMIN',
+  OWNER: 'OWNER'
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
@@ -60,8 +60,8 @@ export type SupplyTransactionType = (typeof SupplyTransactionType)[keyof typeof 
 
 export const ProcessStatus = {
   open: 'open',
-  in_progress: 'in_progress',
-  closed: 'closed'
+  closed: 'closed',
+  in_progress: 'in_progress'
 } as const
 
 export type ProcessStatus = (typeof ProcessStatus)[keyof typeof ProcessStatus]

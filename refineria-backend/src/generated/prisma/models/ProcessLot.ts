@@ -41,29 +41,29 @@ export type ProcessLotSumAggregateOutputType = {
 export type ProcessLotMinAggregateOutputType = {
   id: string | null
   processId: string | null
+  creationDate: Date | null
   number: number | null
   recovered: number | null
   egresadoG: number | null
-  creationDate: Date | null
 }
 
 export type ProcessLotMaxAggregateOutputType = {
   id: string | null
   processId: string | null
+  creationDate: Date | null
   number: number | null
   recovered: number | null
   egresadoG: number | null
-  creationDate: Date | null
 }
 
 export type ProcessLotCountAggregateOutputType = {
   id: number
   processId: number
-  number: number
   barIds: number
+  creationDate: number
+  number: number
   recovered: number
   egresadoG: number
-  creationDate: number
   _all: number
 }
 
@@ -83,29 +83,29 @@ export type ProcessLotSumAggregateInputType = {
 export type ProcessLotMinAggregateInputType = {
   id?: true
   processId?: true
+  creationDate?: true
   number?: true
   recovered?: true
   egresadoG?: true
-  creationDate?: true
 }
 
 export type ProcessLotMaxAggregateInputType = {
   id?: true
   processId?: true
+  creationDate?: true
   number?: true
   recovered?: true
   egresadoG?: true
-  creationDate?: true
 }
 
 export type ProcessLotCountAggregateInputType = {
   id?: true
   processId?: true
-  number?: true
   barIds?: true
+  creationDate?: true
+  number?: true
   recovered?: true
   egresadoG?: true
-  creationDate?: true
   _all?: true
 }
 
@@ -198,11 +198,11 @@ export type ProcessLotGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type ProcessLotGroupByOutputType = {
   id: string
   processId: string
-  number: number
   barIds: string[]
+  creationDate: Date
+  number: number
   recovered: number | null
   egresadoG: number
-  creationDate: Date
   _count: ProcessLotCountAggregateOutputType | null
   _avg: ProcessLotAvgAggregateOutputType | null
   _sum: ProcessLotSumAggregateOutputType | null
@@ -231,22 +231,22 @@ export type ProcessLotWhereInput = {
   NOT?: Prisma.ProcessLotWhereInput | Prisma.ProcessLotWhereInput[]
   id?: Prisma.StringFilter<"ProcessLot"> | string
   processId?: Prisma.StringFilter<"ProcessLot"> | string
-  number?: Prisma.IntFilter<"ProcessLot"> | number
   barIds?: Prisma.StringNullableListFilter<"ProcessLot">
+  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
+  number?: Prisma.IntFilter<"ProcessLot"> | number
   recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null
   egresadoG?: Prisma.FloatFilter<"ProcessLot"> | number
-  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
   process?: Prisma.XOR<Prisma.ProcessScalarRelationFilter, Prisma.ProcessWhereInput>
 }
 
 export type ProcessLotOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   processId?: Prisma.SortOrder
-  number?: Prisma.SortOrder
   barIds?: Prisma.SortOrder
+  creationDate?: Prisma.SortOrder
+  number?: Prisma.SortOrder
   recovered?: Prisma.SortOrderInput | Prisma.SortOrder
   egresadoG?: Prisma.SortOrder
-  creationDate?: Prisma.SortOrder
   process?: Prisma.ProcessOrderByWithRelationInput
 }
 
@@ -256,22 +256,22 @@ export type ProcessLotWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ProcessLotWhereInput[]
   NOT?: Prisma.ProcessLotWhereInput | Prisma.ProcessLotWhereInput[]
   processId?: Prisma.StringFilter<"ProcessLot"> | string
-  number?: Prisma.IntFilter<"ProcessLot"> | number
   barIds?: Prisma.StringNullableListFilter<"ProcessLot">
+  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
+  number?: Prisma.IntFilter<"ProcessLot"> | number
   recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null
   egresadoG?: Prisma.FloatFilter<"ProcessLot"> | number
-  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
   process?: Prisma.XOR<Prisma.ProcessScalarRelationFilter, Prisma.ProcessWhereInput>
 }, "id">
 
 export type ProcessLotOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   processId?: Prisma.SortOrder
-  number?: Prisma.SortOrder
   barIds?: Prisma.SortOrder
+  creationDate?: Prisma.SortOrder
+  number?: Prisma.SortOrder
   recovered?: Prisma.SortOrderInput | Prisma.SortOrder
   egresadoG?: Prisma.SortOrder
-  creationDate?: Prisma.SortOrder
   _count?: Prisma.ProcessLotCountOrderByAggregateInput
   _avg?: Prisma.ProcessLotAvgOrderByAggregateInput
   _max?: Prisma.ProcessLotMaxOrderByAggregateInput
@@ -285,80 +285,80 @@ export type ProcessLotScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ProcessLotScalarWhereWithAggregatesInput | Prisma.ProcessLotScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"ProcessLot"> | string
   processId?: Prisma.StringWithAggregatesFilter<"ProcessLot"> | string
-  number?: Prisma.IntWithAggregatesFilter<"ProcessLot"> | number
   barIds?: Prisma.StringNullableListFilter<"ProcessLot">
+  creationDate?: Prisma.DateTimeWithAggregatesFilter<"ProcessLot"> | Date | string
+  number?: Prisma.IntWithAggregatesFilter<"ProcessLot"> | number
   recovered?: Prisma.FloatNullableWithAggregatesFilter<"ProcessLot"> | number | null
   egresadoG?: Prisma.FloatWithAggregatesFilter<"ProcessLot"> | number
-  creationDate?: Prisma.DateTimeWithAggregatesFilter<"ProcessLot"> | Date | string
 }
 
 export type ProcessLotCreateInput = {
   id?: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
   process: Prisma.ProcessCreateNestedOneWithoutLotsInput
 }
 
 export type ProcessLotUncheckedCreateInput = {
   id?: string
   processId: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
 }
 
 export type ProcessLotUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   process?: Prisma.ProcessUpdateOneRequiredWithoutLotsNestedInput
 }
 
 export type ProcessLotUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   processId?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProcessLotCreateManyInput = {
   id?: string
   processId: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
 }
 
 export type ProcessLotUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProcessLotUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   processId?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProcessLotListRelationFilter = {
@@ -382,11 +382,11 @@ export type StringNullableListFilter<$PrismaModel = never> = {
 export type ProcessLotCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   processId?: Prisma.SortOrder
-  number?: Prisma.SortOrder
   barIds?: Prisma.SortOrder
+  creationDate?: Prisma.SortOrder
+  number?: Prisma.SortOrder
   recovered?: Prisma.SortOrder
   egresadoG?: Prisma.SortOrder
-  creationDate?: Prisma.SortOrder
 }
 
 export type ProcessLotAvgOrderByAggregateInput = {
@@ -398,19 +398,19 @@ export type ProcessLotAvgOrderByAggregateInput = {
 export type ProcessLotMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   processId?: Prisma.SortOrder
+  creationDate?: Prisma.SortOrder
   number?: Prisma.SortOrder
   recovered?: Prisma.SortOrder
   egresadoG?: Prisma.SortOrder
-  creationDate?: Prisma.SortOrder
 }
 
 export type ProcessLotMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   processId?: Prisma.SortOrder
+  creationDate?: Prisma.SortOrder
   number?: Prisma.SortOrder
   recovered?: Prisma.SortOrder
   egresadoG?: Prisma.SortOrder
-  creationDate?: Prisma.SortOrder
 }
 
 export type ProcessLotSumOrderByAggregateInput = {
@@ -465,6 +465,11 @@ export type ProcessLotCreatebarIdsInput = {
   set: string[]
 }
 
+export type ProcessLotUpdatebarIdsInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -473,27 +478,22 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type ProcessLotUpdatebarIdsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
 export type ProcessLotCreateWithoutProcessInput = {
   id?: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
 }
 
 export type ProcessLotUncheckedCreateWithoutProcessInput = {
   id?: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
 }
 
 export type ProcessLotCreateOrConnectWithoutProcessInput = {
@@ -528,47 +528,47 @@ export type ProcessLotScalarWhereInput = {
   NOT?: Prisma.ProcessLotScalarWhereInput | Prisma.ProcessLotScalarWhereInput[]
   id?: Prisma.StringFilter<"ProcessLot"> | string
   processId?: Prisma.StringFilter<"ProcessLot"> | string
-  number?: Prisma.IntFilter<"ProcessLot"> | number
   barIds?: Prisma.StringNullableListFilter<"ProcessLot">
+  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
+  number?: Prisma.IntFilter<"ProcessLot"> | number
   recovered?: Prisma.FloatNullableFilter<"ProcessLot"> | number | null
   egresadoG?: Prisma.FloatFilter<"ProcessLot"> | number
-  creationDate?: Prisma.DateTimeFilter<"ProcessLot"> | Date | string
 }
 
 export type ProcessLotCreateManyProcessInput = {
   id?: string
-  number: number
   barIds?: Prisma.ProcessLotCreatebarIdsInput | string[]
+  creationDate?: Date | string
+  number: number
   recovered?: number | null
   egresadoG?: number
-  creationDate?: Date | string
 }
 
 export type ProcessLotUpdateWithoutProcessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProcessLotUncheckedUpdateWithoutProcessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProcessLotUncheckedUpdateManyWithoutProcessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  number?: Prisma.IntFieldUpdateOperationsInput | number
   barIds?: Prisma.ProcessLotUpdatebarIdsInput | string[]
+  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
   recovered?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   egresadoG?: Prisma.FloatFieldUpdateOperationsInput | number
-  creationDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -576,47 +576,47 @@ export type ProcessLotUncheckedUpdateManyWithoutProcessInput = {
 export type ProcessLotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   processId?: boolean
-  number?: boolean
   barIds?: boolean
+  creationDate?: boolean
+  number?: boolean
   recovered?: boolean
   egresadoG?: boolean
-  creationDate?: boolean
   process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["processLot"]>
 
 export type ProcessLotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   processId?: boolean
-  number?: boolean
   barIds?: boolean
+  creationDate?: boolean
+  number?: boolean
   recovered?: boolean
   egresadoG?: boolean
-  creationDate?: boolean
   process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["processLot"]>
 
 export type ProcessLotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   processId?: boolean
-  number?: boolean
   barIds?: boolean
+  creationDate?: boolean
+  number?: boolean
   recovered?: boolean
   egresadoG?: boolean
-  creationDate?: boolean
   process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["processLot"]>
 
 export type ProcessLotSelectScalar = {
   id?: boolean
   processId?: boolean
-  number?: boolean
   barIds?: boolean
+  creationDate?: boolean
+  number?: boolean
   recovered?: boolean
   egresadoG?: boolean
-  creationDate?: boolean
 }
 
-export type ProcessLotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "processId" | "number" | "barIds" | "recovered" | "egresadoG" | "creationDate", ExtArgs["result"]["processLot"]>
+export type ProcessLotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "processId" | "barIds" | "creationDate" | "number" | "recovered" | "egresadoG", ExtArgs["result"]["processLot"]>
 export type ProcessLotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   process?: boolean | Prisma.ProcessDefaultArgs<ExtArgs>
 }
@@ -635,11 +635,11 @@ export type $ProcessLotPayload<ExtArgs extends runtime.Types.Extensions.Internal
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     processId: string
-    number: number
     barIds: string[]
+    creationDate: Date
+    number: number
     recovered: number | null
     egresadoG: number
-    creationDate: Date
   }, ExtArgs["result"]["processLot"]>
   composites: {}
 }
@@ -1066,11 +1066,11 @@ export interface Prisma__ProcessLotClient<T, Null = never, ExtArgs extends runti
 export interface ProcessLotFieldRefs {
   readonly id: Prisma.FieldRef<"ProcessLot", 'String'>
   readonly processId: Prisma.FieldRef<"ProcessLot", 'String'>
-  readonly number: Prisma.FieldRef<"ProcessLot", 'Int'>
   readonly barIds: Prisma.FieldRef<"ProcessLot", 'String[]'>
+  readonly creationDate: Prisma.FieldRef<"ProcessLot", 'DateTime'>
+  readonly number: Prisma.FieldRef<"ProcessLot", 'Int'>
   readonly recovered: Prisma.FieldRef<"ProcessLot", 'Float'>
   readonly egresadoG: Prisma.FieldRef<"ProcessLot", 'Float'>
-  readonly creationDate: Prisma.FieldRef<"ProcessLot", 'DateTime'>
 }
     
 
