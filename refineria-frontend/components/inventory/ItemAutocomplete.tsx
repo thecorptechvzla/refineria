@@ -103,7 +103,7 @@ export default function ItemAutocomplete({
         placeholder={selectedItem ? `${selectedItem.code} — ${selectedItem.name}` : placeholder}
       />
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-midnight-800 border border-blue-500/20 rounded-sm shadow-xl max-h-[200px] overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-midnight-800 border border-blue-500/20 rounded-sm shadow-xl max-h-[300px] overflow-y-auto">
           {filtered.length > 0 ? (
             filtered.map((item, idx) => (
               <button

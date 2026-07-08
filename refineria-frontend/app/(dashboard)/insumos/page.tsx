@@ -73,8 +73,9 @@ export default function InsumosPage() {
   const [bulkPage, setBulkPage] = useState(0);
   const [showBulkCreateOverlay, setShowBulkCreateOverlay] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [criticoSearch, setCriticoSearch] = useState('');
+const [searchQuery, setSearchQuery] = useState('');
+const [criticoSearch, setCriticoSearch] = useState('');
+const [globalSearchKey, setGlobalSearchKey] = useState(0);
   const [criticoHistoryPage, setCriticoHistoryPage] = useState(0);
   const criticoHistoryPageSize = 10;
   const [historyPage, setHistoryPage] = useState(0);
@@ -122,6 +123,22 @@ export default function InsumosPage() {
       (h) => h.insumo.toLowerCase().includes(q),
     );
   }, [historial, criticoSearch]);
+
+  const autocompleteItems = useMemo(() => {
+    const apiItems = items ?? [];
+    const criticalItems: SupplyItem[] = quimicos.map((q, idx) => ({
+      id: `critico_${q.id}`,
+      code: `CR${String(idx + 1).padStart(3, '0')}`,
+      name: q.name,
+      category: 'OPERATIONS' as SupplyCategory,
+      unit: q.unit,
+      currentStock: q.currentStock ?? 0,
+      criticalLevel: q.minimum,
+      isCritical: true,
+      criticalType: 'QUIMICO' as CriticalType,
+    }));
+    return [...criticalItems, ...apiItems];
+  }, [items, quimicos]);
 
   const totalCriticoPages = Math.max(1, Math.ceil(filteredCriticoHistorial.length / criticoHistoryPageSize));
   const safeCriticoPage = Math.min(criticoHistoryPage, totalCriticoPages - 1);
@@ -266,29 +283,13 @@ export default function InsumosPage() {
   };
 
   const updateBulkRow = (key: number, field: string, value: string) => {
-    setBulkRows((prev) => {
-      const updated = prev.map((r) => (r.key === key ? { ...r, [field]: value } : r));
-      const last = updated[updated.length - 1];
-      if (last.key === key && key === prev[prev.length - 1].key) {
-        const hasContent = gridMode === 'existing'
-          ? (field === 'itemId' && value !== '')
-          : (field === 'name' && value.trim().length >= 1);
-        if (hasContent) {
-          const nextKey = Math.max(...prev.map((r) => r.key), 0) + 1;
-          updated.push({
-            key: nextKey,
-            itemId: '',
-            criticalLevel: '1',
-            quantity: '1',
-          });
-        }
-      }
-      return updated;
-    });
+    setBulkRows((prev) =>
+      prev.map((r) => (r.key === key ? { ...r, [field]: value } : r))
+    );
   };
 
   const handleItemSelect = (rowKey: number, itemId: string) => {
-    const item = items?.find((i) => i.id === itemId);
+    const item = autocompleteItems.find((i) => i.id === itemId);
     setBulkRows((prev) =>
       prev.map((r) =>
         r.key === rowKey
@@ -310,9 +311,28 @@ export default function InsumosPage() {
   };
 
   const initBulkRows = () => {
-    setBulkRows([{ key: 0, itemId: '', criticalLevel: '1', quantity: '1' }]);
-    setBulkRowKey(1);
+    setBulkRows([]);
+    setBulkRowKey(0);
     setBulkPage(0);
+  };
+
+  const handleGlobalSelect = (itemId: string) => {
+    const item = autocompleteItems.find((i) => i.id === itemId);
+    if (!item) return;
+    const nextKey = bulkRowKey + 1;
+    setBulkRowKey(nextKey);
+    setBulkRows((prev) => [
+      ...prev,
+      {
+        key: nextKey,
+        itemId: item.id,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        criticalLevel: String(item.criticalLevel),
+        quantity: '1',
+      },
+    ]);
   };
 
   const totalBulkPages = useMemo(
@@ -374,9 +394,11 @@ export default function InsumosPage() {
       });
       if (bulkType === 'OUT' && filledRows.length > 0) {
         for (const row of filledRows) {
-          const supplyItem = items?.find((i) => i.id === row.itemId);
+          const supplyItem = autocompleteItems.find((i) => i.id === row.itemId);
           if (supplyItem?.isCritical) {
             registerDescargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+          } else if (row.name) {
+            registerDescargo(row.name, parseInt(row.quantity, 10), bulkDestination.trim());
           }
         }
       }
@@ -743,6 +765,20 @@ export default function InsumosPage() {
               </div>
             </div>
 
+            {/* ── Buscador Global ── */}
+            <div className="flex-shrink-0 bg-midnight-800 border border-blue-500/20 px-3 py-2">
+              <ItemAutocomplete
+                key={globalSearchKey}
+                items={autocompleteItems}
+                value=""
+                onChange={(id) => {
+                  handleGlobalSelect(id);
+                  setGlobalSearchKey((k) => k + 1);
+                }}
+                placeholder="Escribe código o nombre para añadir a la lista..."
+              />
+            </div>
+
             <style>{`select option { background: #1e293b; color: #e2e8f0; }`}</style>
 
             <div ref={tableBodyRef} className="flex-1 overflow-y-auto min-h-0 border border-blue-500/10">
@@ -750,7 +786,7 @@ export default function InsumosPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
                     <th className="text-center py-2.5 px-1 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-8">#</th>
-                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[32%]">
+                    <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                       {bulkType === 'IN' ? 'Ítem / Artículo' : 'Ítem'}
                     </th>
                     <th className="text-left py-2.5 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest w-[12%]">Categoría</th>
@@ -767,12 +803,16 @@ export default function InsumosPage() {
                         {String(safeBulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
                       </td>
                       <td className="py-1.5 px-3">
-                        <ItemAutocomplete
-                          items={items ?? []}
-                          value={row.itemId || ''}
-                          onChange={(id) => handleItemSelect(row.key, id)}
-                          placeholder="Buscar insumo..."
-                        />
+                        {row.itemId ? (
+                          <span className="text-slate-200 text-xs">{row.name}</span>
+                        ) : (
+                          <ItemAutocomplete
+                            items={autocompleteItems}
+                            value=""
+                            onChange={(id) => handleItemSelect(row.key, id)}
+                            placeholder="Buscar insumo..."
+                          />
+                        )}
                       </td>
                       <td className="py-1.5 px-3">
                         {row.itemId ? (
