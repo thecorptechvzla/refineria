@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { ProcessProvider } from '@/lib/ProcessContext';
+import { CriticosProvider } from '@/lib/CriticosContext';
 import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -35,7 +36,7 @@ export default function DashboardLayout({
         </button>
         <Header />
         <div className="flex-1 p-3 sm:p-6 overflow-y-auto bg-grid">
-          <ProcessProvider>{children}</ProcessProvider>
+          <CriticosProvider><ProcessProvider>{children}</ProcessProvider></CriticosProvider>
         </div>
       </main>
     </div>

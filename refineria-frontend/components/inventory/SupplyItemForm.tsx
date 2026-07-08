@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, FormEvent, useMemo } from 'react';
-import { AlertCircle } from 'lucide-react';
-import type { SupplyItem, SupplyCategory } from '@/types';
+import { AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
+import type { SupplyItem, SupplyCategory, CriticalType } from '@/types';
 
 interface SupplyItemFormProps {
   items: SupplyItem[] | undefined;
@@ -14,6 +14,8 @@ interface SupplyItemFormProps {
     category: SupplyCategory;
     unit: string;
     criticalLevel: number;
+    isCritical?: boolean;
+    criticalType?: CriticalType;
     quantity?: number;
   }) => Promise<void>;
   isSubmitting: boolean;
@@ -33,14 +35,16 @@ export default function SupplyItemForm({
   const [unit, setUnit] = useState('UNIDAD');
   const [critical, setCritical] = useState('1');
   const [quantity, setQuantity] = useState('1');
+  const [isCritical, setIsCritical] = useState(false);
+  const [criticalType, setCriticalType] = useState<CriticalType>('QUIMICO');
 
   const nextCode = useMemo(() => {
-    const prefix = category === 'OPERATIONS' ? 'OP' : 'SG';
+    const prefix = isCritical ? 'CR' : category === 'OPERATIONS' ? 'OP' : 'SG';
     const existing = items?.filter((i) => i.code.startsWith(prefix)) || [];
     const nums = existing.map((i) => parseInt(i.code.slice(2), 10)).filter((n) => !isNaN(n));
     const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
     return `${prefix}${String(next).padStart(3, '0')}`;
-  }, [items, category]);
+  }, [items, category, isCritical]);
 
   const resetForm = () => {
     setName('');
@@ -48,6 +52,8 @@ export default function SupplyItemForm({
     setUnit('UNIDAD');
     setCritical('1');
     setQuantity('1');
+    setIsCritical(false);
+    setCriticalType('QUIMICO');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -59,6 +65,8 @@ export default function SupplyItemForm({
       category: SupplyCategory;
       unit: string;
       criticalLevel: number;
+      isCritical?: boolean;
+      criticalType?: CriticalType;
       quantity?: number;
     } = {
       code: nextCode,
@@ -66,6 +74,8 @@ export default function SupplyItemForm({
       category,
       unit: unit.trim() || 'UNIDAD',
       criticalLevel: parseInt(critical, 10) || 1,
+      isCritical,
+      criticalType: isCritical ? criticalType : undefined,
     };
 
     if (isBulkMode) {
@@ -125,6 +135,41 @@ export default function SupplyItemForm({
           <option value="OPERATIONS">Operaciones</option>
           <option value="GENERAL_SERVICES">Servicios Generales</option>
         </select>
+      </div>
+
+      {/* ── Toggle: Insumo Crítico ── */}
+      <div className="border border-blue-500/10 p-3">
+        <button
+          type="button"
+          onClick={() => setIsCritical(!isCritical)}
+          className="w-full flex items-center justify-between"
+        >
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+            ¿Es Insumo Crítico?
+          </span>
+          <span className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all ${isCritical ? 'text-gold-400' : 'text-slate-600'}`}>
+            {isCritical ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+            {isCritical ? 'SÍ' : 'NO'}
+          </span>
+        </button>
+        {isCritical && (
+          <div className="mt-3 flex gap-2">
+            {(['QUIMICO', 'GAS', 'COMBUSTIBLE'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setCriticalType(t)}
+                className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                  criticalType === t
+                    ? 'bg-gold-500/10 border-gold-500/30 text-gold-400'
+                    : 'bg-midnight-800/50 border-blue-500/10 text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {t === 'QUIMICO' ? 'QUÍMICO' : t}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

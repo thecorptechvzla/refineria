@@ -68,6 +68,7 @@ export interface CustomFieldValue {
 
 export type SupplyCategory = 'OPERATIONS' | 'GENERAL_SERVICES';
 export type SupplyTransactionType = 'IN' | 'OUT';
+export type CriticalType = 'QUIMICO' | 'GAS' | 'COMBUSTIBLE';
 
 export interface SupplyItem {
   id: string;
@@ -77,6 +78,8 @@ export interface SupplyItem {
   unit: string;
   currentStock: number;
   criticalLevel: number;
+  isCritical: boolean;
+  criticalType: CriticalType | null;
 }
 
 export interface SupplyTransaction {

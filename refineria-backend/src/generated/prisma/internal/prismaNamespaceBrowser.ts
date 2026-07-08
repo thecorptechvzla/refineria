@@ -228,6 +228,8 @@ export const SupplyItemScalarFieldEnum = {
   unit: 'unit',
   currentStock: 'currentStock',
   criticalLevel: 'criticalLevel',
+  isCritical: 'isCritical',
+  criticalType: 'criticalType',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

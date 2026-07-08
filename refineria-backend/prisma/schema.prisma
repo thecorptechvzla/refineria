@@ -156,6 +156,8 @@ model SupplyItem {
   unit          String              @default("UNIDAD")
   currentStock  Int                 @default(0)
   criticalLevel Int                 @default(1)
+  isCritical    Boolean             @default(false) @map("is_critical")
+  criticalType  CriticalType?       @map("critical_type")
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
   transactions  SupplyTransaction[]
@@ -210,6 +212,12 @@ enum WorkerStatus {
 enum SupplyCategory {
   OPERATIONS
   GENERAL_SERVICES
+}
+
+enum CriticalType {
+  QUIMICO
+  GAS
+  COMBUSTIBLE
 }
 
 enum SupplyTransactionType {

@@ -50,6 +50,15 @@ export const SupplyCategory = {
 export type SupplyCategory = (typeof SupplyCategory)[keyof typeof SupplyCategory]
 
 
+export const CriticalType = {
+  QUIMICO: 'QUIMICO',
+  GAS: 'GAS',
+  COMBUSTIBLE: 'COMBUSTIBLE'
+} as const
+
+export type CriticalType = (typeof CriticalType)[keyof typeof CriticalType]
+
+
 export const SupplyTransactionType = {
   IN: 'IN',
   OUT: 'OUT'

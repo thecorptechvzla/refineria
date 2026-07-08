@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useGold } from '@/lib/GoldContext';
 import SupplyItemForm from '@/components/inventory/SupplyItemForm';
 import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
+import { useCriticos } from '@/lib/CriticosContext';
 import type { SupplyItem, SupplyCategory, SupplyTransactionType } from '@/types';
 import {
   Package,
@@ -40,6 +41,7 @@ const tabs: { label: string; value: CategoryFilter }[] = [
 
 export default function InsumosPage() {
   const { user } = useGold();
+  const { registerDescargo } = useCriticos();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
   const tableBodyRef = useRef<HTMLDivElement>(null);
   const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
@@ -282,12 +284,12 @@ export default function InsumosPage() {
       return;
     }
 
-    const items = filledRows.map((r) => ({
+    const payloadItems = filledRows.map((r) => ({
       itemId: r.itemId || '',
       quantity: parseInt(r.quantity, 10),
     }));
 
-    const invalid = items.find((r) => !r.itemId || r.quantity < 1);
+    const invalid = payloadItems.find((r) => !r.itemId || r.quantity < 1);
 
     if (invalid) {
       setBulkShake((k) => k + 1);
@@ -299,8 +301,16 @@ export default function InsumosPage() {
       await createBulkTx.mutateAsync({
         type: bulkType,
         destination: bulkDestination.trim(),
-        items,
+        items: payloadItems,
       });
+      if (bulkType === 'OUT' && filledRows.length > 0) {
+        for (const row of filledRows) {
+          const supplyItem = items?.find((i) => i.id === row.itemId);
+          if (supplyItem?.isCritical) {
+            registerDescargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+          }
+        }
+      }
       setBulkOpen(false);
       resetBulkForm();
     } catch (err: unknown) {
@@ -335,6 +345,9 @@ export default function InsumosPage() {
         quantity: qty,
         reference: txReference.trim(),
       });
+      if (txModal.type === 'OUT' && txModal.item.isCritical) {
+        registerDescargo(txModal.item.name, qty, txReference.trim());
+      }
       setTxModal(null);
       resetTxForm();
     } catch (err: unknown) {

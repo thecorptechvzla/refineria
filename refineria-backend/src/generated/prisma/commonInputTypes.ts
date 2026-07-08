@@ -321,6 +321,13 @@ export type EnumSupplyCategoryFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel> | $Enums.SupplyCategory
 }
 
+export type EnumCriticalTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.CriticalType | Prisma.EnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel> | $Enums.CriticalType | null
+}
+
 export type EnumSupplyCategoryWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.SupplyCategory | Prisma.EnumSupplyCategoryFieldRefInput<$PrismaModel>
   in?: $Enums.SupplyCategory[] | Prisma.ListEnumSupplyCategoryFieldRefInput<$PrismaModel>
@@ -329,6 +336,16 @@ export type EnumSupplyCategoryWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel>
   _max?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel>
+}
+
+export type EnumCriticalTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CriticalType | Prisma.EnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumCriticalTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.CriticalType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel>
 }
 
 export type EnumSupplyTransactionTypeFilter<$PrismaModel = never> = {
@@ -657,6 +674,13 @@ export type NestedEnumSupplyCategoryFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel> | $Enums.SupplyCategory
 }
 
+export type NestedEnumCriticalTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.CriticalType | Prisma.EnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel> | $Enums.CriticalType | null
+}
+
 export type NestedEnumSupplyCategoryWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.SupplyCategory | Prisma.EnumSupplyCategoryFieldRefInput<$PrismaModel>
   in?: $Enums.SupplyCategory[] | Prisma.ListEnumSupplyCategoryFieldRefInput<$PrismaModel>
@@ -665,6 +689,16 @@ export type NestedEnumSupplyCategoryWithAggregatesFilter<$PrismaModel = never> =
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel>
   _max?: Prisma.NestedEnumSupplyCategoryFilter<$PrismaModel>
+}
+
+export type NestedEnumCriticalTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CriticalType | Prisma.EnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.CriticalType[] | Prisma.ListEnumCriticalTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumCriticalTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.CriticalType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCriticalTypeNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumSupplyTransactionTypeFilter<$PrismaModel = never> = {

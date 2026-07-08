@@ -44,6 +44,8 @@ export type SupplyItemMinAggregateOutputType = {
   unit: string | null
   currentStock: number | null
   criticalLevel: number | null
+  isCritical: boolean | null
+  criticalType: $Enums.CriticalType | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,6 +58,8 @@ export type SupplyItemMaxAggregateOutputType = {
   unit: string | null
   currentStock: number | null
   criticalLevel: number | null
+  isCritical: boolean | null
+  criticalType: $Enums.CriticalType | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +72,8 @@ export type SupplyItemCountAggregateOutputType = {
   unit: number
   currentStock: number
   criticalLevel: number
+  isCritical: number
+  criticalType: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -92,6 +98,8 @@ export type SupplyItemMinAggregateInputType = {
   unit?: true
   currentStock?: true
   criticalLevel?: true
+  isCritical?: true
+  criticalType?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -104,6 +112,8 @@ export type SupplyItemMaxAggregateInputType = {
   unit?: true
   currentStock?: true
   criticalLevel?: true
+  isCritical?: true
+  criticalType?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -116,6 +126,8 @@ export type SupplyItemCountAggregateInputType = {
   unit?: true
   currentStock?: true
   criticalLevel?: true
+  isCritical?: true
+  criticalType?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -215,6 +227,8 @@ export type SupplyItemGroupByOutputType = {
   unit: string
   currentStock: number
   criticalLevel: number
+  isCritical: boolean
+  criticalType: $Enums.CriticalType | null
   createdAt: Date
   updatedAt: Date
   _count: SupplyItemCountAggregateOutputType | null
@@ -250,6 +264,8 @@ export type SupplyItemWhereInput = {
   unit?: Prisma.StringFilter<"SupplyItem"> | string
   currentStock?: Prisma.IntFilter<"SupplyItem"> | number
   criticalLevel?: Prisma.IntFilter<"SupplyItem"> | number
+  isCritical?: Prisma.BoolFilter<"SupplyItem"> | boolean
+  criticalType?: Prisma.EnumCriticalTypeNullableFilter<"SupplyItem"> | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFilter<"SupplyItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SupplyItem"> | Date | string
   transactions?: Prisma.SupplyTransactionListRelationFilter
@@ -263,6 +279,8 @@ export type SupplyItemOrderByWithRelationInput = {
   unit?: Prisma.SortOrder
   currentStock?: Prisma.SortOrder
   criticalLevel?: Prisma.SortOrder
+  isCritical?: Prisma.SortOrder
+  criticalType?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   transactions?: Prisma.SupplyTransactionOrderByRelationAggregateInput
@@ -279,6 +297,8 @@ export type SupplyItemWhereUniqueInput = Prisma.AtLeast<{
   unit?: Prisma.StringFilter<"SupplyItem"> | string
   currentStock?: Prisma.IntFilter<"SupplyItem"> | number
   criticalLevel?: Prisma.IntFilter<"SupplyItem"> | number
+  isCritical?: Prisma.BoolFilter<"SupplyItem"> | boolean
+  criticalType?: Prisma.EnumCriticalTypeNullableFilter<"SupplyItem"> | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFilter<"SupplyItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SupplyItem"> | Date | string
   transactions?: Prisma.SupplyTransactionListRelationFilter
@@ -292,6 +312,8 @@ export type SupplyItemOrderByWithAggregationInput = {
   unit?: Prisma.SortOrder
   currentStock?: Prisma.SortOrder
   criticalLevel?: Prisma.SortOrder
+  isCritical?: Prisma.SortOrder
+  criticalType?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SupplyItemCountOrderByAggregateInput
@@ -312,6 +334,8 @@ export type SupplyItemScalarWhereWithAggregatesInput = {
   unit?: Prisma.StringWithAggregatesFilter<"SupplyItem"> | string
   currentStock?: Prisma.IntWithAggregatesFilter<"SupplyItem"> | number
   criticalLevel?: Prisma.IntWithAggregatesFilter<"SupplyItem"> | number
+  isCritical?: Prisma.BoolWithAggregatesFilter<"SupplyItem"> | boolean
+  criticalType?: Prisma.EnumCriticalTypeNullableWithAggregatesFilter<"SupplyItem"> | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SupplyItem"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SupplyItem"> | Date | string
 }
@@ -324,6 +348,8 @@ export type SupplyItemCreateInput = {
   unit?: string
   currentStock?: number
   criticalLevel?: number
+  isCritical?: boolean
+  criticalType?: $Enums.CriticalType | null
   createdAt?: Date | string
   updatedAt?: Date | string
   transactions?: Prisma.SupplyTransactionCreateNestedManyWithoutItemInput
@@ -337,6 +363,8 @@ export type SupplyItemUncheckedCreateInput = {
   unit?: string
   currentStock?: number
   criticalLevel?: number
+  isCritical?: boolean
+  criticalType?: $Enums.CriticalType | null
   createdAt?: Date | string
   updatedAt?: Date | string
   transactions?: Prisma.SupplyTransactionUncheckedCreateNestedManyWithoutItemInput
@@ -350,6 +378,8 @@ export type SupplyItemUpdateInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   transactions?: Prisma.SupplyTransactionUpdateManyWithoutItemNestedInput
@@ -363,6 +393,8 @@ export type SupplyItemUncheckedUpdateInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   transactions?: Prisma.SupplyTransactionUncheckedUpdateManyWithoutItemNestedInput
@@ -376,6 +408,8 @@ export type SupplyItemCreateManyInput = {
   unit?: string
   currentStock?: number
   criticalLevel?: number
+  isCritical?: boolean
+  criticalType?: $Enums.CriticalType | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -388,6 +422,8 @@ export type SupplyItemUpdateManyMutationInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -400,6 +436,8 @@ export type SupplyItemUncheckedUpdateManyInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -412,6 +450,8 @@ export type SupplyItemCountOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   currentStock?: Prisma.SortOrder
   criticalLevel?: Prisma.SortOrder
+  isCritical?: Prisma.SortOrder
+  criticalType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -429,6 +469,8 @@ export type SupplyItemMaxOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   currentStock?: Prisma.SortOrder
   criticalLevel?: Prisma.SortOrder
+  isCritical?: Prisma.SortOrder
+  criticalType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -441,6 +483,8 @@ export type SupplyItemMinOrderByAggregateInput = {
   unit?: Prisma.SortOrder
   currentStock?: Prisma.SortOrder
   criticalLevel?: Prisma.SortOrder
+  isCritical?: Prisma.SortOrder
+  criticalType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -457,6 +501,10 @@ export type SupplyItemScalarRelationFilter = {
 
 export type EnumSupplyCategoryFieldUpdateOperationsInput = {
   set?: $Enums.SupplyCategory
+}
+
+export type NullableEnumCriticalTypeFieldUpdateOperationsInput = {
+  set?: $Enums.CriticalType | null
 }
 
 export type SupplyItemCreateNestedOneWithoutTransactionsInput = {
@@ -481,6 +529,8 @@ export type SupplyItemCreateWithoutTransactionsInput = {
   unit?: string
   currentStock?: number
   criticalLevel?: number
+  isCritical?: boolean
+  criticalType?: $Enums.CriticalType | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -493,6 +543,8 @@ export type SupplyItemUncheckedCreateWithoutTransactionsInput = {
   unit?: string
   currentStock?: number
   criticalLevel?: number
+  isCritical?: boolean
+  criticalType?: $Enums.CriticalType | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -521,6 +573,8 @@ export type SupplyItemUpdateWithoutTransactionsInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -533,6 +587,8 @@ export type SupplyItemUncheckedUpdateWithoutTransactionsInput = {
   unit?: Prisma.StringFieldUpdateOperationsInput | string
   currentStock?: Prisma.IntFieldUpdateOperationsInput | number
   criticalLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  isCritical?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  criticalType?: Prisma.NullableEnumCriticalTypeFieldUpdateOperationsInput | $Enums.CriticalType | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -576,6 +632,8 @@ export type SupplyItemSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   unit?: boolean
   currentStock?: boolean
   criticalLevel?: boolean
+  isCritical?: boolean
+  criticalType?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   transactions?: boolean | Prisma.SupplyItem$transactionsArgs<ExtArgs>
@@ -590,6 +648,8 @@ export type SupplyItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   unit?: boolean
   currentStock?: boolean
   criticalLevel?: boolean
+  isCritical?: boolean
+  criticalType?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["supplyItem"]>
@@ -602,6 +662,8 @@ export type SupplyItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   unit?: boolean
   currentStock?: boolean
   criticalLevel?: boolean
+  isCritical?: boolean
+  criticalType?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["supplyItem"]>
@@ -614,11 +676,13 @@ export type SupplyItemSelectScalar = {
   unit?: boolean
   currentStock?: boolean
   criticalLevel?: boolean
+  isCritical?: boolean
+  criticalType?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SupplyItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "category" | "unit" | "currentStock" | "criticalLevel" | "createdAt" | "updatedAt", ExtArgs["result"]["supplyItem"]>
+export type SupplyItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "category" | "unit" | "currentStock" | "criticalLevel" | "isCritical" | "criticalType" | "createdAt" | "updatedAt", ExtArgs["result"]["supplyItem"]>
 export type SupplyItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   transactions?: boolean | Prisma.SupplyItem$transactionsArgs<ExtArgs>
   _count?: boolean | Prisma.SupplyItemCountOutputTypeDefaultArgs<ExtArgs>
@@ -639,6 +703,8 @@ export type $SupplyItemPayload<ExtArgs extends runtime.Types.Extensions.Internal
     unit: string
     currentStock: number
     criticalLevel: number
+    isCritical: boolean
+    criticalType: $Enums.CriticalType | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["supplyItem"]>
@@ -1072,6 +1138,8 @@ export interface SupplyItemFieldRefs {
   readonly unit: Prisma.FieldRef<"SupplyItem", 'String'>
   readonly currentStock: Prisma.FieldRef<"SupplyItem", 'Int'>
   readonly criticalLevel: Prisma.FieldRef<"SupplyItem", 'Int'>
+  readonly isCritical: Prisma.FieldRef<"SupplyItem", 'Boolean'>
+  readonly criticalType: Prisma.FieldRef<"SupplyItem", 'CriticalType'>
   readonly createdAt: Prisma.FieldRef<"SupplyItem", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SupplyItem", 'DateTime'>
 }
