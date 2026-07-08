@@ -13,7 +13,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useGold } from '@/lib/GoldContext';
 import SupplyItemForm from '@/components/inventory/SupplyItemForm';
 import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
-import type { SupplyItem, SupplyCategory, SupplyTransactionType } from '@/types';
+import { useCriticos } from '@/lib/CriticosContext';
+import type { SupplyItem, SupplyCategory, SupplyTransactionType, CriticalType } from '@/types';
 import {
   Package,
   AlertTriangle,
@@ -30,21 +31,24 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | null;
+type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | 'CRITICAL' | null;
 
 const tabs: { label: string; value: CategoryFilter }[] = [
   { label: 'OPERACIONES', value: 'OPERATIONS' },
   { label: 'SERVICIOS GENERALES', value: 'GENERAL_SERVICES' },
+  { label: 'CRÍTICOS', value: 'CRITICAL' },
   { label: 'TODOS', value: null },
 ];
 
 export default function InsumosPage() {
   const { user } = useGold();
+  const { registerDescargo, registerCritico, historial, quimicos } = useCriticos();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
   const tableBodyRef = useRef<HTMLDivElement>(null);
   const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
   const [bulkPageSize, setBulkPageSize] = useState(20);
-  const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(category ?? undefined);
+  const apiCategory = category === 'CRITICAL' ? undefined : category;
+  const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(apiCategory ?? undefined);
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
   const createBulkTx = useCreateBulkSupplyTransaction();
@@ -70,6 +74,9 @@ export default function InsumosPage() {
   const [showBulkCreateOverlay, setShowBulkCreateOverlay] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [criticoSearch, setCriticoSearch] = useState('');
+  const [criticoHistoryPage, setCriticoHistoryPage] = useState(0);
+  const criticoHistoryPageSize = 10;
   const [historyPage, setHistoryPage] = useState(0);
   const historyPageSize = 10;
 
@@ -107,6 +114,22 @@ export default function InsumosPage() {
     return result;
   }, [items, searchQuery]);
 
+  const filteredCriticoHistorial = useMemo(() => {
+    if (!historial) return [];
+    if (!criticoSearch.trim()) return historial;
+    const q = criticoSearch.toLowerCase();
+    return historial.filter(
+      (h) => h.insumo.toLowerCase().includes(q),
+    );
+  }, [historial, criticoSearch]);
+
+  const totalCriticoPages = Math.max(1, Math.ceil(filteredCriticoHistorial.length / criticoHistoryPageSize));
+  const safeCriticoPage = Math.min(criticoHistoryPage, totalCriticoPages - 1);
+  const pageCriticoHistorial = useMemo(
+    () => filteredCriticoHistorial.slice(safeCriticoPage * criticoHistoryPageSize, (safeCriticoPage + 1) * criticoHistoryPageSize),
+    [filteredCriticoHistorial, safeCriticoPage, criticoHistoryPageSize],
+  );
+
   const [txModal, setTxModal] = useState<{
     item: SupplyItem;
     type: SupplyTransactionType;
@@ -126,11 +149,35 @@ export default function InsumosPage() {
     category: SupplyCategory;
     unit: string;
     criticalLevel: number;
+    isCritical?: boolean;
+    criticalType?: CriticalType;
+    initialStock?: number;
+    dailyConsumption?: number;
+    cilindrosLlenos?: number;
+    cilindrosEnUso?: number;
+    cilindrosDisponibles?: number;
+    litrosIniciales?: number;
+    capacidadTanque?: number;
   }) => {
     setCreateError('');
 
     try {
       await createItem.mutateAsync(data);
+      if (data.isCritical && data.criticalType && data.criticalType !== 'QUIMICO') {
+        registerCritico({
+          name: data.name,
+          criticalType: data.criticalType,
+          unit: data.unit,
+          initialStock: data.initialStock,
+          dailyConsumption: data.dailyConsumption,
+          minimum: data.criticalLevel,
+          cilindrosLlenos: data.cilindrosLlenos,
+          cilindrosEnUso: data.cilindrosEnUso,
+          cilindrosDisponibles: data.cilindrosDisponibles,
+          litrosIniciales: data.litrosIniciales,
+          capacidadTanque: data.capacidadTanque,
+        });
+      }
       setShowCreateModal(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear insumo';
@@ -145,9 +192,33 @@ export default function InsumosPage() {
     unit: string;
     criticalLevel: number;
     quantity?: number;
+    isCritical?: boolean;
+    criticalType?: CriticalType;
+    initialStock?: number;
+    dailyConsumption?: number;
+    cilindrosLlenos?: number;
+    cilindrosEnUso?: number;
+    cilindrosDisponibles?: number;
+    litrosIniciales?: number;
+    capacidadTanque?: number;
   }) => {
     const { quantity = 1, ...itemData } = data;
     const newItem = await createItem.mutateAsync(itemData);
+    if (data.isCritical && data.criticalType && data.criticalType !== 'QUIMICO') {
+      registerCritico({
+        name: data.name,
+        criticalType: data.criticalType,
+        unit: data.unit,
+        initialStock: data.initialStock,
+        dailyConsumption: data.dailyConsumption,
+        minimum: data.criticalLevel,
+        cilindrosLlenos: data.cilindrosLlenos,
+        cilindrosEnUso: data.cilindrosEnUso,
+        cilindrosDisponibles: data.cilindrosDisponibles,
+        litrosIniciales: data.litrosIniciales,
+        capacidadTanque: data.capacidadTanque,
+      });
+    }
     queryClient.setQueryData<SupplyItem[]>(
       ['supplies', 'items', category ?? undefined],
       (old) => (old ? [...old, newItem] : [newItem]),
@@ -282,12 +353,12 @@ export default function InsumosPage() {
       return;
     }
 
-    const items = filledRows.map((r) => ({
+    const payloadItems = filledRows.map((r) => ({
       itemId: r.itemId || '',
       quantity: parseInt(r.quantity, 10),
     }));
 
-    const invalid = items.find((r) => !r.itemId || r.quantity < 1);
+    const invalid = payloadItems.find((r) => !r.itemId || r.quantity < 1);
 
     if (invalid) {
       setBulkShake((k) => k + 1);
@@ -299,8 +370,16 @@ export default function InsumosPage() {
       await createBulkTx.mutateAsync({
         type: bulkType,
         destination: bulkDestination.trim(),
-        items,
+        items: payloadItems,
       });
+      if (bulkType === 'OUT' && filledRows.length > 0) {
+        for (const row of filledRows) {
+          const supplyItem = items?.find((i) => i.id === row.itemId);
+          if (supplyItem?.isCritical) {
+            registerDescargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+          }
+        }
+      }
       setBulkOpen(false);
       resetBulkForm();
     } catch (err: unknown) {
@@ -335,6 +414,9 @@ export default function InsumosPage() {
         quantity: qty,
         reference: txReference.trim(),
       });
+      if (txModal.type === 'OUT' && txModal.item.isCritical) {
+        registerDescargo(txModal.item.name, qty, txReference.trim());
+      }
       setTxModal(null);
       resetTxForm();
     } catch (err: unknown) {
@@ -802,6 +884,7 @@ export default function InsumosPage() {
                   <SupplyItemForm
                     items={items}
                     isBulkMode
+                    chemicals={quimicos}
                     onSubmit={handleBulkCreateSubmit}
                     isSubmitting={createItem.isPending}
                     error={createError}
@@ -833,6 +916,7 @@ export default function InsumosPage() {
               </div>
               <SupplyItemForm
                 items={items}
+                chemicals={quimicos}
                 onSubmit={handleCreateSubmit}
                 isSubmitting={createItem.isPending}
                 error={createError}
@@ -887,17 +971,150 @@ export default function InsumosPage() {
                 ))}
               </div>
               <div className="flex-1 min-w-[180px] max-w-xs ml-auto">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
-                  placeholder="Buscar por código o nombre..."
-                />
+                {category === 'CRITICAL' ? (
+                  <input
+                    type="text"
+                    value={criticoSearch}
+                    onChange={(e) => setCriticoSearch(e.target.value)}
+                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
+                    placeholder="Buscar en historial..."
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
+                    placeholder="Buscar por código o nombre..."
+                  />
+                )}
               </div>
             </div>
 
             <div className="flex-1 overflow-x-auto">
+              {category === 'CRITICAL' ? (
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <History className="w-4 h-4 text-blue-400" />
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Consumos</span>
+                    <span className="ml-auto text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
+                      {filteredCriticoHistorial.length} registros
+                    </span>
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-blue-500/10">
+                          <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
+                          <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código / Insumo</th>
+                          <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
+                          <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cantidad</th>
+                          <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Referencia</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pageCriticoHistorial.length > 0 ? (
+                          pageCriticoHistorial.map((h) => (
+                            <tr key={h.id} className="terminal-row">
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-300">{h.date}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{h.insumo}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
+                                <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-red-500/20 text-red-400 bg-red-500/10">
+                                  DESCARGO
+                                </span>
+                              </td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-red-400 text-right">{h.cantidad}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{h.observacion || '—'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-500">
+                              <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                              <p>No hay consumos registrados.</p>
+                              <p className="text-xs text-slate-600 mt-1">Los descargos de insumos críticos aparecerán aquí automáticamente.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile cards */}
+                  <div className="sm:hidden space-y-2">
+                    {pageCriticoHistorial.length > 0 ? (
+                      pageCriticoHistorial.map((h) => (
+                        <div key={h.id} className="bg-midnight-800/50 border border-blue-500/10 p-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono text-slate-500">{h.date}</span>
+                            <span className="text-[10px] font-mono font-bold text-red-400">-{h.cantidad}</span>
+                          </div>
+                          <div className="text-xs text-slate-200 font-medium">{h.insumo}</div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase tracking-wider text-red-400/80 border border-red-500/10 px-1.5 py-0.5 bg-red-500/5">DESCARGO</span>
+                            <span className="text-[10px] text-slate-500 truncate ml-2">{h.observacion || '—'}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center">
+                        <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500">No hay consumos registrados.</p>
+                      </div>
+                    )}
+                    {totalCriticoPages > 1 && (
+                      <div className="flex items-center justify-center gap-3 pt-2">
+                        <button
+                          type="button"
+                          disabled={criticoHistoryPage === 0}
+                          onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))}
+                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {safeCriticoPage + 1}/{totalCriticoPages}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={criticoHistoryPage >= totalCriticoPages - 1}
+                          onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))}
+                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop pagination */}
+                  {totalCriticoPages > 1 && (
+                    <div className="hidden sm:flex items-center justify-center gap-3 pt-3 border-t border-blue-500/10 mt-3">
+                      <button
+                        type="button"
+                        disabled={criticoHistoryPage === 0}
+                        onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))}
+                        className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {safeCriticoPage + 1}/{totalCriticoPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={criticoHistoryPage >= totalCriticoPages - 1}
+                        onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))}
+                        className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
@@ -990,6 +1207,7 @@ export default function InsumosPage() {
                   )}
                 </tbody>
               </table>
+            )}
             </div>
           </div>
         </div>

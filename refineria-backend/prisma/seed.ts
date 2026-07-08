@@ -126,7 +126,43 @@ async function main() {
   //   prisma.worker.create({ data: { name: 'Sofía Mamani', position: 'Auxiliar de Oficina', status: 'inactive', startDate: new Date('2023-02-15T08:00:00Z') } }),
   // ]);
 
-  // console.log('Workers created:', workers.length);
+  // ─── Insumos Críticos (Químicos) ───
+  const chemicals = [
+    { code: 'CR001', name: 'Ácido Clorhídrico', unit: 'Lts', criticalLevel: 860, criticalType: 'QUIMICO' as const },
+    { code: 'CR002', name: 'Ácido Nítrico', unit: 'Lts', criticalLevel: 500, criticalType: 'QUIMICO' as const },
+    { code: 'CR003', name: 'Metabisulfito', unit: 'kg', criticalLevel: 300, criticalType: 'QUIMICO' as const },
+    { code: 'CR004', name: 'Urea', unit: 'kg', criticalLevel: 600, criticalType: 'QUIMICO' as const },
+    { code: 'CR005', name: 'Soda Caustica (Lts)', unit: 'Lts', criticalLevel: 120, criticalType: 'QUIMICO' as const },
+    { code: 'CR006', name: 'Soda Caustica (Kg)', unit: 'Kg', criticalLevel: 250, criticalType: 'QUIMICO' as const },
+    { code: 'CR007', name: 'Amoniaco', unit: 'Lts', criticalLevel: 500, criticalType: 'QUIMICO' as const },
+    { code: 'CR008', name: 'Alcohol Etilico', unit: 'Lts', criticalLevel: 40, criticalType: 'QUIMICO' as const },
+  ];
+
+  const created = [];
+  for (const chem of chemicals) {
+    const item = await prisma.supplyItem.upsert({
+      where: { code: chem.code },
+      update: {
+        name: chem.name,
+        unit: chem.unit,
+        criticalLevel: chem.criticalLevel,
+        criticalType: chem.criticalType,
+      },
+      create: {
+        code: chem.code,
+        name: chem.name,
+        category: 'OPERATIONS',
+        unit: chem.unit,
+        currentStock: 0,
+        criticalLevel: chem.criticalLevel,
+        isCritical: true,
+        criticalType: chem.criticalType,
+      },
+    });
+    created.push(item.code);
+  }
+  console.log('Supply items created:', created.join(', '));
+
   console.log('Seeding complete!');
 }
 

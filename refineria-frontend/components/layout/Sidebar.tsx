@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useLogout } from '@/lib/hooks/useAuth';
-import { LayoutDashboard, ArrowLeftRight, Building2, LogOut, X, ShieldCheck, ClipboardList, Settings, FileDown, Shield, Package } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Building2, LogOut, X, ShieldCheck, ClipboardList, Settings, FileDown, Shield, Package, CircleAlert } from 'lucide-react';
 
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
@@ -23,6 +23,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
     { name: 'Configuración de procesos', href: '/procesos', icon: Settings, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Exportar', href: '/exportar', icon: FileDown, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Inventario', href: '/insumos', icon: Package, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
+    { name: 'Reporte de Críticos', href: '/criticos', icon: CircleAlert, allowedRoles: ['ADMIN', 'SUPERADMIN', 'OWNER'] as const },
     { name: 'Administración', href: '/admin/usuarios', icon: Shield, allowedRoles: ['SUPERADMIN'] as const },
   ];
 

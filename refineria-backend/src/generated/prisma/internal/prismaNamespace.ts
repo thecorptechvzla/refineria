@@ -1563,6 +1563,8 @@ export const SupplyItemScalarFieldEnum = {
   unit: 'unit',
   currentStock: 'currentStock',
   criticalLevel: 'criticalLevel',
+  isCritical: 'isCritical',
+  criticalType: 'criticalType',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1768,6 +1770,20 @@ export type EnumSupplyCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$P
  * Reference to a field of type 'SupplyCategory[]'
  */
 export type ListEnumSupplyCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SupplyCategory[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CriticalType'
+ */
+export type EnumCriticalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CriticalType'>
+    
+
+
+/**
+ * Reference to a field of type 'CriticalType[]'
+ */
+export type ListEnumCriticalTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CriticalType[]'>
     
 
 

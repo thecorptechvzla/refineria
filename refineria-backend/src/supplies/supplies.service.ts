@@ -10,7 +10,7 @@ import { CreateSupplyItemDto } from './dto/create-supply-item.dto';
 import { UpdateSupplyItemDto } from './dto/update-supply-item.dto';
 import { CreateSupplyTransactionDto } from './dto/create-supply-transaction.dto';
 import { CreateBulkSupplyTransactionDto } from './dto/create-bulk-supply-transaction.dto';
-import { SupplyCategory } from '../generated/prisma/client';
+import { CriticalType, SupplyCategory } from '../generated/prisma/client';
 
 @Injectable()
 export class SuppliesService {
@@ -34,6 +34,8 @@ export class SuppliesService {
         category: dto.category,
         unit: dto.unit ?? 'UNIDAD',
         criticalLevel: dto.criticalLevel ?? 1,
+        isCritical: dto.isCritical ?? false,
+        criticalType: dto.isCritical ? (dto.criticalType ?? null) : null,
       },
     });
   }
@@ -245,6 +247,8 @@ export class SuppliesService {
                 category: item.category,
                 unit,
                 criticalLevel,
+                isCritical: item.isCritical ?? false,
+                criticalType: item.isCritical ? (item.criticalType ?? null) : null,
                 currentStock: item.quantity,
               },
             });

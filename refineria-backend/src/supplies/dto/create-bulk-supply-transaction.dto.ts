@@ -1,6 +1,6 @@
-import { IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SupplyCategory, SupplyTransactionType } from '../../generated/prisma/client';
+import { CriticalType, SupplyCategory, SupplyTransactionType } from '../../generated/prisma/client';
 
 class BulkItemDto {
   @IsOptional()
@@ -23,6 +23,14 @@ class BulkItemDto {
   @IsInt()
   @Min(0)
   criticalLevel?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isCritical?: boolean;
+
+  @IsOptional()
+  @IsEnum(CriticalType)
+  criticalType?: CriticalType;
 
   @IsNumber()
   @Min(1)
