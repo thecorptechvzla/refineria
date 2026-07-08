@@ -22,10 +22,20 @@ interface SupplyItemFormData {
   capacidadTanque?: number;
 }
 
+interface ChemicalOption {
+  id: string;
+  name: string;
+  unit: string;
+  initialStock: number;
+  dailyConsumption: number;
+  minimum: number;
+}
+
 interface SupplyItemFormProps {
   items: SupplyItem[] | undefined;
   initialCategory?: SupplyCategory;
   isBulkMode?: boolean;
+  chemicals?: ChemicalOption[];
   onSubmit: (data: SupplyItemFormData) => Promise<void>;
   isSubmitting: boolean;
   error?: string;
@@ -35,6 +45,7 @@ export default function SupplyItemForm({
   items,
   initialCategory = 'OPERATIONS',
   isBulkMode = false,
+  chemicals,
   onSubmit,
   isSubmitting,
   error,
@@ -46,6 +57,7 @@ export default function SupplyItemForm({
   const [quantity, setQuantity] = useState('1');
   const [isCritical, setIsCritical] = useState(false);
   const [criticalType, setCriticalType] = useState<CriticalType>('QUIMICO');
+  const [selectedChemId, setSelectedChemId] = useState('');
 
   const [initialStock, setInitialStock] = useState('');
   const [dailyConsumption, setDailyConsumption] = useState('');
@@ -54,6 +66,18 @@ export default function SupplyItemForm({
   const [cilindrosDisponibles, setCilindrosDisponibles] = useState('');
   const [litrosIniciales, setLitrosIniciales] = useState('');
   const [capacidadTanque, setCapacidadTanque] = useState('');
+
+  const handleChemicalSelect = (chemId: string) => {
+    setSelectedChemId(chemId);
+    const chem = chemicals?.find((c) => c.id === chemId);
+    if (chem) {
+      setName(chem.name);
+      setInitialStock(String(chem.initialStock));
+      setDailyConsumption(String(chem.dailyConsumption));
+      setCritical(String(chem.minimum));
+      setUnit(chem.unit);
+    }
+  };
 
   const nextCode = useMemo(() => {
     const prefix = isCritical ? 'CR' : category === 'OPERATIONS' ? 'OP' : 'SG';
@@ -71,6 +95,7 @@ export default function SupplyItemForm({
     setQuantity('1');
     setIsCritical(false);
     setCriticalType('QUIMICO');
+    setSelectedChemId('');
     setInitialStock('');
     setDailyConsumption('');
     setCilindrosLlenos('');
@@ -270,64 +295,67 @@ export default function SupplyItemForm({
             <Beaker className="w-4 h-4 text-blue-400" />
             <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Datos del Químico</span>
           </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+              <span className="text-red-400 mr-0.5">*</span>Insumo Químico
+            </label>
+            <select
+              value={selectedChemId}
+              onChange={(e) => handleChemicalSelect(e.target.value)}
+              className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+            >
+              <option value="">Seleccionar químico...</option>
+              {chemicals?.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                <span className="text-red-400 mr-0.5">*</span>Inventario Inicial
+                Inventario Inicial (Lts/Kg)
               </label>
               <input
                 type="number"
-                required
-                min="0"
+                disabled
                 value={initialStock}
-                onChange={(e) => setInitialStock(e.target.value)}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                placeholder="Ej. 1000"
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
               />
             </div>
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                <span className="text-red-400 mr-0.5">*</span>Consumo Diario Promedio
+                Consumo Diario Promedio
               </label>
               <input
                 type="number"
-                required
-                min="0"
+                disabled
                 value={dailyConsumption}
-                onChange={(e) => setDailyConsumption(e.target.value)}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                placeholder="Ej. 216"
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                <span className="text-red-400 mr-0.5">*</span>Cantidad Mínima (Alerta)
+                Cantidad Mínima (Alerta)
               </label>
               <input
                 type="number"
-                required
-                min="0"
+                disabled
                 value={critical}
-                onChange={(e) => setCritical(e.target.value)}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-                placeholder="Ej. 860"
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
               />
             </div>
             <div>
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                <span className="text-red-400 mr-0.5">*</span>Unidad
+                Unidad
               </label>
-              <select
+              <input
+                type="text"
+                disabled
                 value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-              >
-                <option value="Lts">Lts</option>
-                <option value="Kg">Kg</option>
-                <option value="UNIDAD">UNIDAD</option>
-              </select>
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
+              />
             </div>
           </div>
         </div>

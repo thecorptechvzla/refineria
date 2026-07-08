@@ -15,7 +15,6 @@ import {
   Gauge,
   FlaskConical,
   Wrench,
-  History,
   Plus,
   X,
   ChevronRight,
@@ -37,7 +36,6 @@ const TABS = [
   { id: 'resumen', label: 'RESUMEN', icon: LayoutDashboard },
   { id: 'quimicos', label: 'QUÍMICOS', icon: Beaker },
   { id: 'gases', label: 'GASES / COMBUSTIBLE', icon: Flame },
-  { id: 'historial', label: 'HISTORIAL', icon: History },
   { id: 'novedades', label: 'NOVEDADES', icon: ClipboardList },
 ];
 
@@ -142,7 +140,7 @@ function KpiCard({
 export default function CriticosPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('resumen');
-  const { quimicos, gases, combustible, historial, novedades, addNovedad } = useCriticos();
+  const { quimicos, gases, combustible, novedades, addNovedad } = useCriticos();
 
   useEffect(() => { setIsMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
@@ -320,31 +318,31 @@ export default function CriticosPage() {
                 </thead>
                 <tbody>
                   {quimicos.map((q) => {
-                    const isCritical = q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
+                    const isCritical = isMounted && q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
                     return (
                       <tr key={q.id} className="terminal-row">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{q.name}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{q.unit}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.initialStock}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">
-                          {q.dailyConsumption > 0 ? q.dailyConsumption : <span className="text-slate-500">—</span>}
+                          {isMounted && q.dailyConsumption > 0 ? q.dailyConsumption : <span className="text-slate-500">—</span>}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.minimum}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <span className={`text-sm font-mono font-bold ${isCritical ? 'text-red-400' : 'text-gold-500'}`}>
-                            {Number(q.currentStock || 0).toLocaleString('de-DE')}
+                            {isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}
                           </span>
                           {isCritical && (
                             <AlertTriangle className="inline-block w-4 h-4 ml-2 text-red-400 blink-warning" />
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                          {q.daysOfAutonomy !== null ? (
+                          {isMounted && q.daysOfAutonomy !== null ? (
                             <span className={`text-sm font-mono font-bold ${isCritical ? 'text-red-400' : 'text-slate-300'}`}>
                               {q.daysOfAutonomy.toFixed(1)}
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-500">N/A</span>
+                            <span className="text-xs text-slate-500">—</span>
                           )}
                         </td>
                       </tr>
@@ -357,8 +355,8 @@ export default function CriticosPage() {
             {/* ── Mobile cards ── */}
             <div className="md:hidden divide-y divide-blue-500/10">
               {quimicos.map((q) => {
-                const isCritical = q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
-                const pct = q.initialStock > 0 ? Math.min(100, (q.currentStock / q.initialStock) * 100) : 0;
+                const isCritical = isMounted && q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
+                const pct = isMounted && q.initialStock > 0 ? Math.min(100, (q.currentStock / q.initialStock) * 100) : 0;
                 const barColor = pct > 50 ? '#10B981' : pct > 25 ? '#F59E0B' : '#EF4444';
                 return (
                   <div key={q.id} className="p-4 hover:bg-midnight-800/20 transition-colors">
@@ -374,7 +372,7 @@ export default function CriticosPage() {
                             : 'text-green-400 bg-green-500/10 border-green-500/20'
                         }`}
                       >
-                        {q.daysOfAutonomy !== null ? `${q.daysOfAutonomy.toFixed(1)}d` : 'N/A'}
+                        {isMounted && q.daysOfAutonomy !== null ? `${q.daysOfAutonomy.toFixed(1)}d` : '—'}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
@@ -385,7 +383,7 @@ export default function CriticosPage() {
                         />
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 w-14 text-right">
-                        {Number(q.currentStock || 0).toLocaleString('de-DE')}/{q.initialStock}
+                        {isMounted ? `${Number(q.currentStock || 0).toLocaleString('de-DE')}/${q.initialStock}` : '—'}
                       </span>
                     </div>
                   </div>
@@ -440,6 +438,7 @@ export default function CriticosPage() {
                 <span className="text-[10px] font-mono text-slate-600 border border-blue-500/10 px-2 py-0.5">GASOIL</span>
               </div>
               <div className="p-4 sm:p-5">
+                {isMounted ? (
                 <div className="flex items-center gap-5">
                   <div className="flex-shrink-0 flex flex-col items-center gap-1">
                     <div className="relative w-16 h-52 bg-midnight-900 border-2 border-blue-500/15 rounded-sm overflow-hidden">
@@ -491,6 +490,14 @@ export default function CriticosPage() {
                     </p>
                   </div>
                 </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Fuel className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">Cargando datos de combustible...</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -525,7 +532,7 @@ export default function CriticosPage() {
                       {q.history.map((h, i) => (
                         <td key={i} className="px-2 py-2.5 text-center font-mono text-slate-400">{h.v}</td>
                       ))}
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-gold-500 border-l border-blue-500/20">{Number(q.currentStock || 0).toLocaleString('de-DE')}</td>
+                      <td className="px-3 py-2.5 text-center font-mono font-bold text-gold-500 border-l border-blue-500/20">{isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -633,18 +640,26 @@ export default function CriticosPage() {
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">Control Diario de Combustible</h2>
             </div>
             <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-blue-500/10">
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Cantidad Inicial</p>
-                <p className="text-lg font-bold text-white hud-number">{combustible.initialAmount.toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Disponible</p>
-                <p className="text-lg font-bold text-amber-400 hud-number">{combustible.currentStock.toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Consumido</p>
-                <p className="text-lg font-bold text-red-400 hud-number">{(combustible.initialAmount - combustible.currentStock).toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
-              </div>
+              {isMounted ? (
+                <>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Cantidad Inicial</p>
+                    <p className="text-lg font-bold text-white hud-number">{combustible.initialAmount.toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Disponible</p>
+                    <p className="text-lg font-bold text-amber-400 hud-number">{combustible.currentStock.toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Consumido</p>
+                    <p className="text-lg font-bold text-red-400 hud-number">{(combustible.initialAmount - combustible.currentStock).toLocaleString()} <span className="text-sm text-slate-400">Lts</span></p>
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-3 flex items-center justify-center py-6">
+                  <p className="text-sm text-slate-500">Cargando...</p>
+                </div>
+              )}
             </div>
             <div className="overflow-x-auto max-h-80 overflow-y-auto">
               <table className="min-w-full">
@@ -667,51 +682,6 @@ export default function CriticosPage() {
               </table>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ════════════════════════════════════════════════ */}
-      {/* TAB: HISTORIAL */}
-      {/* ════════════════════════════════════════════════ */}
-      {activeTab === 'historial' && (
-        <div className="glass-panel">
-          <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center gap-2">
-            <History className="w-4 h-4 text-blue-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Historial de Consumos</h2>
-            <span className="ml-auto text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-              {historial.length} registros
-            </span>
-          </div>
-          {historial.length > 0 ? (
-            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-blue-500/10 bg-midnight-800/50 sticky top-0">
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Insumo</th>
-                    <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cantidad Consumida</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Observación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historial.map((h) => (
-                    <tr key={h.id} className="terminal-row">
-                      <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-300">{h.date}</td>
-                      <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{h.insumo}</td>
-                      <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-red-400 text-right">{h.cantidad}</td>
-                      <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{h.observacion || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No hay consumos registrados desde el inventario.</p>
-              <p className="text-xs text-slate-600 mt-1">Los descargos de insumos críticos aparecerán aquí automáticamente.</p>
-            </div>
-          )}
         </div>
       )}
 
