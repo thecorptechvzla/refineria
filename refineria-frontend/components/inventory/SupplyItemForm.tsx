@@ -317,9 +317,10 @@ export default function SupplyItemForm({
               </label>
               <input
                 type="number"
-                disabled
+                min="0"
                 value={initialStock}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
+                onChange={(e) => setInitialStock(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
               />
             </div>
             <div>
@@ -328,9 +329,10 @@ export default function SupplyItemForm({
               </label>
               <input
                 type="number"
-                disabled
+                min="0"
                 value={dailyConsumption}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
+                onChange={(e) => setDailyConsumption(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
               />
             </div>
           </div>
@@ -341,9 +343,10 @@ export default function SupplyItemForm({
               </label>
               <input
                 type="number"
-                disabled
+                min="0"
                 value={critical}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
+                onChange={(e) => setCritical(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
               />
             </div>
             <div>
@@ -352,9 +355,9 @@ export default function SupplyItemForm({
               </label>
               <input
                 type="text"
-                disabled
                 value={unit}
-                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/10 text-slate-500 text-sm outline-none cursor-not-allowed"
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
               />
             </div>
           </div>
