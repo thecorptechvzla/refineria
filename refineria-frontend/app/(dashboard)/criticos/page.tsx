@@ -16,7 +16,6 @@ import {
   FlaskConical,
   Wrench,
   History,
-  FileText,
   Plus,
   X,
   ChevronRight,
@@ -39,7 +38,6 @@ const TABS = [
   { id: 'quimicos', label: 'QUÍMICOS', icon: Beaker },
   { id: 'gases', label: 'GASES / COMBUSTIBLE', icon: Flame },
   { id: 'historial', label: 'HISTORIAL', icon: History },
-  { id: 'registros', label: 'REGISTROS', icon: FileText },
   { id: 'novedades', label: 'NOVEDADES', icon: ClipboardList },
 ];
 
@@ -144,7 +142,7 @@ function KpiCard({
 export default function CriticosPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('resumen');
-  const { quimicos, gases, combustible, historial, novedades, registros, addNovedad } = useCriticos();
+  const { quimicos, gases, combustible, historial, novedades, addNovedad } = useCriticos();
 
   useEffect(() => { setIsMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
@@ -800,57 +798,6 @@ export default function CriticosPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* TAB: REGISTROS */}
-      {/* ════════════════════════════════════════════════ */}
-      {activeTab === 'registros' && (
-        <div className="glass-panel">
-          <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Historial de Insumos Críticos Registrados</h2>
-          </div>
-
-          {registros.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-500 uppercase tracking-widest">No hay registros aún</p>
-              <p className="text-[10px] text-slate-600 mt-1">Los insumos críticos registrados aparecerán aquí.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-xs">
-                <thead>
-                  <tr className="border-b border-blue-500/10 text-slate-500 text-[10px] uppercase tracking-widest">
-                    <th className="text-left p-3 font-semibold">Fecha</th>
-                    <th className="text-left p-3 font-semibold">Insumo</th>
-                    <th className="text-left p-3 font-semibold">Tipo</th>
-                    <th className="text-left p-3 font-semibold">Detalle</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-blue-500/5">
-                  {registros.map((r) => (
-                    <tr key={r.id} className="hover:bg-midnight-800/30 transition-colors">
-                      <td className="p-3 text-slate-400 font-mono whitespace-nowrap">{r.date}</td>
-                      <td className="p-3 text-slate-200 font-medium">{r.name}</td>
-                      <td className="p-3">
-                        <span className={`
-                          inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-sm
-                          ${r.criticalType === 'QUIMICO' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : ''}
-                          ${r.criticalType === 'GAS' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : ''}
-                          ${r.criticalType === 'COMBUSTIBLE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}
-                        `}>
-                          {r.criticalType}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-400">{r.details}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       )}
 

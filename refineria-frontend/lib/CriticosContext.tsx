@@ -38,14 +38,6 @@ export interface Novedad {
   accion: string;
 }
 
-export interface RegistroEntry {
-  id: string;
-  date: string;
-  name: string;
-  criticalType: 'QUIMICO' | 'GAS' | 'COMBUSTIBLE';
-  details: string;
-}
-
 /* ───── Computed Types (derived from raw data) ───── */
 
 export interface QuimicoComputed extends CriticoQuimico {
@@ -76,7 +68,6 @@ interface CriticosState {
   };
   historial: ConsumoHistorialEntry[];
   novedades: Novedad[];
-  registros: RegistroEntry[];
 }
 
 export interface CriticoRegistration {
@@ -99,7 +90,6 @@ interface CriticosContextValue {
   combustible: CombustibleData;
   historial: ConsumoHistorialEntry[];
   novedades: Novedad[];
-  registros: RegistroEntry[];
   registerDescargo: (itemName: string, quantity: number, reference: string) => void;
   registerCritico: (data: CriticoRegistration) => void;
   addNovedad: (equipo: string, diagnostico: string, accion: string) => void;
@@ -232,7 +222,6 @@ function buildDefaultState(): CriticosState {
       { id: '3', equipo: 'Horno azul grande', diagnostico: 'Presenta falla en la bobina. Al parecer no es 100% cobre — las tuberías que están vendiendo tienen aleación y eso afecta la inducción.', accion: 'Hoy terminaron de entregar la otra bobina.' },
       { id: '4', equipo: 'Casting bar', diagnostico: 'Presenta goteo interno (sudoración en las paredes). No se pudo hacer prueba por falla en el generador grande por el sensor de presión de aceite y que estaban en uso los hornos por fundición.', accion: 'Pendiente de reprogramar prueba.' },
     ],
-    registros: [],
   };
 }
 
@@ -264,7 +253,6 @@ function loadInitialState(): CriticosState {
           consumption: Number(e.consumption) || 0,
         }));
       }
-      if (!parsed.registros) parsed.registros = [];
       return parsed;
     }
   } catch { /* ignore */ }
@@ -346,18 +334,9 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
 
   const registerCritico = useCallback((data: CriticoRegistration) => {
     setState((prev) => {
-      const registro: RegistroEntry = {
-        id: generateId(),
-        date: now(),
-        name: data.name,
-        criticalType: data.criticalType,
-        details: '',
-      };
-
       if (data.criticalType === 'QUIMICO') {
-        registro.details = `${Number(data.initialStock) || 0} ${data.unit || 'Lts'}, consumo ${Number(data.dailyConsumption) || 0}/día, mínimo ${Number(data.minimum) || 0}`;
         const q: CriticoQuimico = {
-          id: registro.id,
+          id: generateId(),
           name: data.name,
           unit: data.unit || 'Lts',
           initialStock: Number(data.initialStock) || 0,
@@ -366,28 +345,25 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
           minimum: Number(data.minimum) || 0,
           history: [],
         };
-        return { ...prev, quimicos: [...prev.quimicos, q], registros: [registro, ...prev.registros] };
+        return { ...prev, quimicos: [...prev.quimicos, q] };
       }
 
       if (data.criticalType === 'GAS') {
-        registro.details = `Llenos: ${Number(data.cilindrosLlenos) || 0}, En uso: ${Number(data.cilindrosEnUso) || 0}, Vacíos: ${Number(data.cilindrosDisponibles) || 0}`;
         const g: CriticoGas = {
-          id: registro.id,
+          id: generateId(),
           name: data.name,
           full: Number(data.cilindrosLlenos) || 0,
           inUse: Number(data.cilindrosEnUso) || 0,
           available: Number(data.cilindrosDisponibles) || 0,
         };
-        return { ...prev, gases: [...prev.gases, g], registros: [registro, ...prev.registros] };
+        return { ...prev, gases: [...prev.gases, g] };
       }
 
       if (data.criticalType === 'COMBUSTIBLE') {
         const litros = Number(data.litrosIniciales) || 0;
-        registro.details = `${litros} litros iniciales`;
         return {
           ...prev,
           combustible: { initialAmount: litros || prev.combustible.initialAmount, log: prev.combustible.log },
-          registros: [registro, ...prev.registros],
         };
       }
 
@@ -406,7 +382,7 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registros: state.registros, registerDescargo, registerCritico, addNovedad }}>
+    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registerDescargo, registerCritico, addNovedad }}>
       {children}
     </CriticosContext.Provider>
   );
