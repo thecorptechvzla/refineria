@@ -70,6 +70,20 @@ interface CriticosState {
   novedades: Novedad[];
 }
 
+export interface CriticoRegistration {
+  name: string;
+  criticalType: 'QUIMICO' | 'GAS' | 'COMBUSTIBLE';
+  unit?: string;
+  initialStock?: number;
+  dailyConsumption?: number;
+  minimum?: number;
+  cilindrosLlenos?: number;
+  cilindrosEnUso?: number;
+  cilindrosDisponibles?: number;
+  litrosIniciales?: number;
+  capacidadTanque?: number;
+}
+
 interface CriticosContextValue {
   quimicos: QuimicoComputed[];
   gases: CriticoGas[];
@@ -77,6 +91,7 @@ interface CriticosContextValue {
   historial: ConsumoHistorialEntry[];
   novedades: Novedad[];
   registerDescargo: (itemName: string, quantity: number, reference: string) => void;
+  registerCritico: (data: CriticoRegistration) => void;
   addNovedad: (equipo: string, diagnostico: string, accion: string) => void;
 }
 
@@ -317,6 +332,45 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const registerCritico = useCallback((data: CriticoRegistration) => {
+    setState((prev) => {
+      if (data.criticalType === 'QUIMICO') {
+        const q: CriticoQuimico = {
+          id: generateId(),
+          name: data.name,
+          unit: data.unit || 'Lts',
+          initialStock: Number(data.initialStock) || 0,
+          ajuste: 0,
+          dailyConsumption: Number(data.dailyConsumption) || 0,
+          minimum: Number(data.minimum) || 0,
+          history: [],
+        };
+        return { ...prev, quimicos: [...prev.quimicos, q] };
+      }
+
+      if (data.criticalType === 'GAS') {
+        const g: CriticoGas = {
+          id: generateId(),
+          name: data.name,
+          full: Number(data.cilindrosLlenos) || 0,
+          inUse: Number(data.cilindrosEnUso) || 0,
+          available: Number(data.cilindrosDisponibles) || 0,
+        };
+        return { ...prev, gases: [...prev.gases, g] };
+      }
+
+      if (data.criticalType === 'COMBUSTIBLE') {
+        const litros = Number(data.litrosIniciales) || 0;
+        return {
+          ...prev,
+          combustible: { initialAmount: litros || prev.combustible.initialAmount, log: prev.combustible.log },
+        };
+      }
+
+      return prev;
+    });
+  }, []);
+
   const addNovedad = useCallback((equipo: string, diagnostico: string, accion: string) => {
     setState((prev) => ({
       ...prev,
@@ -328,7 +382,7 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registerDescargo, addNovedad }}>
+    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registerDescargo, registerCritico, addNovedad }}>
       {children}
     </CriticosContext.Provider>
   );

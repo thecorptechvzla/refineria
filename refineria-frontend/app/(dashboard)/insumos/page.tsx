@@ -14,7 +14,7 @@ import { useGold } from '@/lib/GoldContext';
 import SupplyItemForm from '@/components/inventory/SupplyItemForm';
 import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { useCriticos } from '@/lib/CriticosContext';
-import type { SupplyItem, SupplyCategory, SupplyTransactionType } from '@/types';
+import type { SupplyItem, SupplyCategory, SupplyTransactionType, CriticalType } from '@/types';
 import {
   Package,
   AlertTriangle,
@@ -41,7 +41,7 @@ const tabs: { label: string; value: CategoryFilter }[] = [
 
 export default function InsumosPage() {
   const { user } = useGold();
-  const { registerDescargo } = useCriticos();
+  const { registerDescargo, registerCritico } = useCriticos();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
   const tableBodyRef = useRef<HTMLDivElement>(null);
   const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
@@ -128,11 +128,35 @@ export default function InsumosPage() {
     category: SupplyCategory;
     unit: string;
     criticalLevel: number;
+    isCritical?: boolean;
+    criticalType?: CriticalType;
+    initialStock?: number;
+    dailyConsumption?: number;
+    cilindrosLlenos?: number;
+    cilindrosEnUso?: number;
+    cilindrosDisponibles?: number;
+    litrosIniciales?: number;
+    capacidadTanque?: number;
   }) => {
     setCreateError('');
 
     try {
       await createItem.mutateAsync(data);
+      if (data.isCritical && data.criticalType) {
+        registerCritico({
+          name: data.name,
+          criticalType: data.criticalType,
+          unit: data.unit,
+          initialStock: data.initialStock,
+          dailyConsumption: data.dailyConsumption,
+          minimum: data.criticalLevel,
+          cilindrosLlenos: data.cilindrosLlenos,
+          cilindrosEnUso: data.cilindrosEnUso,
+          cilindrosDisponibles: data.cilindrosDisponibles,
+          litrosIniciales: data.litrosIniciales,
+          capacidadTanque: data.capacidadTanque,
+        });
+      }
       setShowCreateModal(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear insumo';
@@ -147,9 +171,33 @@ export default function InsumosPage() {
     unit: string;
     criticalLevel: number;
     quantity?: number;
+    isCritical?: boolean;
+    criticalType?: CriticalType;
+    initialStock?: number;
+    dailyConsumption?: number;
+    cilindrosLlenos?: number;
+    cilindrosEnUso?: number;
+    cilindrosDisponibles?: number;
+    litrosIniciales?: number;
+    capacidadTanque?: number;
   }) => {
     const { quantity = 1, ...itemData } = data;
     const newItem = await createItem.mutateAsync(itemData);
+    if (data.isCritical && data.criticalType) {
+      registerCritico({
+        name: data.name,
+        criticalType: data.criticalType,
+        unit: data.unit,
+        initialStock: data.initialStock,
+        dailyConsumption: data.dailyConsumption,
+        minimum: data.criticalLevel,
+        cilindrosLlenos: data.cilindrosLlenos,
+        cilindrosEnUso: data.cilindrosEnUso,
+        cilindrosDisponibles: data.cilindrosDisponibles,
+        litrosIniciales: data.litrosIniciales,
+        capacidadTanque: data.capacidadTanque,
+      });
+    }
     queryClient.setQueryData<SupplyItem[]>(
       ['supplies', 'items', category ?? undefined],
       (old) => (old ? [...old, newItem] : [newItem]),
