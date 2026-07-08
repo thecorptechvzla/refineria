@@ -98,6 +98,7 @@ function KpiCard({
   subtext,
   iconClass,
   onClick,
+  isMounted,
   children,
 }: {
   icon: React.ElementType;
@@ -107,6 +108,7 @@ function KpiCard({
   subtext?: string;
   iconClass?: string;
   onClick?: () => void;
+  isMounted?: boolean;
   children?: React.ReactNode;
 }) {
   const Comp = onClick ? 'button' : 'div';
@@ -124,7 +126,7 @@ function KpiCard({
       </div>
       {value != null && (
         <p className={`text-2xl font-bold hud-number ${valueClass ?? 'text-white'}`}>
-          {value}
+          {isMounted ? value : '—'}
         </p>
       )}
       {children}
@@ -160,7 +162,7 @@ export default function CriticosPage() {
   const minAutonomy = useMemo(() => {
     const valid = quimicosActivos.filter((q) => q.daysOfAutonomy !== null);
     if (valid.length === 0) return null;
-    return Math.min(...valid.map((q) => q.daysOfAutonomy!));
+    return Math.min(...valid.map((q) => q.daysOfAutonomy!)) || 0;
   }, [quimicosActivos]);
 
   const criticalItem = useMemo(() => {
@@ -251,12 +253,13 @@ export default function CriticosPage() {
             <KpiCard
               icon={FlaskConical}
               label="DÍAS DE OPERACIÓN"
+              isMounted={isMounted}
               iconClass={isMounted && minAutonomy !== null && minAutonomy < 5 ? 'text-red-400' : 'text-blue-400'}
               valueClass={isMounted && minAutonomy !== null && minAutonomy < 5 ? 'text-red-400 blink-warning' : 'text-white'}
               value={minAutonomy !== null ? minAutonomy.toFixed(1) : '—'}
               onClick={() => setModal('autonomia')}
             >
-              {minAutonomy !== null && (
+              {isMounted && minAutonomy !== null && (
                 <p className="text-[10px] text-slate-500 mt-0.5 truncate">
                   Limitado por: {criticalItem?.name ?? '—'}
                 </p>
@@ -267,40 +270,31 @@ export default function CriticosPage() {
             <KpiCard
               icon={AlertTriangle}
               label="Críticos"
+              isMounted={isMounted}
               value={criticosBajos.length.toString()}
               subtext="con &lt;5 días de autonomía"
               onClick={() => setModal('criticos')}
-            >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-              </div>
-            </KpiCard>
+            />
 
             {/* GASES */}
             <KpiCard
               icon={Cylinder}
               label="Gases"
+              isMounted={isMounted}
               value={gases.length.toString()}
               subtext="tipos registrados"
               onClick={() => setModal('gases')}
-            >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-              </div>
-            </KpiCard>
+            />
 
             {/* COMBUSTIBLE */}
             <KpiCard
               icon={Fuel}
               label="Combustible"
+              isMounted={isMounted}
               value={combustible.currentStock.toLocaleString()}
               subtext="litros disponibles"
               onClick={() => setModal('combustible')}
-            >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-              </div>
-            </KpiCard>
+            />
           </div>
 
           {/* Estado de Químicos — Desktop: tabla, Mobile: cards */}
