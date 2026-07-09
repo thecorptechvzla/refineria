@@ -94,7 +94,7 @@ export default function DashboardPage() {
     const start = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredProcessList.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProcessList, safePage]);
-
+// hola
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
     const round2 = (v: number) => Math.round(v * 100) / 100;
