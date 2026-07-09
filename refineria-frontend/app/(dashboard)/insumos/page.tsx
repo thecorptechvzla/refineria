@@ -76,6 +76,11 @@ export default function InsumosPage() {
 const [searchQuery, setSearchQuery] = useState('');
 const [criticoSearch, setCriticoSearch] = useState('');
 const [globalSearchKey, setGlobalSearchKey] = useState(0);
+  const [itemForQuantity, setItemForQuantity] = useState<{
+    item: SupplyItem;
+    existingRowKey?: number;
+    quantity: string;
+  } | null>(null);
   const [criticoHistoryPage, setCriticoHistoryPage] = useState(0);
   const criticoHistoryPageSize = 10;
   const [historyPage, setHistoryPage] = useState(0);
@@ -124,21 +129,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
     );
   }, [historial, criticoSearch]);
 
-  const autocompleteItems = useMemo(() => {
-    const apiItems = items ?? [];
-    const criticalItems: SupplyItem[] = quimicos.map((q, idx) => ({
-      id: `critico_${q.id}`,
-      code: `CR${String(idx + 1).padStart(3, '0')}`,
-      name: q.name,
-      category: 'OPERATIONS' as SupplyCategory,
-      unit: q.unit,
-      currentStock: q.currentStock ?? 0,
-      criticalLevel: q.minimum,
-      isCritical: true,
-      criticalType: 'QUIMICO' as CriticalType,
-    }));
-    return [...criticalItems, ...apiItems];
-  }, [items, quimicos]);
+  const autocompleteItems = useMemo(() => items ?? [], [items]);
 
   const totalCriticoPages = Math.max(1, Math.ceil(filteredCriticoHistorial.length / criticoHistoryPageSize));
   const safeCriticoPage = Math.min(criticoHistoryPage, totalCriticoPages - 1);
@@ -282,12 +273,6 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
     ]);
   };
 
-  const updateBulkRow = (key: number, field: string, value: string) => {
-    setBulkRows((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, [field]: value } : r))
-    );
-  };
-
   const handleItemSelect = (rowKey: number, itemId: string) => {
     const item = autocompleteItems.find((i) => i.id === itemId);
     setBulkRows((prev) =>
@@ -319,20 +304,44 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
   const handleGlobalSelect = (itemId: string) => {
     const item = autocompleteItems.find((i) => i.id === itemId);
     if (!item) return;
-    const nextKey = bulkRowKey + 1;
-    setBulkRowKey(nextKey);
-    setBulkRows((prev) => [
-      ...prev,
-      {
-        key: nextKey,
-        itemId: item.id,
-        name: item.name,
-        category: item.category,
-        unit: item.unit,
-        criticalLevel: String(item.criticalLevel),
-        quantity: '1',
-      },
-    ]);
+    setItemForQuantity({ item, quantity: '1' });
+  };
+
+  const handleRowTap = (row: typeof bulkRows[0]) => {
+    const item = autocompleteItems.find((i) => i.id === row.itemId);
+    if (!item) return;
+    setItemForQuantity({ item, existingRowKey: row.key, quantity: row.quantity });
+  };
+
+  const handleQuantityConfirm = () => {
+    if (!itemForQuantity) return;
+    const qty = parseInt(itemForQuantity.quantity, 10);
+    if (!qty || qty < 1) return;
+
+    if (itemForQuantity.existingRowKey !== undefined) {
+      setBulkRows((prev) =>
+        prev.map((r) =>
+          r.key === itemForQuantity.existingRowKey ? { ...r, quantity: String(qty) } : r
+        )
+      );
+    } else {
+      const nextKey = bulkRowKey + 1;
+      setBulkRowKey(nextKey);
+      setBulkRows((prev) => [
+        ...prev,
+        {
+          key: nextKey,
+          itemId: itemForQuantity.item.id,
+          name: itemForQuantity.item.name,
+          category: itemForQuantity.item.category,
+          unit: itemForQuantity.item.unit,
+          criticalLevel: String(itemForQuantity.item.criticalLevel),
+          quantity: String(qty),
+        },
+      ]);
+    }
+    setItemForQuantity(null);
+    setGlobalSearchKey((k) => k + 1);
   };
 
   const totalBulkPages = useMemo(
@@ -771,10 +780,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 key={globalSearchKey}
                 items={autocompleteItems}
                 value=""
-                onChange={(id) => {
-                  handleGlobalSelect(id);
-                  setGlobalSearchKey((k) => k + 1);
-                }}
+                onChange={(id) => handleGlobalSelect(id)}
                 placeholder="Escribe código o nombre para añadir a la lista..."
               />
             </div>
@@ -798,7 +804,15 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 </thead>
                 <tbody>
                     {pageRows.map((row, idx) => (
-                    <tr key={row.key} className="border-b border-blue-500/5 hover:bg-midnight-800/20 transition-colors">
+                    <tr
+                      key={row.key}
+                      onClick={() => row.itemId && handleRowTap(row)}
+                      className={`border-b border-blue-500/5 transition-colors ${
+                        row.itemId
+                          ? 'cursor-pointer hover:bg-midnight-800/30'
+                          : ''
+                      }`}
+                    >
                       <td className="py-1.5 px-1 text-center text-[10px] font-mono text-slate-600">
                         {String(safeBulkPage * bulkPageSize + idx + 1).padStart(2, '0')}
                       </td>
@@ -836,18 +850,18 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                         )}
                       </td>
                       <td className="py-1.5 px-3 text-center">
-                        <input
-                          type="number"
-                          min="1"
-                          value={row.quantity}
-                          onChange={(e) => updateBulkRow(row.key, 'quantity', e.target.value)}
-                          className="w-full bg-transparent border-0 text-slate-200 text-xs outline-none focus:ring-0 text-center"
-                        />
+                        {row.itemId ? (
+                          <span className="text-sm font-mono font-bold text-slate-200">
+                            {row.quantity}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
                       </td>
                       <td className="py-1.5 px-3 text-center">
                         <button
                           type="button"
-                          onClick={() => removeBulkRow(row.key)}
+                          onClick={(e) => { e.stopPropagation(); removeBulkRow(row.key); }}
                           className="text-red-400 hover:text-red-300 transition-colors"
                           title="Quitar fila"
                         >
@@ -903,6 +917,66 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
               </button>
             </div>
           </form>
+
+          {itemForQuantity && (
+            <div className="absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-slide-up">
+              <div className="w-full max-w-xs glass-panel">
+                <div className="p-5 space-y-4">
+                  <div className="text-center">
+                    <p className="text-xs font-mono text-slate-500 mb-1">{itemForQuantity.item.code}</p>
+                    <p className="text-sm font-bold text-white">{itemForQuantity.item.name}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Existencia: {itemForQuantity.item.currentStock} {itemForQuantity.item.unit}
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                      Cantidad
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      autoFocus
+                      value={itemForQuantity.quantity}
+                      onChange={(e) =>
+                        setItemForQuantity((prev) =>
+                          prev ? { ...prev, quantity: e.target.value } : null
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleQuantityConfirm();
+                      }}
+                      className="w-full text-center text-3xl font-bold py-4 bg-midnight-800 border border-blue-500/20 text-gold-400 outline-none focus:border-gold-500/40 transition-colors"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleQuantityConfirm}
+                    className={`w-full py-3 text-sm font-bold uppercase tracking-widest transition-all ${
+                      bulkType === 'IN'
+                        ? 'bg-green-500 text-midnight-900 hover:bg-green-400'
+                        : 'bg-red-500 text-white hover:bg-red-400'
+                    }`}
+                  >
+                    {itemForQuantity.existingRowKey !== undefined
+                      ? `Actualizar ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`
+                      : `Añadir ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }}
+                    className="w-full py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {showBulkCreateOverlay && (
             <div className="absolute inset-0 z-40 bg-midnight-900/95 backdrop-blur-sm flex items-start justify-center pt-12 animate-slide-up">
