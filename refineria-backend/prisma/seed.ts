@@ -147,11 +147,12 @@ async function main() {
         unit: chem.unit,
         criticalLevel: chem.criticalLevel,
         criticalType: chem.criticalType,
+        category: 'CRITICAL',
       },
       create: {
         code: chem.code,
         name: chem.name,
-        category: 'OPERATIONS',
+        category: 'CRITICAL',
         unit: chem.unit,
         currentStock: 0,
         criticalLevel: chem.criticalLevel,

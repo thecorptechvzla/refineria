@@ -44,7 +44,8 @@ export type WorkerStatus = (typeof WorkerStatus)[keyof typeof WorkerStatus]
 
 export const SupplyCategory = {
   OPERATIONS: 'OPERATIONS',
-  GENERAL_SERVICES: 'GENERAL_SERVICES'
+  GENERAL_SERVICES: 'GENERAL_SERVICES',
+  CRITICAL: 'CRITICAL'
 } as const
 
 export type SupplyCategory = (typeof SupplyCategory)[keyof typeof SupplyCategory]

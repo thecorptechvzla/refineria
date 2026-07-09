@@ -276,7 +276,7 @@ export class SuppliesService {
   }
 
   private async generateCode(tx: any, category: SupplyCategory): Promise<string> {
-    const prefix = category === 'OPERATIONS' ? 'OP' : 'SG';
+    const prefix = category === 'OPERATIONS' ? 'OP' : category === 'CRITICAL' ? 'CR' : 'SG';
     const lastItem = await tx.supplyItem.findFirst({
       where: { code: { startsWith: prefix } },
       orderBy: { code: 'desc' },

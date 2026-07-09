@@ -42,14 +42,14 @@ const tabs: { label: string; value: CategoryFilter }[] = [
 
 export default function InsumosPage() {
   const { user } = useGold();
-  const { registerDescargo, registerCritico, historial, quimicos } = useCriticos();
+  const { registerDescargo, registerCargo, registerCritico, historial, quimicos } = useCriticos();
   const [category, setCategory] = useState<CategoryFilter>('OPERATIONS');
   const tableBodyRef = useRef<HTMLDivElement>(null);
   const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
   const [bulkPageSize, setBulkPageSize] = useState(20);
-  const apiCategory = category === 'CRITICAL' ? undefined : category;
+  const apiCategory = category;
   const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(apiCategory ?? undefined);
-  const { data: allItems } = useSupplyItems();
+  const { data: allItems } = useSupplyItems(apiCategory ?? undefined);
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
   const createBulkTx = useCreateBulkSupplyTransaction();
@@ -412,6 +412,16 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
           }
         }
       }
+      if (bulkType === 'IN' && filledRows.length > 0) {
+        for (const row of filledRows) {
+          const supplyItem = autocompleteItems.find((i) => i.id === row.itemId);
+          if (supplyItem?.isCritical) {
+            registerCargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+          } else if (row.name) {
+            registerCargo(row.name, parseInt(row.quantity, 10), bulkDestination.trim());
+          }
+        }
+      }
       setBulkOpen(false);
       resetBulkForm();
     } catch (err: unknown) {
@@ -448,6 +458,9 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
       });
       if (txModal.type === 'OUT' && txModal.item.isCritical) {
         registerDescargo(txModal.item.name, qty, txReference.trim());
+      }
+      if (txModal.type === 'IN' && txModal.item.isCritical) {
+        registerCargo(txModal.item.name, qty, txReference.trim());
       }
       setTxModal(null);
       resetTxForm();
@@ -1111,7 +1124,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 <div className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <History className="w-4 h-4 text-blue-400" />
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Consumos</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Movimientos</span>
                     <span className="ml-auto text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                       {filteredCriticoHistorial.length} registros
                     </span>
@@ -1136,11 +1149,17 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-300">{h.date}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{h.insumo}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
-                                <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-red-500/20 text-red-400 bg-red-500/10">
-                                  DESCARGO
-                                </span>
+                                {h.tipo === 'CARGO' ? (
+                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 text-emerald-400 bg-emerald-500/10">
+                                    CARGO
+                                  </span>
+                                ) : (
+                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-red-500/20 text-red-400 bg-red-500/10">
+                                    DESCARGO
+                                  </span>
+                                )}
                               </td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-red-400 text-right">{h.cantidad}</td>
+                              <td className={`px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-right ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>{h.tipo === 'CARGO' ? '+' : ''}{h.cantidad}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{h.observacion || '—'}</td>
                             </tr>
                           ))
@@ -1148,8 +1167,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                           <tr>
                             <td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-500">
                               <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                              <p>No hay consumos registrados.</p>
-                              <p className="text-xs text-slate-600 mt-1">Los descargos de insumos críticos aparecerán aquí automáticamente.</p>
+                              <p>No hay movimientos registrados.</p>
+                              <p className="text-xs text-slate-600 mt-1">Los movimientos de insumos críticos aparecerán aquí automáticamente.</p>
                             </td>
                           </tr>
                         )}
@@ -1164,11 +1183,15 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                         <div key={h.id} className="bg-midnight-800/50 border border-blue-500/10 p-3 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-mono text-slate-500">{h.date}</span>
-                            <span className="text-[10px] font-mono font-bold text-red-400">-{h.cantidad}</span>
+                            <span className={`text-[10px] font-mono font-bold ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>{h.tipo === 'CARGO' ? '+' : '-'}{h.cantidad}</span>
                           </div>
                           <div className="text-xs text-slate-200 font-medium">{h.insumo}</div>
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] uppercase tracking-wider text-red-400/80 border border-red-500/10 px-1.5 py-0.5 bg-red-500/5">DESCARGO</span>
+                            {h.tipo === 'CARGO' ? (
+                              <span className="text-[10px] uppercase tracking-wider text-emerald-400/80 border border-emerald-500/10 px-1.5 py-0.5 bg-emerald-500/5">CARGO</span>
+                            ) : (
+                              <span className="text-[10px] uppercase tracking-wider text-red-400/80 border border-red-500/10 px-1.5 py-0.5 bg-red-500/5">DESCARGO</span>
+                            )}
                             <span className="text-[10px] text-slate-500 truncate ml-2">{h.observacion || '—'}</span>
                           </div>
                         </div>
@@ -1176,7 +1199,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     ) : (
                       <div className="p-6 text-center">
                         <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                        <p className="text-xs text-slate-500">No hay consumos registrados.</p>
+                        <p className="text-xs text-slate-500">No hay movimientos registrados.</p>
                       </div>
                     )}
                     {totalCriticoPages > 1 && (

@@ -212,6 +212,7 @@ enum WorkerStatus {
 enum SupplyCategory {
   OPERATIONS
   GENERAL_SERVICES
+  CRITICAL
 }
 
 enum CriticalType {

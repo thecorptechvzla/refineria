@@ -28,6 +28,7 @@ export interface ConsumoHistorialEntry {
   date: string;
   insumo: string;
   cantidad: number;
+  tipo: 'CARGO' | 'DESCARGO';
   observacion: string;
 }
 
@@ -91,6 +92,7 @@ interface CriticosContextValue {
   historial: ConsumoHistorialEntry[];
   novedades: Novedad[];
   registerDescargo: (itemName: string, quantity: number, reference: string) => void;
+  registerCargo: (itemName: string, quantity: number, reference: string) => void;
   registerCritico: (data: CriticoRegistration) => void;
   addNovedad: (equipo: string, diagnostico: string, accion: string) => void;
 }
@@ -294,6 +296,7 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
         date: now(),
         insumo: itemName,
         cantidad: quantity,
+        tipo: 'DESCARGO',
         observacion: reference,
       };
 
@@ -327,6 +330,40 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
         ...prev,
         quimicos: updatedQuimicos,
         combustible: updatedCombustible,
+        historial: [historialEntry, ...prev.historial],
+      };
+    });
+  }, []);
+
+  const registerCargo = useCallback((itemName: string, quantity: number, reference: string) => {
+    setState((prev) => {
+      const historialEntry: ConsumoHistorialEntry = {
+        id: generateId(),
+        date: now(),
+        insumo: itemName,
+        cantidad: quantity,
+        tipo: 'CARGO',
+        observacion: reference,
+      };
+
+      /* Try to match a químicos item: increase ajuste (positive = more stock) */
+      const qIdx = prev.quimicos.findIndex(
+        (q) => q.name.toLowerCase().includes(itemName.toLowerCase()),
+      );
+      let updatedQuimicos = prev.quimicos;
+      if (qIdx !== -1) {
+        const q = prev.quimicos[qIdx];
+        const updated: CriticoQuimico = {
+          ...q,
+          ajuste: q.ajuste + quantity,
+        };
+        updatedQuimicos = [...prev.quimicos];
+        updatedQuimicos[qIdx] = updated;
+      }
+
+      return {
+        ...prev,
+        quimicos: updatedQuimicos,
         historial: [historialEntry, ...prev.historial],
       };
     });
@@ -382,7 +419,7 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registerDescargo, registerCritico, addNovedad }}>
+    <CriticosContext.Provider value={{ quimicos, gases: state.gases, combustible, historial: state.historial, novedades: state.novedades, registerDescargo, registerCargo, registerCritico, addNovedad }}>
       {children}
     </CriticosContext.Provider>
   );
