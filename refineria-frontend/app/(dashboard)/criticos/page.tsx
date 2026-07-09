@@ -18,8 +18,6 @@ import {
   Plus,
   X,
   ChevronRight,
-  Truck,
-  Check,
 } from 'lucide-react';
 import {
   LineChart,
@@ -149,7 +147,7 @@ function KpiCard({
 export default function CriticosPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('resumen');
-  const { quimicos, gases, combustible, novedades, addNovedad, registerCargo } = useCriticos();
+  const { quimicos, gases, combustible, novedades, addNovedad } = useCriticos();
 
   useEffect(() => { setIsMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
@@ -161,11 +159,6 @@ export default function CriticosPage() {
   const [nfEquipo, setNfEquipo] = useState('');
   const [nfDiagnostico, setNfDiagnostico] = useState('');
   const [nfAccion, setNfAccion] = useState('');
-
-  /* ── Cargo / PEDIR state ── */
-  const [pedirItem, setPedirItem] = useState<{ id: string; name: string } | null>(null);
-  const [pedirQty, setPedirQty] = useState('');
-  const [pedirRef, setPedirRef] = useState('');
 
   /* ── Computed KPIs ── */
 
@@ -322,13 +315,11 @@ export default function CriticosPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Insumo</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Stock / Existencia</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Unidad</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Stock Inicial</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Consumo Diario</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Mínimo</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Existencia</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Días Autonomía</th>
-                    <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -339,13 +330,7 @@ export default function CriticosPage() {
                     return (
                       <tr key={q.id} className="terminal-row">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{q.name}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{q.unit}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.initialStock}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">
-                          {isMounted && q.dailyConsumption > 0 ? q.dailyConsumption : <span className="text-slate-500">—</span>}
-                        </td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.minimum}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap min-w-[130px]">
                           <div className="flex items-center gap-1">
                             <span className={`text-sm font-mono font-bold ${ac.text}`}>
                               {isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}
@@ -355,11 +340,16 @@ export default function CriticosPage() {
                             )}
                           </div>
                           {isMounted && q.initialStock > 0 && (
-                            <div className="w-full h-1 bg-midnight-800 rounded-sm overflow-hidden mt-1 max-w-[120px]">
+                            <div className="w-full h-1.5 bg-midnight-800 rounded-sm overflow-hidden mt-1 max-w-[160px]">
                               <div className={`h-full rounded-sm transition-all duration-500 ${ac.bar}`} style={{ width: `${pct}%` }} />
                             </div>
                           )}
                         </td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{q.unit}</td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">
+                          {isMounted && q.dailyConsumption > 0 ? q.dailyConsumption : <span className="text-slate-500">—</span>}
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.minimum}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           {isMounted && q.daysOfAutonomy !== null ? (
                             <div className="group relative inline-block">
@@ -376,15 +366,6 @@ export default function CriticosPage() {
                           ) : (
                             <span className="text-xs text-slate-500">—</span>
                           )}
-                        </td>
-                        <td className="px-4 sm:px-5 py-3 text-center">
-                          <button
-                            onClick={() => { setPedirItem({ id: q.id, name: q.name }); setPedirQty(''); setPedirRef(''); }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gold-500/10 border border-gold-500/30 text-gold-400 text-[10px] font-bold uppercase tracking-widest hover:bg-gold-500/20 hover:border-gold-500/50 transition-all rounded-sm"
-                          >
-                            <Truck className="w-3 h-3" />
-                            PEDIR
-                          </button>
                         </td>
                       </tr>
                     );
@@ -433,14 +414,6 @@ export default function CriticosPage() {
                         Agotamiento estimado: {formatDate(depletionDate)}
                       </p>
                     )}
-                    {/* PEDIR button mobile */}
-                    <button
-                      onClick={() => { setPedirItem({ id: q.id, name: q.name }); setPedirQty(''); setPedirRef(''); }}
-                      className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gold-500/10 border border-gold-500/30 text-gold-400 text-[9px] font-bold uppercase tracking-widest hover:bg-gold-500/20 transition-all rounded-sm"
-                    >
-                      <Truck className="w-2.5 h-2.5" />
-                      PEDIR
-                    </button>
                   </div>
                 );
               })}
@@ -1021,48 +994,6 @@ export default function CriticosPage() {
               ))}
             </div>
           </div>
-        </div>
-      </Modal>
-
-      {/* Modal: PEDIR (Cargo rápido) */}
-      <Modal open={pedirItem !== null} onClose={() => setPedirItem(null)} title={`Pedir: ${pedirItem?.name ?? ''}`} icon={Truck}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Cantidad</label>
-            <input
-              type="number"
-              value={pedirQty}
-              onChange={(e) => setPedirQty(e.target.value)}
-              className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-              placeholder="Ingrese cantidad"
-              min={1}
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Referencia / Nota</label>
-            <input
-              type="text"
-              value={pedirRef}
-              onChange={(e) => setPedirRef(e.target.value)}
-              className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
-              placeholder="N° orden, proveedor, etc."
-            />
-          </div>
-          <button
-            onClick={() => {
-              if (pedirItem && Number(pedirQty) > 0) {
-                registerCargo(pedirItem.name, Number(pedirQty), pedirRef.trim() || 'Pedido desde críticos');
-                setPedirItem(null);
-                setPedirQty('');
-                setPedirRef('');
-              }
-            }}
-            disabled={!pedirItem || Number(pedirQty) <= 0}
-            className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            <Check className="w-4 h-4" />
-            Confirmar Cargo
-          </button>
         </div>
       </Modal>
 
