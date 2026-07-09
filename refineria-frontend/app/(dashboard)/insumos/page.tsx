@@ -49,6 +49,7 @@ export default function InsumosPage() {
   const [bulkPageSize, setBulkPageSize] = useState(20);
   const apiCategory = category === 'CRITICAL' ? undefined : category;
   const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(apiCategory ?? undefined);
+  const { data: allItems } = useSupplyItems();
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
   const createBulkTx = useCreateBulkSupplyTransaction();
@@ -129,7 +130,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
     );
   }, [historial, criticoSearch]);
 
-  const autocompleteItems = useMemo(() => items ?? [], [items]);
+  const autocompleteItems = useMemo(() => allItems ?? [], [allItems]);
 
   const totalCriticoPages = Math.max(1, Math.ceil(filteredCriticoHistorial.length / criticoHistoryPageSize));
   const safeCriticoPage = Math.min(criticoHistoryPage, totalCriticoPages - 1);
