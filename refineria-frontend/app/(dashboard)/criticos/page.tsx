@@ -18,6 +18,8 @@ import {
   Plus,
   X,
   ChevronRight,
+  Truck,
+  Check,
 } from 'lucide-react';
 import {
   LineChart,
@@ -49,6 +51,13 @@ function addDays(date: Date, days: number): Date {
   const r = new Date(date);
   r.setDate(r.getDate() + days);
   return r;
+}
+
+function autonomyColor(days: number | null): { text: string; bar: string; label: string; icon: 'critical' | 'warning' | 'safe' | 'none' } {
+  if (days === null) return { text: 'text-slate-500', bar: 'bg-slate-500', label: '—', icon: 'none' };
+  if (days < 5) return { text: 'text-red-400', bar: 'bg-red-500', label: 'Crítico', icon: 'critical' };
+  if (days < 10) return { text: 'text-amber-400', bar: 'bg-amber-500', label: 'Advertencia', icon: 'warning' };
+  return { text: 'text-emerald-400', bar: 'bg-emerald-500', label: 'Estable', icon: 'safe' };
 }
 
 /* ───── Modal Component ───── */
@@ -140,7 +149,7 @@ function KpiCard({
 export default function CriticosPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('resumen');
-  const { quimicos, gases, combustible, novedades, addNovedad } = useCriticos();
+  const { quimicos, gases, combustible, novedades, addNovedad, registerCargo } = useCriticos();
 
   useEffect(() => { setIsMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
@@ -152,6 +161,11 @@ export default function CriticosPage() {
   const [nfEquipo, setNfEquipo] = useState('');
   const [nfDiagnostico, setNfDiagnostico] = useState('');
   const [nfAccion, setNfAccion] = useState('');
+
+  /* ── Cargo / PEDIR state ── */
+  const [pedirItem, setPedirItem] = useState<{ id: string; name: string } | null>(null);
+  const [pedirQty, setPedirQty] = useState('');
+  const [pedirRef, setPedirRef] = useState('');
 
   /* ── Computed KPIs ── */
 
@@ -252,14 +266,14 @@ export default function CriticosPage() {
               icon={FlaskConical}
               label="DÍAS DE OPERACIÓN"
               isMounted={isMounted}
-              iconClass={isMounted && minAutonomy !== null && minAutonomy < 5 ? 'text-red-400' : 'text-blue-400'}
-              valueClass={isMounted && minAutonomy !== null && minAutonomy < 5 ? 'text-red-400 blink-warning' : 'text-white'}
+              iconClass={isMounted && minAutonomy !== null ? autonomyColor(minAutonomy).text : 'text-blue-400'}
+              valueClass={isMounted && minAutonomy !== null ? autonomyColor(minAutonomy).text : 'text-white'}
               value={minAutonomy !== null ? minAutonomy.toFixed(1) : '—'}
               onClick={() => setModal('autonomia')}
             >
               {isMounted && minAutonomy !== null && (
                 <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-                  Limitado por: {criticalItem?.name ?? '—'}
+                  {autonomyColor(minAutonomy).label} — Limitado por: {criticalItem?.name ?? '—'}
                 </p>
               )}
             </KpiCard>
@@ -314,11 +328,14 @@ export default function CriticosPage() {
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Mínimo</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Existencia</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Días Autonomía</th>
+                    <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {quimicos.map((q) => {
-                    const isCritical = isMounted && q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
+                    const ac = autonomyColor(isMounted ? q.daysOfAutonomy : null);
+                    const pct = isMounted && q.initialStock > 0 ? Math.min(100, (q.currentStock / q.initialStock) * 100) : 0;
+                    const depletionDate = isMounted && q.daysOfAutonomy !== null ? addDays(new Date(), q.daysOfAutonomy) : null;
                     return (
                       <tr key={q.id} className="terminal-row">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{q.name}</td>
@@ -329,21 +346,45 @@ export default function CriticosPage() {
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-400">{q.minimum}</td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                          <span className={`text-sm font-mono font-bold ${isCritical ? 'text-red-400' : 'text-gold-500'}`}>
-                            {isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}
-                          </span>
-                          {isCritical && (
-                            <AlertTriangle className="inline-block w-4 h-4 ml-2 text-red-400 blink-warning" />
+                          <div className="flex items-center gap-1">
+                            <span className={`text-sm font-mono font-bold ${ac.text}`}>
+                              {isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}
+                            </span>
+                            {ac.icon === 'critical' && (
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-400 blink-warning" />
+                            )}
+                          </div>
+                          {isMounted && q.initialStock > 0 && (
+                            <div className="w-full h-1 bg-midnight-800 rounded-sm overflow-hidden mt-1 max-w-[120px]">
+                              <div className={`h-full rounded-sm transition-all duration-500 ${ac.bar}`} style={{ width: `${pct}%` }} />
+                            </div>
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           {isMounted && q.daysOfAutonomy !== null ? (
-                            <span className={`text-sm font-mono font-bold ${isCritical ? 'text-red-400' : 'text-slate-300'}`}>
-                              {q.daysOfAutonomy.toFixed(1)}
-                            </span>
+                            <div className="group relative inline-block">
+                              <span className={`text-sm font-mono font-bold ${ac.text} cursor-help`}>
+                                {q.daysOfAutonomy.toFixed(1)}
+                              </span>
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-30 pointer-events-none">
+                                <div className="bg-midnight-800 border border-blue-500/20 px-3 py-2 text-xs text-slate-300 whitespace-nowrap rounded-sm shadow-xl">
+                                  Fecha estimada de agotamiento:<br />
+                                  <span className="text-amber-400 font-semibold">{depletionDate ? formatDate(depletionDate) : '—'}</span>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
                             <span className="text-xs text-slate-500">—</span>
                           )}
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-center">
+                          <button
+                            onClick={() => { setPedirItem({ id: q.id, name: q.name }); setPedirQty(''); setPedirRef(''); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gold-500/10 border border-gold-500/30 text-gold-400 text-[10px] font-bold uppercase tracking-widest hover:bg-gold-500/20 hover:border-gold-500/50 transition-all rounded-sm"
+                          >
+                            <Truck className="w-3 h-3" />
+                            PEDIR
+                          </button>
                         </td>
                       </tr>
                     );
@@ -355,9 +396,9 @@ export default function CriticosPage() {
             {/* ── Mobile cards ── */}
             <div className="md:hidden divide-y divide-blue-500/10">
               {quimicos.map((q) => {
-                const isCritical = isMounted && q.daysOfAutonomy !== null && q.daysOfAutonomy < 5;
+                const ac = autonomyColor(isMounted ? q.daysOfAutonomy : null);
                 const pct = isMounted && q.initialStock > 0 ? Math.min(100, (q.currentStock / q.initialStock) * 100) : 0;
-                const barColor = pct > 50 ? '#10B981' : pct > 25 ? '#F59E0B' : '#EF4444';
+                const depletionDate = isMounted && q.daysOfAutonomy !== null ? addDays(new Date(), q.daysOfAutonomy) : null;
                 return (
                   <div key={q.id} className="p-4 hover:bg-midnight-800/20 transition-colors">
                     <div className="flex items-start justify-between gap-2">
@@ -365,27 +406,41 @@ export default function CriticosPage() {
                         <h3 className="text-sm font-bold text-slate-200 truncate">{q.name}</h3>
                         <p className="text-[10px] font-mono text-slate-500">{q.unit}</p>
                       </div>
-                      <span
-                        className={`flex-shrink-0 text-xs font-bold font-mono px-2.5 py-1 rounded-full border ${
-                          isCritical
-                            ? 'text-red-400 bg-red-500/10 border-red-500/20 blink-warning'
-                            : 'text-green-400 bg-green-500/10 border-green-500/20'
-                        }`}
-                      >
-                        {isMounted && q.daysOfAutonomy !== null ? `${q.daysOfAutonomy.toFixed(1)}d` : '—'}
-                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {ac.icon === 'critical' && <AlertTriangle className="w-3.5 h-3.5 text-red-400 blink-warning" />}
+                        <span className={`text-xs font-bold font-mono px-2.5 py-1 rounded-full border ${ac.text} ${
+                          ac.icon === 'critical' ? 'bg-red-500/10 border-red-500/20' :
+                          ac.icon === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
+                          ac.icon === 'safe' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                          'bg-slate-500/10 border-slate-500/20'
+                        }`}>
+                          {isMounted && q.daysOfAutonomy !== null ? `${q.daysOfAutonomy.toFixed(1)}d` : '—'}
+                        </span>
+                      </div>
                     </div>
+                    {/* Progress bar + stock indicator */}
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex-1 h-2.5 bg-midnight-800 rounded-sm overflow-hidden">
-                        <div
-                          className="h-full rounded-sm transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: barColor }}
-                        />
+                        <div className={`h-full rounded-sm transition-all duration-500 ${ac.bar}`} style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400 w-14 text-right">
+                      <span className={`text-[10px] font-mono w-14 text-right ${ac.text}`}>
                         {isMounted ? `${Number(q.currentStock || 0).toLocaleString('de-DE')}/${q.initialStock}` : '—'}
                       </span>
                     </div>
+                    {/* Tooltip / depletion info */}
+                    {isMounted && depletionDate && (
+                      <p className="text-[9px] text-slate-600 mt-1 font-mono">
+                        Agotamiento estimado: {formatDate(depletionDate)}
+                      </p>
+                    )}
+                    {/* PEDIR button mobile */}
+                    <button
+                      onClick={() => { setPedirItem({ id: q.id, name: q.name }); setPedirQty(''); setPedirRef(''); }}
+                      className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gold-500/10 border border-gold-500/30 text-gold-400 text-[9px] font-bold uppercase tracking-widest hover:bg-gold-500/20 transition-all rounded-sm"
+                    >
+                      <Truck className="w-2.5 h-2.5" />
+                      PEDIR
+                    </button>
                   </div>
                 );
               })}
@@ -394,37 +449,50 @@ export default function CriticosPage() {
 
           {/* Gases + Combustible */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            {/* Gases */}
+            {/* Gases — Mini-cards tipo cilindro */}
             <div className="glass-panel">
               <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center gap-2">
                 <Cylinder className="w-4 h-4 text-cyan-400" />
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Gases</h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-blue-500/10">
-                      <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Gas</th>
-                      <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Llenas</th>
-                      <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">En Uso</th>
-                      <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Disponibles</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gases.map((g) => (
-                      <tr key={g.id} className="terminal-row">
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{g.name}</td>
-                        <td className="px-4 sm:px-5 py-3 text-center text-sm font-mono text-slate-300">{g.full}</td>
-                        <td className="px-4 sm:px-5 py-3 text-center text-sm font-mono text-slate-300">{g.inUse}</td>
-                        <td className="px-4 sm:px-5 py-3 text-center">
-                          <span className={`text-sm font-mono font-bold ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>
-                            {g.available}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {gases.map((g) => {
+                  const total = g.full + g.inUse + g.available;
+                  const fullPct = total > 0 ? (g.full / total) * 100 : 0;
+                  return (
+                    <div key={g.id} className="bg-midnight-800/60 border border-cyan-500/15 p-4 rounded-sm flex flex-col items-center gap-3 hover:border-cyan-500/30 transition-colors group">
+                      {/* Cylinder icon */}
+                      <div className="relative w-12 h-20 bg-midnight-900 border-2 border-cyan-500/20 rounded-full overflow-hidden">
+                        <div
+                          className="absolute bottom-0 left-0 right-0 transition-all duration-700"
+                          style={{
+                            height: `${fullPct}%`,
+                            background: 'linear-gradient(to top, #06B6D4, #22D3EE)',
+                            boxShadow: '0 0 8px rgba(6,182,212,0.2)',
+                          }}
+                        />
+                        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-1 bg-cyan-500/30 rounded-full" />
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-1.5 bg-cyan-500/30 rounded-full" />
+                      </div>
+                      <h3 className="text-sm font-bold text-white text-center">{g.name}</h3>
+                      {/* Stats row */}
+                      <div className="w-full grid grid-cols-3 gap-1 text-center">
+                        <div className="bg-midnight-900/60 border border-amber-500/10 p-2 rounded-sm">
+                          <p className="text-sm font-bold font-mono text-amber-400">{g.full}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Llenas</p>
+                        </div>
+                        <div className="bg-midnight-900/60 border border-blue-500/10 p-2 rounded-sm">
+                          <p className="text-sm font-bold font-mono text-blue-400">{g.inUse}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">En Uso</p>
+                        </div>
+                        <div className="bg-midnight-900/60 border border-green-500/10 p-2 rounded-sm">
+                          <p className={`text-sm font-bold font-mono ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>{g.available}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Disp.</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -526,15 +594,21 @@ export default function CriticosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {quimicos.filter((q) => q.history.length > 0).map((q) => (
+                  {quimicos.filter((q) => q.history.length > 0).map((q) => {
+                    const ac = autonomyColor(isMounted ? q.daysOfAutonomy : null);
+                    return (
                     <tr key={q.id} className="terminal-row">
                       <td className="px-3 py-2.5 whitespace-nowrap text-slate-200 font-medium sticky left-0 bg-midnight-900/90 backdrop-blur-sm z-10">{q.name}</td>
                       {q.history.map((h, i) => (
                         <td key={i} className="px-2 py-2.5 text-center font-mono text-slate-400">{h.v}</td>
                       ))}
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-gold-500 border-l border-blue-500/20">{isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}</td>
+                      <td className={`px-3 py-2.5 text-center font-mono font-bold ${ac.text} border-l border-blue-500/20`}>
+                        {isMounted ? Number(q.currentStock || 0).toLocaleString('de-DE') : '—'}
+                        {ac.icon === 'critical' && <AlertTriangle className="inline-block w-3 h-3 ml-1 text-red-400" />}
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -584,29 +658,43 @@ export default function CriticosPage() {
               <Cylinder className="w-4 h-4 text-cyan-400" />
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">Control de Cilindros</h2>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-blue-500/10">
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Gas</th>
-                    <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Llenas</th>
-                    <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">En Uso</th>
-                    <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Disponibles</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gases.map((g) => (
-                    <tr key={g.id} className="terminal-row">
-                      <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{g.name}</td>
-                      <td className="px-4 sm:px-5 py-3 text-center text-sm font-mono text-slate-300">{g.full}</td>
-                      <td className="px-4 sm:px-5 py-3 text-center text-sm font-mono text-slate-300">{g.inUse}</td>
-                      <td className="px-4 sm:px-5 py-3 text-center">
-                        <span className={`text-sm font-mono font-bold ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>{g.available}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {gases.map((g) => {
+                const total = g.full + g.inUse + g.available;
+                const fullPct = total > 0 ? (g.full / total) * 100 : 0;
+                return (
+                  <div key={g.id} className="bg-midnight-800/60 border border-cyan-500/15 p-4 rounded-sm flex flex-col items-center gap-3 hover:border-cyan-500/30 transition-colors">
+                    {/* Cylinder visual */}
+                    <div className="relative w-14 h-24 bg-midnight-900 border-2 border-cyan-500/20 rounded-full overflow-hidden">
+                      <div
+                        className="absolute bottom-0 left-0 right-0 transition-all duration-700"
+                        style={{
+                          height: `${fullPct}%`,
+                          background: 'linear-gradient(to top, #06B6D4, #22D3EE)',
+                          boxShadow: '0 0 8px rgba(6,182,212,0.2)',
+                        }}
+                      />
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-cyan-500/30 rounded-full" />
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-1.5 bg-cyan-500/30 rounded-full" />
+                    </div>
+                    <h3 className="text-sm font-bold text-white text-center">{g.name}</h3>
+                    <div className="w-full grid grid-cols-3 gap-1.5 text-center">
+                      <div className="bg-midnight-900/60 border border-amber-500/10 p-2 rounded-sm">
+                        <p className="text-base font-bold font-mono text-amber-400">{g.full}</p>
+                        <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Llenas</p>
+                      </div>
+                      <div className="bg-midnight-900/60 border border-blue-500/10 p-2 rounded-sm">
+                        <p className="text-base font-bold font-mono text-blue-400">{g.inUse}</p>
+                        <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">En Uso</p>
+                      </div>
+                      <div className="bg-midnight-900/60 border border-green-500/10 p-2 rounded-sm">
+                        <p className={`text-base font-bold font-mono ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>{g.available}</p>
+                        <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Disp.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -804,7 +892,7 @@ export default function CriticosPage() {
                   </div>
                   <div>
                     <span className="text-slate-500">Autonomía:</span>
-                    <span className="ml-1 font-mono text-red-400">{q.daysOfAutonomy.toFixed(1)} días</span>
+                    <span className={`ml-1 font-mono ${autonomyColor(q.daysOfAutonomy).text}`}>{q.daysOfAutonomy.toFixed(1)} días</span>
                   </div>
                   <div>
                     <span className="text-slate-500">Se agota:</span>
@@ -840,7 +928,7 @@ export default function CriticosPage() {
                   </div>
                   <div className="text-right min-w-[60px]">
                     <p className="text-[9px] text-slate-500 uppercase tracking-widest">Autonomía</p>
-                    <p className="text-xs font-mono font-bold text-red-400">{q.daysOfAutonomy?.toFixed(1)}d</p>
+                    <p className={`text-xs font-mono font-bold ${autonomyColor(q.daysOfAutonomy).text}`}>{q.daysOfAutonomy?.toFixed(1)}d</p>
                   </div>
                 </div>
               </div>
@@ -933,6 +1021,48 @@ export default function CriticosPage() {
               ))}
             </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal: PEDIR (Cargo rápido) */}
+      <Modal open={pedirItem !== null} onClose={() => setPedirItem(null)} title={`Pedir: ${pedirItem?.name ?? ''}`} icon={Truck}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Cantidad</label>
+            <input
+              type="number"
+              value={pedirQty}
+              onChange={(e) => setPedirQty(e.target.value)}
+              className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+              placeholder="Ingrese cantidad"
+              min={1}
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Referencia / Nota</label>
+            <input
+              type="text"
+              value={pedirRef}
+              onChange={(e) => setPedirRef(e.target.value)}
+              className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none"
+              placeholder="N° orden, proveedor, etc."
+            />
+          </div>
+          <button
+            onClick={() => {
+              if (pedirItem && Number(pedirQty) > 0) {
+                registerCargo(pedirItem.name, Number(pedirQty), pedirRef.trim() || 'Pedido desde críticos');
+                setPedirItem(null);
+                setPedirQty('');
+                setPedirRef('');
+              }
+            }}
+            disabled={!pedirItem || Number(pedirQty) <= 0}
+            className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+          >
+            <Check className="w-4 h-4" />
+            Confirmar Cargo
+          </button>
         </div>
       </Modal>
 
