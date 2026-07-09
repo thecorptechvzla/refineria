@@ -374,7 +374,7 @@ export default function IngresoPage() {
                 />
                 {pBruto > 0 && pLey > 0 && (
                   <p className="text-[10px] text-gold-500/70 mt-1 font-mono">
-                    E = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLey)} ÷ 1000 = <span className="text-gold-400">{formatLocaleNumber(pBruto * pLey / 1000)}</span>
+                    FA = {formatLocaleNumber(pBruto)} × {formatLocaleNumber(pLey)} ÷ 1000 = <span className="text-gold-400">{formatLocaleNumber(pBruto * pLey / 1000)}</span>
                   </p>
                 )}
               </div>
@@ -402,7 +402,7 @@ export default function IngresoPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Ruler className="w-3 h-3 inline mr-1" />
-                  Peso Fino Analítico — E (g)
+                  FA — Fino Analítico (g)
                 </label>
                 <input
                   type="text"
@@ -418,7 +418,7 @@ export default function IngresoPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Ruler className="w-3 h-3 inline mr-1" />
-                  Peso Fino Esperado — F (g)
+                  FE — Fino Esperado (g)
                 </label>
                 <input
                   type="text"
@@ -573,9 +573,9 @@ export default function IngresoPage() {
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">E (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">F (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">G (g)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FA (g)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FE (g)</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">R (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Ag (‰)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>

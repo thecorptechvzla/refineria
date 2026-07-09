@@ -418,9 +418,9 @@ function ProcessDetailView({
                               </div>
                               <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
                                 <span>Ley: {bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</span>
-                                <span>E: {formatLocaleNumber(bar.analytical)}</span>
-                                <span>F: {formatLocaleNumber(bar.expected)}</span>
-                                <span>G: {formatLocaleNumber(bar.recovered)}</span>
+                                <span>FA: {formatLocaleNumber(bar.analytical)}</span>
+                                <span>FE: {formatLocaleNumber(bar.expected)}</span>
+                                <span>R: {formatLocaleNumber(bar.recovered)}</span>
                                 {bar.originalLot && (
                                   <span className="bg-midnight-700 text-slate-300 text-[9px] px-1.5 py-0.5 rounded font-mono leading-none">Lote: {bar.originalLot}</span>
                                 )}
@@ -496,9 +496,9 @@ function ProcessDetailView({
                   <tr className="border-b border-blue-500/10">
                     <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lote N°</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Bruto (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Analítico — E (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Esperado — F (g)</th>
-                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino Recuperado — G (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FA — Fino Analítico (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FE — Fino Esperado (g)</th>
+                    <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">R — Recuperado (g)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">% Recuperación</th>
                     <th className="px-3 py-3 text-right text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Diferencia (g)</th>
                   </tr>
@@ -540,7 +540,7 @@ function ProcessDetailView({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Crosshair className="w-4 h-4 text-blue-400" />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Captura de Peso Fino Recuperado (G) por Lote</h2>
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Captura de Peso Fino Recuperado (R) por Lote</h2>
         </div>
 
         {processDetail.lotDetails.length > 0 ? (
@@ -563,7 +563,7 @@ function ProcessDetailView({
                     <div>
                       <p className="text-base font-bold text-gold-500 font-mono">Lote #{lot.number}</p>
                       <p className="text-xs text-slate-500 mt-0.5 font-mono">
-                        Σ E: {formatLocaleNumber(sumE)} g · Σ F: {formatLocaleNumber(sumF)} g
+                        Σ FA: {formatLocaleNumber(sumE)} g · Σ FE: {formatLocaleNumber(sumF)} g
                       </p>
                       {lotBlocked && (
                         <div className="bg-yellow-500/10 border border-yellow-500/30 p-2 mt-2">
@@ -576,7 +576,7 @@ function ProcessDetailView({
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="flex items-center gap-2">
                         <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
-                          G (g)
+                          R (g)
                         </label>
                           <input
                             type="text"
@@ -625,7 +625,7 @@ function ProcessDetailView({
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Save className="w-3 h-3" />
-                                {isOpen ? 'Guardar' : 'Guardar G'}
+                                {isOpen ? 'Guardar' : 'Guardar R'}
                               </span>
                             )}
                           </button>
@@ -666,8 +666,8 @@ function ProcessDetailView({
                             <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Serial</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Peso Bruto (g)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley (‰)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">E (g)</th>
-                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">F (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">FA (g)</th>
+                            <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">FE (g)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ley Ag (‰)</th>
                             <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-600 uppercase tracking-widest">Ag (g)</th>
                             {isOpen && <th className="px-3 py-2" />}
@@ -1213,7 +1213,7 @@ export default function ProcesosPage() {
     if (!managingProcessId) return;
     try {
       await updateProcessStatus(managingProcessId, 'in_progress');
-      setSuccessMessage('Asignaci&oacute;n finalizada. Ahora puede ingresar el Peso Fino Recuperado (G) por lote.');
+      setSuccessMessage('Asignaci&oacute;n finalizada. Ahora puede ingresar el Peso Fino Recuperado (R) por lote.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch {
       setErrorMessage('Error al finalizar la asignación');
@@ -1496,7 +1496,7 @@ export default function ProcesosPage() {
               >
                 <span className="flex items-center justify-center gap-1.5">
                   <Settings className="w-3 h-3" />
-                  Ingresar G
+                  Ingresar R
                 </span>
               </button>
             ),
@@ -1547,7 +1547,7 @@ export default function ProcesosPage() {
                     <span>{lotCount} lote{lotCount !== 1 ? 's' : ''}</span>
                     <span>{barCount} barra{barCount !== 1 ? 's' : ''}</span>
                     {activeTab === 'in_progress' && (
-                      <span>G: {gCount}/{lotCount} guardado{gCount !== 1 ? 's' : ''}</span>
+                      <span>R: {gCount}/{lotCount} guardado{gCount !== 1 ? 's' : ''}</span>
                     )}
                     {activeTab === 'closed' && p.closedAt ? (
                       <span>Cerrado {new Date(p.closedAt).toLocaleDateString('es-PE')}</span>

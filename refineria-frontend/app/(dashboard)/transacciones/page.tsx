@@ -193,7 +193,7 @@ export default function TransaccionesPage() {
                                           Lote #{lot.number}
                                         </p>
                                         <div className="flex gap-3 text-[10px] text-slate-500">
-                                          <span>G: <span className="text-slate-300 font-mono">{formatLocaleNumber(lot.recovered ?? 0)}</span></span>
+                                          <span>R: <span className="text-slate-300 font-mono">{formatLocaleNumber(lot.recovered ?? 0)}</span></span>
                                           <span>Egresado: <span className="text-slate-300 font-mono">{formatLocaleNumber(lot.egresadoG)}</span></span>
                                           <span>Disponible: <span className="text-green-400 font-mono">{formatLocaleNumber(available)}</span></span>
                                         </div>

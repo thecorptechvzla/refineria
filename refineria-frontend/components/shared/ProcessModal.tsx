@@ -178,9 +178,9 @@ export function ProcessModal({
                     <tr className="border-b border-blue-500/10">
                       <th className={TH_LEFT}>Lote / Barra</th>
                       <th className={TH}><span className="hidden sm:inline">Bruto</span><span className="sm:hidden">BRU.</span></th>
-                      <th className={TH}>E</th>
-                      <th className={TH}>F</th>
-                      <th className={TH}>G</th>
+                      <th className={TH}>FA</th>
+                      <th className={TH}>FE</th>
+                      <th className={TH}>R</th>
                       <th className={`${TH} text-blue-400`}><span className="hidden sm:inline">% Recup.</span><span className="sm:hidden">%REC</span></th>
                       <th className={`${TH} text-blue-400`}>Dif</th>
                       <th className={`${TH} whitespace-nowrap`}><span className="hidden sm:inline">Ley Ag</span><span className="sm:hidden">AG (g)</span></th>
@@ -222,9 +222,9 @@ export function ProcessModal({
                                   <tr className="border-b border-blue-500/5">
                                     <th className="sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-1.5 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest border-r border-blue-500/10" />
                                     <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}><span className="hidden sm:inline">Bruto</span><span className="sm:hidden">BRU.</span></th>
-                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>E</th>
-                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>F</th>
-                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>G</th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>FA</th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>FE</th>
+                                    <th className={TH.replace('py-2 sm:py-3', 'py-1.5')}>R</th>
                                     <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} text-blue-400`}><span className="hidden sm:inline">% Recup.</span><span className="sm:hidden">%REC</span></th>
                                     <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} text-blue-400`}>Dif</th>
                                     <th className={`${TH.replace('py-2 sm:py-3', 'py-1.5')} whitespace-nowrap`}><span className="hidden sm:inline">Ley Ag</span><span className="sm:hidden">AG (g)</span></th>
