@@ -22,6 +22,8 @@ import {
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -56,6 +58,17 @@ function autonomyColor(days: number | null): { text: string; bar: string; label:
   if (days < 5) return { text: 'text-red-400', bar: 'bg-red-500', label: 'Crítico', icon: 'critical' };
   if (days < 10) return { text: 'text-amber-400', bar: 'bg-amber-500', label: 'Advertencia', icon: 'warning' };
   return { text: 'text-emerald-400', bar: 'bg-emerald-500', label: 'Estable', icon: 'safe' };
+}
+
+function generateMockTrend(baseValue: number, length: number, volatility: number = 0.18): { v: number }[] {
+  const trend: { v: number }[] = [];
+  let current = baseValue;
+  for (let i = 0; i < length; i++) {
+    const change = current * (Math.random() - 0.5) * volatility;
+    current = Math.max(1, current + change);
+    trend.push({ v: Math.round(current * 10) / 10 });
+  }
+  return trend;
 }
 
 /* ───── Modal Component ───── */
@@ -104,6 +117,8 @@ function KpiCard({
   iconClass,
   onClick,
   isMounted,
+  sparklineData,
+  sparklineColor,
   children,
 }: {
   icon: React.ElementType;
@@ -114,30 +129,58 @@ function KpiCard({
   iconClass?: string;
   onClick?: () => void;
   isMounted?: boolean;
+  sparklineData?: { v: number }[];
+  sparklineColor?: string;
   children?: React.ReactNode;
 }) {
   const Comp = onClick ? 'button' : 'div';
+  const grdId = `spark-grd-${label.replace(/\s+/g, '-')}`;
   return (
     <Comp
       onClick={onClick}
-      className={`glass-panel p-4 text-left transition-all duration-200 relative ${onClick ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] group' : ''}`}
+      className={`bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left transition-all duration-200 relative ${
+        onClick
+          ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] group'
+          : ''
+      }`}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className={`w-4 h-4 ${iconClass ?? 'text-blue-400'}`} />
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{label}</span>
-        {onClick && (
-          <ChevronRight className="w-3 h-3 text-slate-600 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Icon className={`w-4 h-4 ${iconClass ?? 'text-blue-400'}`} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{label}</span>
+            {onClick && (
+              <ChevronRight className="w-3 h-3 text-slate-600 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            )}
+          </div>
+          {value != null && (
+            <p className={`text-2xl font-bold hud-number ${valueClass ?? 'text-white'}`}>
+              {isMounted ? value : '—'}
+            </p>
+          )}
+          {children}
+          {subtext && (
+            <p className="text-[10px] text-slate-500 mt-0.5">{subtext}</p>
+          )}
+        </div>
+        {sparklineData && sparklineData.length > 1 && (
+          <div className="w-28 sm:w-32 h-14 sm:h-16 flex-shrink-0 self-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sparklineData}>
+                <defs>
+                  <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={sparklineColor || '#3B82F6'} stopOpacity={0.45} />
+                    <stop offset="95%" stopColor={sparklineColor || '#3B82F6'} stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <XAxis hide />
+                <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                <Area type="monotone" dataKey="v" stroke={sparklineColor || '#3B82F6'} strokeWidth={2} fill={`url(#${grdId})`} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
-      {value != null && (
-        <p className={`text-2xl font-bold hud-number ${valueClass ?? 'text-white'}`}>
-          {isMounted ? value : '—'}
-        </p>
-      )}
-      {children}
-      {subtext && (
-        <p className="text-[10px] text-slate-500 mt-0.5">{subtext}</p>
-      )}
     </Comp>
   );
 }
@@ -198,6 +241,28 @@ export default function CriticosPage() {
     });
     if (recent.length === 0) return 0;
     return Math.round(recent.reduce((s, e) => s + e.consumption, 0) / recent.length);
+  }, [combustible]);
+
+  /* ── Sparkline data ── */
+  const autonomySparkline = useMemo(() => {
+    if (minAutonomy === null) return [];
+    return generateMockTrend(minAutonomy, 7);
+  }, [minAutonomy]);
+
+  const criticosSparkline = useMemo(() => {
+    return criticosBajos.length > 0 ? generateMockTrend(criticosBajos.length, 7) : [];
+  }, [criticosBajos.length]);
+
+  const gasesSparkline = useMemo(() => {
+    const total = gases.reduce((s, g) => s + g.full + g.inUse + g.available, 0);
+    return total > 0 ? generateMockTrend(total, 7) : [];
+  }, [gases]);
+
+  const combustibleSparkline = useMemo(() => {
+    if (combustible.log.length >= 3) {
+      return combustible.log.slice(-7).map((entry) => ({ v: entry.remaining }));
+    }
+    return generateMockTrend(combustible.currentStock, 7);
   }, [combustible]);
 
   const handleAddNovedad = () => {
@@ -263,6 +328,8 @@ export default function CriticosPage() {
               valueClass={isMounted && minAutonomy !== null ? autonomyColor(minAutonomy).text : 'text-white'}
               value={minAutonomy !== null ? minAutonomy.toFixed(1) : '—'}
               onClick={() => setModal('autonomia')}
+              sparklineData={isMounted ? autonomySparkline : []}
+              sparklineColor="#3B82F6"
             >
               {isMounted && minAutonomy !== null && (
                 <p className="text-[10px] text-slate-500 mt-0.5 truncate">
@@ -279,6 +346,8 @@ export default function CriticosPage() {
               value={criticosBajos.length.toString()}
               subtext="con &lt;5 días de autonomía"
               onClick={() => setModal('criticos')}
+              sparklineData={isMounted ? criticosSparkline : []}
+              sparklineColor="#EF4444"
             />
 
             {/* GASES */}
@@ -289,6 +358,8 @@ export default function CriticosPage() {
               value={gases.length.toString()}
               subtext="tipos registrados"
               onClick={() => setModal('gases')}
+              sparklineData={isMounted ? gasesSparkline : []}
+              sparklineColor="#06B6D4"
             />
 
             {/* COMBUSTIBLE */}
@@ -299,6 +370,8 @@ export default function CriticosPage() {
               value={combustible.currentStock.toLocaleString()}
               subtext="litros disponibles"
               onClick={() => setModal('combustible')}
+              sparklineData={isMounted ? combustibleSparkline : []}
+              sparklineColor="#F59E0B"
             />
           </div>
 
