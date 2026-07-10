@@ -81,6 +81,7 @@ export default function InsumosPage() {
   const [combustibleFileUrl, setCombustibleFileUrl] = useState<string | null>(null);
 
 const [searchQuery, setSearchQuery] = useState('');
+const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 const [criticoSearch, setCriticoSearch] = useState('');
 const [globalSearchKey, setGlobalSearchKey] = useState(0);
   const [itemForQuantity, setItemForQuantity] = useState<{
@@ -1137,73 +1138,76 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
           </div>
         )}
         <div className={showCreateModal ? 'lg:col-span-7 lg:col-start-6' : 'lg:col-span-8 lg:col-start-3'}>
-          <div className="glass-panel h-full flex flex-col">
-            <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-blue-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Inventario</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-                  {String(filteredItems?.length ?? items?.length ?? 0).padStart(2, '0')}
-                </span>
-                <button
-                  onClick={() => { initBulkRows(); setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20 active:scale-95"
-                >
-                  <ArrowUpDown className="w-3 h-3" />
-                  Cargos / Descargos
-                </button>
-                {canAct && (
-                  <button
-                    onClick={() => { setShowCreateModal(true); setTxModal(null); setHistoryItemId(null); setBulkOpen(false); }}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all active:scale-95"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Nuevo Insumo
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="glass-panel h-full flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="sticky top-0 z-10 bg-midnight-900/95 backdrop-blur-md border-b border-blue-500/10">
+                <div className="p-4 sm:p-5 flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-blue-400" />
+                    <h2 className="text-sm font-bold text-white uppercase tracking-wider">Inventario</h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
+                      {String(filteredItems?.length ?? items?.length ?? 0).padStart(2, '0')}
+                    </span>
+                    <button
+                      onClick={() => { initBulkRows(); setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20 active:scale-95"
+                    >
+                      <ArrowUpDown className="w-3 h-3" />
+                      Cargos / Descargos
+                    </button>
+                    {canAct && (
+                      <button
+                        onClick={() => { setShowCreateModal(true); setTxModal(null); setHistoryItemId(null); setBulkOpen(false); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all active:scale-95"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Nuevo Insumo
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-            <div className="px-4 sm:px-5 py-3 border-b border-blue-500/10 flex items-center gap-3 flex-wrap">
-              <div className="flex gap-1 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-4 sm:mx-0 px-4 sm:px-0">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.label}
-                    onClick={() => setCategory(tab.value)}
-                    className={`snap-start shrink-0 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-200 active:scale-95 ${
-                      category === tab.value
-                        ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400 shadow-[inset_0_-2px_0_0_rgba(250,204,21,0.7)]'
-                        : 'bg-midnight-800/50 border border-blue-500/10 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                <div className="px-4 sm:px-5 py-3 flex items-center gap-3 flex-wrap border-t border-blue-500/10">
+                  <div className="flex gap-1 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-4 sm:mx-0 px-4 sm:px-0">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.label}
+                        onClick={() => setCategory(tab.value)}
+                        className={`snap-start shrink-0 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-200 active:scale-95 ${
+                          category === tab.value
+                            ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400 shadow-[inset_0_-2px_0_0_rgba(250,204,21,0.7)]'
+                            : 'bg-midnight-800/50 border border-blue-500/10 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-[180px] max-w-xs ml-auto">
+                    {category === 'CRITICAL' || category === 'COMBUSTIBLE' ? (
+                      <input
+                        type="text"
+                        value={criticoSearch}
+                        onChange={(e) => setCriticoSearch(e.target.value)}
+                        className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
+                        placeholder={category === 'CRITICAL' ? 'Buscar químico...' : 'Buscar en historial...'}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
+                        placeholder="Buscar por código o nombre..."
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-[180px] max-w-xs ml-auto">
-                {category === 'CRITICAL' || category === 'COMBUSTIBLE' ? (
-                  <input
-                    type="text"
-                    value={criticoSearch}
-                    onChange={(e) => setCriticoSearch(e.target.value)}
-                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
-                    placeholder={category === 'CRITICAL' ? 'Buscar químico...' : 'Buscar en historial...'}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
-                    placeholder="Buscar por código o nombre..."
-                  />
-                )}
-              </div>
-            </div>
 
-            <div className="flex-1 overflow-x-auto">
+              <div className="overflow-x-auto">
               {category === 'CRITICAL' ? (
                 <div className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-4">
@@ -1216,21 +1220,50 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
 
                   {filteredCriticoItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {filteredCriticoItems.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setCriticoItemModal(item)}
-                          className="bg-midnight-800/50 border border-blue-500/10 p-4 text-left hover:border-orange-500/30 hover:bg-midnight-800/80 transition-all group active:scale-[0.98]"
-                        >
-                          <p className="text-[10px] font-mono text-slate-500 mb-1">{item.code}</p>
-                          <p className="text-sm font-bold text-slate-200 group-hover:text-orange-400 transition-colors">{item.name}</p>
-                          <div className="flex items-center justify-between mt-3 text-[10px] text-slate-500">
-                            <span>Stock: <span className="font-mono text-slate-300">{item.currentStock}</span></span>
-                            <span>Mín: <span className="font-mono text-slate-300">{item.criticalLevel}</span></span>
-                          </div>
-                        </button>
-                      ))}
+                      {filteredCriticoItems.map((item) => {
+                        const maxStock = item.criticalLevel > 0 ? Math.max(item.currentStock, item.criticalLevel * 3) : item.currentStock || 1;
+                        const stockPct = Math.min(100, (item.currentStock / maxStock) * 100);
+                        const isLow = stockPct < 20;
+                        const isMid = stockPct >= 20 && stockPct <= 50;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setCriticoItemModal(item)}
+                            className={`relative overflow-hidden bg-midnight-800/50 p-4 text-left hover:bg-midnight-800/80 transition-all group active:scale-[0.98] ${
+                              isLow ? 'border animate-pulse-border' : 'border border-blue-500/10 hover:border-orange-500/30'
+                            }`}
+                          >
+                            {/* Liquid fill background */}
+                            <div
+                              className="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out"
+                              style={{
+                                height: `${stockPct}%`,
+                                background: isLow
+                                  ? 'linear-gradient(to top, rgba(239,68,68,0.25), rgba(239,68,68,0.08), transparent)'
+                                  : isMid
+                                    ? 'linear-gradient(to top, rgba(245,158,11,0.2), rgba(245,158,11,0.06), transparent)'
+                                    : 'linear-gradient(to top, rgba(16,185,129,0.2), rgba(16,185,129,0.06), transparent)',
+                              }}
+                            />
+                            {/* Status dot */}
+                            <div
+                              className={`absolute top-3 right-3 w-2 h-2 rounded-full ${
+                                isLow ? 'bg-red-500 animate-pulse' : isMid ? 'bg-amber-500' : 'bg-emerald-500'
+                              }`}
+                            />
+                            {/* Content */}
+                            <div className="relative z-10">
+                              <p className="text-[10px] font-mono text-slate-500 mb-1">{item.code}</p>
+                              <p className="text-sm font-bold text-slate-200 group-hover:text-orange-400 transition-colors">{item.name}</p>
+                              <div className="flex items-center justify-between mt-3 text-[10px] text-slate-500">
+                                <span>Stock: <span className="font-mono text-slate-300">{item.currentStock}</span></span>
+                                <span>Mín: <span className="font-mono text-slate-300">{item.criticalLevel}</span></span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-6 text-center">
@@ -1283,9 +1316,9 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               </td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
                                 {(h.observacion || '').includes(' | URL:') ? (
-                                  <a href={(h.observacion || '').split(' | URL:')[1]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors" title="Abrir comprobante">
+                                  <button onClick={() => setLightboxUrl((h.observacion || '').split(' | URL:')[1])} className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors active:scale-95" title="Ver comprobante">
                                     <Paperclip className="w-4 h-4" />
-                                  </a>
+                                  </button>
                                 ) : (
                                   <span className="text-slate-600">—</span>
                                 )}
@@ -1305,37 +1338,59 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     </table>
                   </div>
 
-                  {/* Mobile cards */}
-                  <div className="sm:hidden space-y-2">
+                  {/* Mobile timeline */}
+                  <div className="sm:hidden">
                     {pageCriticoHistorial.length > 0 ? (
-                      pageCriticoHistorial.map((h) => (
-                        <div key={h.id} className="bg-midnight-800/50 border border-blue-500/10 p-3 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-slate-500">{h.date}</span>
-                            <span className={`text-[10px] font-mono font-bold ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>{h.tipo === 'CARGO' ? '+' : '-'}{h.cantidad}</span>
-                          </div>
-                          <div className="text-xs text-slate-200 font-medium">{h.insumo}</div>
-                          <div className="flex items-center justify-between">
-                            {h.tipo === 'CARGO' ? (
-                              <span className="text-[10px] uppercase tracking-wider text-emerald-400/80 border border-emerald-500/10 px-1.5 py-0.5 bg-emerald-500/5">CARGO</span>
-                            ) : (
-                              <span className="text-[10px] uppercase tracking-wider text-red-400/80 border border-red-500/10 px-1.5 py-0.5 bg-red-500/5">DESCARGO</span>
-                            )}
-                            <span className="text-[10px] text-slate-500 truncate ml-2">{h.observacion || '—'}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span className="uppercase tracking-wider">Soporte</span>
-                            {(h.observacion || '').includes(' | URL:') ? (
-                              <a href={(h.observacion || '').split(' | URL:')[1]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors" title="Abrir comprobante">
-                                <Paperclip className="w-3.5 h-3.5" />
-                                <span>Ver Comprobante</span>
-                              </a>
-                            ) : (
-                              <span>—</span>
-                            )}
-                          </div>
-                        </div>
-                      ))
+                      <div className="relative">
+                        {pageCriticoHistorial.map((h, idx) => {
+                          const isLast = idx === pageCriticoHistorial.length - 1;
+                          const soporteUrl = (h.observacion || '').includes(' | URL:')
+                            ? (h.observacion || '').split(' | URL:')[1] : null;
+                          const cleanRef = soporteUrl
+                            ? (h.observacion || '').split(' | URL:')[0] : h.observacion || '—';
+                          return (
+                            <div key={h.id} className={`relative pl-8 ${isLast ? '' : 'pb-4'}`}>
+                              {/* Vertical line */}
+                              {!isLast && <div className="absolute left-3 top-3 bottom-0 w-px bg-blue-500/20" />}
+                              {/* Dot */}
+                              <div className={`absolute left-1.5 top-1.5 w-3 h-3 rounded-full border-2 z-10 ${
+                                h.tipo === 'CARGO'
+                                  ? 'border-emerald-500/40 bg-emerald-500/20'
+                                  : 'border-red-500/40 bg-red-500/20'
+                              }`} />
+                              {/* Card */}
+                              <div className="bg-midnight-800/50 border border-blue-500/10 rounded-lg p-3 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-mono text-slate-500">{h.date}</span>
+                                  <span className={`text-[10px] font-mono font-bold ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {h.tipo === 'CARGO' ? '+' : '-'}{h.cantidad}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-200 font-medium">{h.insumo}</div>
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 border ${
+                                    h.tipo === 'CARGO'
+                                      ? 'text-emerald-400/80 border-emerald-500/10 bg-emerald-500/5'
+                                      : 'text-red-400/80 border-red-500/10 bg-red-500/5'
+                                  }`}>
+                                    {h.tipo === 'CARGO' ? 'CARGO' : 'DESCARGO'}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 truncate ml-2">{cleanRef}</span>
+                                </div>
+                                {soporteUrl && (
+                                  <div className="flex items-center justify-end pt-0.5">
+                                    <button onClick={() => setLightboxUrl(soporteUrl)}
+                                      className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors active:scale-95 text-[10px] font-semibold uppercase tracking-wider">
+                                      <Paperclip className="w-3 h-3" />
+                                      Ver Comprobante
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     ) : (
                       <div className="p-6 text-center">
                         <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
@@ -1558,25 +1613,52 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
               )}
             </div>
           </div>
+          </div>
 
-          {criticoItemModal && (
-            <div className="absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-slide-up">
-              <div className="w-full max-w-2xl glass-panel max-h-[80vh] flex flex-col">
-                <div className="p-4 border-b border-blue-500/10 flex items-center justify-between flex-shrink-0">
+          {criticoItemModal && (() => {
+            const graphMax = criticoItemHistory && criticoItemHistory.length > 0
+              ? Math.max(...criticoItemHistory.slice(0, 6).map(t => t.quantity), 1) : 1;
+            const modalContent = (isMobile?: boolean) => (
+              <>
+                <div className={`flex items-center justify-between ${isMobile ? '' : 'border-b border-blue-500/10 p-4 flex-shrink-0'}`}>
                   <div className="flex items-center gap-2">
                     <History className="w-4 h-4 text-blue-400" />
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historial de {criticoItemModal.name}</h3>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">{criticoItemModal.name}</h3>
                   </div>
                   <button onClick={() => setCriticoItemModal(null)} className="text-slate-500 hover:text-slate-300 transition-colors active:scale-95">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="p-4 border-b border-blue-500/10 flex items-center gap-4 text-xs text-slate-400 flex-shrink-0">
+                <div className={`flex items-center gap-4 text-xs text-slate-400 flex-shrink-0 ${isMobile ? 'border-b border-blue-500/10 pb-3' : 'p-4 border-b border-blue-500/10'}`}>
                   <span>Código: <span className="font-mono text-slate-200">{criticoItemModal.code}</span></span>
                   <span>Stock: <span className="font-mono text-slate-200">{criticoItemModal.currentStock}</span></span>
                   <span>Unidad: <span className="font-mono text-slate-200">{criticoItemModal.unit}</span></span>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4">
+                {/* Quick graph */}
+                {criticoItemHistory && criticoItemHistory.length > 0 && (
+                  <div className={`${isMobile ? '' : 'p-4 border-b border-blue-500/10'}`}>
+                    <div className="bg-midnight-900/60 rounded-lg p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Últimos movimientos</p>
+                      <div className="space-y-1.5">
+                        {criticoItemHistory.slice(0, 6).map((tx) => (
+                          <div key={tx.id} className="flex items-center gap-2">
+                            <span className={`text-[10px] font-mono font-bold w-10 text-right ${tx.type === 'IN' ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {tx.type === 'IN' ? '+' : ''}{tx.quantity}
+                            </span>
+                            <div className="flex-1 h-3 bg-midnight-800/60 rounded-sm overflow-hidden">
+                              <div className={`h-full rounded-sm transition-all duration-500 ${tx.type === 'IN' ? 'bg-emerald-500/50' : 'bg-red-500/50'}`} style={{ width: `${(tx.quantity / graphMax) * 100}%` }} />
+                            </div>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${tx.type === 'IN' ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {tx.type === 'IN' ? 'CARGO' : 'DESCARGO'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Table */}
+                <div className={`${isMobile ? '' : 'flex-1 overflow-y-auto p-4'}`}>
                   {criticoItemHistoryLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
@@ -1611,7 +1693,37 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     <p className="text-xs text-slate-500 text-center py-8">No hay transacciones registradas para este insumo.</p>
                   )}
                 </div>
-              </div>
+              </>
+            );
+            return (
+              <>
+                {/* Desktop modal */}
+                <div className="hidden sm:flex absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm items-center justify-center p-4 animate-slide-up">
+                  <div className="w-full max-w-2xl glass-panel max-h-[80vh] flex flex-col">
+                    {modalContent()}
+                  </div>
+                </div>
+                {/* Mobile bottom sheet */}
+                <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end animate-slide-up">
+                  <div className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm" onClick={() => setCriticoItemModal(null)} />
+                  <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto space-y-4">
+                    <div className="flex justify-center -mt-2 mb-1">
+                      <div className="w-10 h-1 rounded-full bg-slate-600" />
+                    </div>
+                    {modalContent(true)}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
+          {/* Lightbox */}
+          {lightboxUrl && (
+            <div className="fixed inset-0 z-[60] bg-midnight-900/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-slide-up" onClick={() => setLightboxUrl(null)}>
+              <img src={lightboxUrl} className="max-w-full max-h-[80vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} alt="Comprobante" />
+              <button onClick={() => setLightboxUrl(null)} className="mt-5 px-6 py-3 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-sm font-bold uppercase tracking-widest hover:bg-red-500/30 transition-all active:scale-95">
+                Cerrar
+              </button>
             </div>
           )}
 
@@ -1632,6 +1744,13 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
         }
         .animate-slide-up {
           animation: slideUp 0.2s ease-out;
+        }
+        @keyframes pulseBorder {
+          0%, 100% { border-color: rgba(239, 68, 68, 0.4); }
+          50% { border-color: rgba(239, 68, 68, 0.75); }
+        }
+        .animate-pulse-border {
+          animation: pulseBorder 2s ease-in-out infinite;
         }
         .scrollbar-none::-webkit-scrollbar {
           display: none;
