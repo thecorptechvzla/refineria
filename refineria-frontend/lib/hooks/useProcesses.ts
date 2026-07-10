@@ -187,20 +187,15 @@ export function useUploadFile() {
         throw new Error(err.error || 'Error al obtener token de subida');
       }
 
-      const { clientToken } = await tokenRes.json();
-      const storeId = clientToken.split('_')[3];
-      const params = new URLSearchParams({ pathname: uniqueFilename });
+      const { clientToken, uploadUrl } = await tokenRes.json();
+      const uploadEndpoint = uploadUrl || `https://${clientToken.split('_')[3]}.blob.vercel-storage.com/${uniqueFilename}`;
 
-      const uploadRes = await fetch(`https://vercel.com/api/blob/?${params.toString()}`, {
+      const uploadRes = await fetch(uploadEndpoint, {
         method: 'PUT',
         credentials: 'omit',
         headers: {
           authorization: `Bearer ${clientToken}`,
-          'x-vercel-blob-store-id': storeId,
           'x-vercel-blob-access': 'public',
-          'x-api-version': '12',
-          'x-api-blob-request-id': `${storeId}:${Date.now()}:${Math.random().toString(16).slice(2)}`,
-          'x-api-blob-request-attempt': '0',
           'x-content-type': file.type || 'application/pdf',
         },
         body: file,
