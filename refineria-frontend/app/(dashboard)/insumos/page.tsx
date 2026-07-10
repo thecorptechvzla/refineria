@@ -30,15 +30,16 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Eye,
+  Paperclip,
 } from 'lucide-react';
 
-type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | 'CRITICAL' | null;
+type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | 'CRITICAL' | 'COMBUSTIBLE' | null;
 
 const tabs: { label: string; value: CategoryFilter }[] = [
   { label: 'OPERACIONES', value: 'OPERATIONS' },
   { label: 'SERVICIOS GENERALES', value: 'GENERAL_SERVICES' },
   { label: 'CRÍTICOS', value: 'CRITICAL' },
+  { label: 'COMBUSTIBLE', value: 'COMBUSTIBLE' },
   { label: 'TODOS', value: null },
 ];
 
@@ -49,7 +50,7 @@ export default function InsumosPage() {
   const tableBodyRef = useRef<HTMLDivElement>(null);
   const bulkNewInsumoBtnRef = useRef<HTMLButtonElement>(null);
   const [bulkPageSize, setBulkPageSize] = useState(20);
-  const apiCategory = category;
+  const apiCategory = category === 'COMBUSTIBLE' ? undefined : category;
   const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(apiCategory ?? undefined);
   const { data: allItems } = useSupplyItems();
   const createItem = useCreateSupplyItem();
@@ -91,6 +92,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
   const criticoHistoryPageSize = 10;
   const [historyPage, setHistoryPage] = useState(0);
   const historyPageSize = 10;
+  const [criticoItemModal, setCriticoItemModal] = useState<SupplyItem | null>(null);
+  const { data: criticoItemHistory, isLoading: criticoItemHistoryLoading } = useSupplyHistory(criticoItemModal?.id ?? null);
 
 
   const uploadFile = useUploadFile();
@@ -131,12 +134,24 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
 
   const filteredCriticoHistorial = useMemo(() => {
     if (!historial) return [];
-    if (!criticoSearch.trim()) return historial;
-    const q = criticoSearch.toLowerCase();
-    return historial.filter(
-      (h) => h.insumo.toLowerCase().includes(q),
+    const fuelNames = ['gasoil', 'diesel', 'combustible', 'gasolina'];
+    const fuelHistorial = historial.filter((h) =>
+      fuelNames.some((kw) => h.insumo.toLowerCase().includes(kw))
     );
-  }, [historial, criticoSearch]);
+    if (category !== 'COMBUSTIBLE') return fuelHistorial;
+    if (!criticoSearch.trim()) return fuelHistorial;
+    const q = criticoSearch.toLowerCase();
+    return fuelHistorial.filter((h) => h.insumo.toLowerCase().includes(q));
+  }, [historial, criticoSearch, category]);
+
+  const filteredCriticoItems = useMemo(() => {
+    if (!items) return [];
+    if (!criticoSearch.trim()) return items;
+    const q = criticoSearch.toLowerCase();
+    return items.filter(
+      (i) => i.name.toLowerCase().includes(q) || i.code.toLowerCase().includes(q)
+    );
+  }, [items, criticoSearch]);
 
   const autocompleteItems = useMemo(() => allItems ?? [], [allItems]);
 
@@ -415,12 +430,12 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
       const isCombustible = item?.criticalType === 'COMBUSTIBLE';
       let ref = bulkDestination.trim();
       if (isCombustible && combustiblereceiptUrl) {
-        ref = `${ref} | RECIBO:${combustiblereceiptUrl}`;
+        ref = `${ref.toUpperCase()} | URL:${combustiblereceiptUrl}`;
       }
       return {
         itemId: r.itemId || '',
         quantity: parseInt(r.quantity, 10),
-        reference: isCombustible ? ref.toUpperCase() : ref,
+        reference: ref,
       };
     });
 
@@ -439,22 +454,26 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
         items: payloadItems,
       });
       if (bulkType === 'OUT' && filledRows.length > 0) {
-        for (const row of filledRows) {
-          const supplyItem = autocompleteItems.find((i) => i.id === row.itemId);
+        for (let i = 0; i < filledRows.length; i++) {
+          const row = filledRows[i];
+          const supplyItem = autocompleteItems.find((ii) => ii.id === row.itemId);
+          const ref = payloadItems[i]?.reference || bulkDestination.trim();
           if (supplyItem?.isCritical) {
-            registerDescargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+            registerDescargo(supplyItem.name, parseInt(row.quantity, 10), ref);
           } else if (row.name) {
-            registerDescargo(row.name, parseInt(row.quantity, 10), bulkDestination.trim());
+            registerDescargo(row.name, parseInt(row.quantity, 10), ref);
           }
         }
       }
       if (bulkType === 'IN' && filledRows.length > 0) {
-        for (const row of filledRows) {
-          const supplyItem = autocompleteItems.find((i) => i.id === row.itemId);
+        for (let i = 0; i < filledRows.length; i++) {
+          const row = filledRows[i];
+          const supplyItem = autocompleteItems.find((ii) => ii.id === row.itemId);
+          const ref = payloadItems[i]?.reference || bulkDestination.trim();
           if (supplyItem?.isCritical) {
-            registerCargo(supplyItem.name, parseInt(row.quantity, 10), bulkDestination.trim());
+            registerCargo(supplyItem.name, parseInt(row.quantity, 10), ref);
           } else if (row.name) {
-            registerCargo(row.name, parseInt(row.quantity, 10), bulkDestination.trim());
+            registerCargo(row.name, parseInt(row.quantity, 10), ref);
           }
         }
       }
@@ -1164,13 +1183,13 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 ))}
               </div>
               <div className="flex-1 min-w-[180px] max-w-xs ml-auto">
-                {category === 'CRITICAL' ? (
+                {category === 'CRITICAL' || category === 'COMBUSTIBLE' ? (
                   <input
                     type="text"
                     value={criticoSearch}
                     onChange={(e) => setCriticoSearch(e.target.value)}
                     className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
-                    placeholder="Buscar en historial..."
+                    placeholder={category === 'CRITICAL' ? 'Buscar químico...' : 'Buscar en historial...'}
                   />
                 ) : (
                   <input
@@ -1188,24 +1207,59 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
               {category === 'CRITICAL' ? (
                 <div className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-4">
+                    <Package className="w-4 h-4 text-blue-400" />
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Insumos Críticos</span>
+                    <span className="ml-auto text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
+                      {filteredCriticoItems.length} insumos
+                    </span>
+                  </div>
+
+                  {filteredCriticoItems.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {filteredCriticoItems.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setCriticoItemModal(item)}
+                          className="bg-midnight-800/50 border border-blue-500/10 p-4 text-left hover:border-orange-500/30 hover:bg-midnight-800/80 transition-all group"
+                        >
+                          <p className="text-[10px] font-mono text-slate-500 mb-1">{item.code}</p>
+                          <p className="text-sm font-bold text-slate-200 group-hover:text-orange-400 transition-colors">{item.name}</p>
+                          <div className="flex items-center justify-between mt-3 text-[10px] text-slate-500">
+                            <span>Stock: <span className="font-mono text-slate-300">{item.currentStock}</span></span>
+                            <span>Mín: <span className="font-mono text-slate-300">{item.criticalLevel}</span></span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <Package className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                      <p className="text-xs text-slate-500">No hay insumos críticos.</p>
+                    </div>
+                  )}
+                </div>
+              ) : category === 'COMBUSTIBLE' ? (
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-4">
                     <History className="w-4 h-4 text-blue-400" />
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Movimientos</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Combustible</span>
                     <span className="ml-auto text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                       {filteredCriticoHistorial.length} registros
                     </span>
                   </div>
 
-                   {/* Desktop table */}
+                  {/* Desktop table */}
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
                         <tr className="border-b border-blue-500/10">
                           <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
-                          <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código / Insumo</th>
+                          <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Insumo</th>
                           <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
                           <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cantidad</th>
                           <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Referencia</th>
-                          <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Comprobante</th>
+                          <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Soporte</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1216,27 +1270,21 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-200">{h.insumo}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
                                 {h.tipo === 'CARGO' ? (
-                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 text-emerald-400 bg-emerald-500/10">
-                                    CARGO
-                                  </span>
+                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 text-emerald-400 bg-emerald-500/10">CARGO</span>
                                 ) : (
-                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-red-500/20 text-red-400 bg-red-500/10">
-                                    DESCARGO
-                                  </span>
+                                  <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-red-500/20 text-red-400 bg-red-500/10">DESCARGO</span>
                                 )}
                               </td>
                               <td className={`px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-right ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>{h.tipo === 'CARGO' ? '+' : ''}{h.cantidad}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{h.observacion || '—'}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">
+                                {(h.observacion || '').includes(' | URL:')
+                                  ? (h.observacion || '').split(' | URL:')[0]
+                                  : h.observacion || '—'}
+                              </td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
-                                {(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0] ? (
-                                  <a
-                                    href={(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0]}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors text-xs"
-                                    title="Abrir comprobante"
-                                  >
-                                    <Eye className="w-4 h-4" />
+                                {(h.observacion || '').includes(' | URL:') ? (
+                                  <a href={(h.observacion || '').split(' | URL:')[1]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors" title="Abrir comprobante">
+                                    <Paperclip className="w-4 h-4" />
                                   </a>
                                 ) : (
                                   <span className="text-slate-600">—</span>
@@ -1248,8 +1296,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                           <tr>
                             <td colSpan={6} className="px-5 py-8 text-center text-sm text-slate-500">
                               <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                              <p>No hay movimientos registrados.</p>
-                              <p className="text-xs text-slate-600 mt-1">Los movimientos de insumos críticos aparecerán aquí automáticamente.</p>
+                              <p>No hay movimientos de combustible registrados.</p>
+                              <p className="text-xs text-slate-600 mt-1">Las cargas de GASOIL aparecerán aquí automáticamente.</p>
                             </td>
                           </tr>
                         )}
@@ -1276,17 +1324,11 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                             <span className="text-[10px] text-slate-500 truncate ml-2">{h.observacion || '—'}</span>
                           </div>
                           <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span className="uppercase tracking-wider">Comprobante</span>
-                            {(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0] ? (
-                              <a
-                                href={(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0]}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                                title="Abrir comprobante"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>Ver</span>
+                            <span className="uppercase tracking-wider">Soporte</span>
+                            {(h.observacion || '').includes(' | URL:') ? (
+                              <a href={(h.observacion || '').split(' | URL:')[1]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors" title="Abrir comprobante">
+                                <Paperclip className="w-3.5 h-3.5" />
+                                <span>Ver Comprobante</span>
                               </a>
                             ) : (
                               <span>—</span>
@@ -1297,28 +1339,16 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     ) : (
                       <div className="p-6 text-center">
                         <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                        <p className="text-xs text-slate-500">No hay movimientos registrados.</p>
+                        <p className="text-xs text-slate-500">No hay movimientos de combustible registrados.</p>
                       </div>
                     )}
                     {totalCriticoPages > 1 && (
                       <div className="flex items-center justify-center gap-3 pt-2">
-                        <button
-                          type="button"
-                          disabled={criticoHistoryPage === 0}
-                          onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))}
-                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
+                        <button type="button" disabled={criticoHistoryPage === 0} onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))} className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {safeCriticoPage + 1}/{totalCriticoPages}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={criticoHistoryPage >= totalCriticoPages - 1}
-                          onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))}
-                          className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
+                        <span className="text-[10px] font-mono text-slate-400">{safeCriticoPage + 1}/{totalCriticoPages}</span>
+                        <button type="button" disabled={criticoHistoryPage >= totalCriticoPages - 1} onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))} className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                           <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>
@@ -1328,23 +1358,11 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                   {/* Desktop pagination */}
                   {totalCriticoPages > 1 && (
                     <div className="hidden sm:flex items-center justify-center gap-3 pt-3 border-t border-blue-500/10 mt-3">
-                      <button
-                        type="button"
-                        disabled={criticoHistoryPage === 0}
-                        onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))}
-                        className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
-                      >
+                      <button type="button" disabled={criticoHistoryPage === 0} onClick={() => setCriticoHistoryPage((p) => Math.max(0, p - 1))} className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs">
                         <ChevronLeft className="w-4 h-4" />
                       </button>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {safeCriticoPage + 1}/{totalCriticoPages}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={criticoHistoryPage >= totalCriticoPages - 1}
-                        onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))}
-                        className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
-                      >
+                      <span className="text-[10px] font-mono text-slate-400">{safeCriticoPage + 1}/{totalCriticoPages}</span>
+                      <button type="button" disabled={criticoHistoryPage >= totalCriticoPages - 1} onClick={() => setCriticoHistoryPage((p) => Math.min(totalCriticoPages - 1, p + 1))} className="text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs">
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
@@ -1446,6 +1464,63 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
             )}
             </div>
           </div>
+
+          {criticoItemModal && (
+            <div className="absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-slide-up">
+              <div className="w-full max-w-2xl glass-panel max-h-[80vh] flex flex-col">
+                <div className="p-4 border-b border-blue-500/10 flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-blue-400" />
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historial de {criticoItemModal.name}</h3>
+                  </div>
+                  <button onClick={() => setCriticoItemModal(null)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 border-b border-blue-500/10 flex items-center gap-4 text-xs text-slate-400 flex-shrink-0">
+                  <span>Código: <span className="font-mono text-slate-200">{criticoItemModal.code}</span></span>
+                  <span>Stock: <span className="font-mono text-slate-200">{criticoItemModal.currentStock}</span></span>
+                  <span>Unidad: <span className="font-mono text-slate-200">{criticoItemModal.unit}</span></span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  {criticoItemHistoryLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs text-slate-400 ml-2">Cargando historial...</span>
+                    </div>
+                  ) : criticoItemHistory && criticoItemHistory.length > 0 ? (
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-blue-500/10 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+                          <th className="text-left py-2 px-3">Fecha</th>
+                          <th className="text-center py-2 px-3">Tipo</th>
+                          <th className="text-right py-2 px-3">Cantidad</th>
+                          <th className="text-left py-2 px-3">Referencia</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {criticoItemHistory.map((tx) => (
+                          <tr key={tx.id} className="border-b border-blue-500/5">
+                            <td className="py-2 px-3 text-slate-300 font-mono">{new Date(tx.date).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                            <td className="py-2 px-3 text-center">
+                              <span className={`inline-block px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${tx.type === 'IN' ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10' : 'text-red-400 border-red-500/20 bg-red-500/10'}`}>
+                                {tx.type === 'IN' ? 'CARGO' : 'DESCARGO'}
+                              </span>
+                            </td>
+                            <td className={`py-2 px-3 text-right font-mono font-bold ${tx.type === 'IN' ? 'text-emerald-400' : 'text-red-400'}`}>{tx.type === 'IN' ? '+' : ''}{tx.quantity}</td>
+                            <td className="py-2 px-3 text-slate-400">{tx.reference || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p className="text-xs text-slate-500 text-center py-8">No hay transacciones registradas para este insumo.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
