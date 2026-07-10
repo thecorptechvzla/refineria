@@ -823,7 +823,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                   ref={bulkNewInsumoBtnRef}
                   type="button"
                   onClick={() => setShowBulkCreateOverlay(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Nuevo Insumo
@@ -836,7 +836,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 <button
                   type="button"
                   onClick={() => addBulkRow()}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20 active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Agregar Fila
@@ -989,91 +989,91 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
           </form>
 
           {itemForQuantity && (
-            <div className="absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-slide-up">
-              <div className="w-full max-w-xs glass-panel">
-                <div className="p-5 space-y-4">
+            <>
+              {/* Desktop modal */}
+              <div className="hidden sm:flex absolute inset-0 z-40 bg-midnight-900/80 backdrop-blur-sm items-center justify-center p-4 animate-slide-up">
+                <div className="w-full max-w-xs glass-panel">
+                  <div className="p-5 space-y-4">
+                    <div className="text-center">
+                      <p className="text-xs font-mono text-slate-500 mb-1">{itemForQuantity.item.code}</p>
+                      <p className="text-sm font-bold text-white">{itemForQuantity.item.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Existencia: {itemForQuantity.item.currentStock} {itemForQuantity.item.unit}
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Cantidad</label>
+                      <input type="number" min="1" autoFocus value={itemForQuantity.quantity}
+                        onChange={(e) => setItemForQuantity((prev) => prev ? { ...prev, quantity: e.target.value } : null)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleQuantityConfirm(); }}
+                        className="w-full text-center text-3xl font-bold py-4 bg-midnight-800 border border-blue-500/20 text-gold-400 outline-none focus:border-gold-500/40 transition-colors" placeholder="0" />
+                    </div>
+
+                    {itemForQuantity.item.criticalType === 'COMBUSTIBLE' && (
+                      <div>
+                        <input ref={fileInputRef} type="file" accept="image/*,.pdf" capture="environment" className="hidden"
+                          onChange={(e) => { const file = e.target.files?.[0]; if (file) setCombustibleFile(file); if (e.target) e.target.value = ''; }} />
+                        <button type="button" onClick={() => fileInputRef.current?.click()}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${combustibleFile ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400' : 'bg-orange-600/20 border border-orange-500/30 text-orange-400 hover:bg-orange-600/30'}`}>
+                          {combustibleFile ? '✅ COMPROBANTE LISTO' : '📎 ADJUNTAR COMPROBANTE'}
+                        </button>
+                      </div>
+                    )}
+
+                    <button type="button" onClick={handleQuantityConfirm}
+                      className={`w-full py-3 text-sm font-bold uppercase tracking-widest transition-all active:scale-95 ${bulkType === 'IN' ? 'bg-green-500 text-midnight-900 hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-400'}`}>
+                      {itemForQuantity.existingRowKey !== undefined ? `Actualizar ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}` : `Añadir ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`}
+                    </button>
+
+                    <button type="button" onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }}
+                      className="w-full py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider">Cancelar</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile bottom sheet */}
+              <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end animate-slide-up">
+                <div className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm" onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }} />
+                <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-6 pb-8 space-y-4 max-h-[80vh] overflow-y-auto">
+                  <div className="flex justify-center -mt-2 mb-1">
+                    <div className="w-10 h-1 rounded-full bg-slate-600" />
+                  </div>
                   <div className="text-center">
                     <p className="text-xs font-mono text-slate-500 mb-1">{itemForQuantity.item.code}</p>
-                    <p className="text-sm font-bold text-white">{itemForQuantity.item.name}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Existencia: {itemForQuantity.item.currentStock} {itemForQuantity.item.unit}
-                    </p>
+                    <p className="text-base font-bold text-white">{itemForQuantity.item.name}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">Existencia: {itemForQuantity.item.currentStock} {itemForQuantity.item.unit}</p>
                   </div>
 
                   <div className="text-center">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
-                      Cantidad
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      autoFocus
-                      value={itemForQuantity.quantity}
-                      onChange={(e) =>
-                        setItemForQuantity((prev) =>
-                          prev ? { ...prev, quantity: e.target.value } : null
-                        )
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleQuantityConfirm();
-                      }}
-                      className="w-full text-center text-3xl font-bold py-4 bg-midnight-800 border border-blue-500/20 text-gold-400 outline-none focus:border-gold-500/40 transition-colors"
-                      placeholder="0"
-                    />
+                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Cantidad</label>
+                    <input type="number" min="1" autoFocus value={itemForQuantity.quantity}
+                      onChange={(e) => setItemForQuantity((prev) => prev ? { ...prev, quantity: e.target.value } : null)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleQuantityConfirm(); }}
+                      className="w-full text-center text-3xl font-bold py-4 bg-midnight-700/50 border border-blue-500/20 text-gold-400 outline-none focus:border-gold-500/40 transition-colors rounded-lg" placeholder="0" />
                   </div>
 
                   {itemForQuantity.item.criticalType === 'COMBUSTIBLE' && (
                     <div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,.pdf"
-                        capture="environment"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) setCombustibleFile(file);
-                          if (e.target) e.target.value = '';
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest transition-all ${
-                          combustibleFile
-                            ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400'
-                            : 'bg-orange-600/20 border border-orange-500/30 text-orange-400 hover:bg-orange-600/30'
-                        }`}
-                      >
+                      <input ref={fileInputRef} type="file" accept="image/*,.pdf" capture="environment" className="hidden"
+                        onChange={(e) => { const file = e.target.files?.[0]; if (file) setCombustibleFile(file); if (e.target) e.target.value = ''; }} />
+                      <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className={`w-full flex items-center justify-center gap-2 py-3 text-xs font-bold uppercase tracking-widest transition-all active:scale-95 rounded-lg ${combustibleFile ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400' : 'bg-orange-600/20 border border-orange-500/30 text-orange-400 hover:bg-orange-600/30'}`}>
                         {combustibleFile ? '✅ COMPROBANTE LISTO' : '📎 ADJUNTAR COMPROBANTE'}
                       </button>
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={handleQuantityConfirm}
-                    className={`w-full py-3 text-sm font-bold uppercase tracking-widest transition-all ${
-                      bulkType === 'IN'
-                        ? 'bg-green-500 text-midnight-900 hover:bg-green-400'
-                        : 'bg-red-500 text-white hover:bg-red-400'
-                    }`}
-                  >
-                    {itemForQuantity.existingRowKey !== undefined
-                      ? `Actualizar ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`
-                      : `Añadir ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`}
+                  <button type="button" onClick={handleQuantityConfirm}
+                    className={`w-full py-3.5 text-sm font-bold uppercase tracking-widest transition-all active:scale-95 rounded-lg ${bulkType === 'IN' ? 'bg-green-500 text-midnight-900 hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-400'}`}>
+                    {itemForQuantity.existingRowKey !== undefined ? `Actualizar ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}` : `Añadir ${bulkType === 'IN' ? 'Cargo' : 'Descargo'}`}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }}
-                    className="w-full py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider"
-                  >
-                    Cancelar
-                  </button>
+                  <button type="button" onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }}
+                    className="w-full py-3 text-xs text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider active:scale-95">Cancelar</button>
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           {showBulkCreateOverlay && (
@@ -1149,7 +1149,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 </span>
                 <button
                   onClick={() => { initBulkRows(); setBulkOpen(true); setShowCreateModal(false); setTxModal(null); setHistoryItemId(null); }}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/80 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all border border-blue-500/20 active:scale-95"
                 >
                   <ArrowUpDown className="w-3 h-3" />
                   Cargos / Descargos
@@ -1157,7 +1157,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 {canAct && (
                   <button
                     onClick={() => { setShowCreateModal(true); setTxModal(null); setHistoryItemId(null); setBulkOpen(false); }}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-gold-500 text-midnight-900 text-[10px] font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 transition-all active:scale-95"
                   >
                     <Plus className="w-3 h-3" />
                     Nuevo Insumo
@@ -1167,14 +1167,14 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
             </div>
 
             <div className="px-4 sm:px-5 py-3 border-b border-blue-500/10 flex items-center gap-3 flex-wrap">
-              <div className="flex gap-1">
+              <div className="flex gap-1 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-4 sm:mx-0 px-4 sm:px-0">
                 {tabs.map((tab) => (
                   <button
                     key={tab.label}
                     onClick={() => setCategory(tab.value)}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
+                    className={`snap-start shrink-0 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-200 active:scale-95 ${
                       category === tab.value
-                        ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400'
+                        ? 'bg-gold-500/10 border border-gold-500/30 text-gold-400 shadow-[inset_0_-2px_0_0_rgba(250,204,21,0.7)]'
                         : 'bg-midnight-800/50 border border-blue-500/10 text-slate-500 hover:text-slate-300 hover:border-blue-500/30'
                     }`}
                   >
@@ -1188,7 +1188,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     type="text"
                     value={criticoSearch}
                     onChange={(e) => setCriticoSearch(e.target.value)}
-                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
+                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
                     placeholder={category === 'CRITICAL' ? 'Buscar químico...' : 'Buscar en historial...'}
                   />
                 ) : (
@@ -1196,7 +1196,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600"
+                    className="w-full px-3 py-2 bg-midnight-800 border border-blue-500/10 text-slate-200 text-xs outline-none placeholder:text-slate-600 transition-all duration-200 focus:border-gold-500/40 focus:bg-midnight-800/60"
                     placeholder="Buscar por código o nombre..."
                   />
                 )}
@@ -1221,7 +1221,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                           key={item.id}
                           type="button"
                           onClick={() => setCriticoItemModal(item)}
-                          className="bg-midnight-800/50 border border-blue-500/10 p-4 text-left hover:border-orange-500/30 hover:bg-midnight-800/80 transition-all group"
+                          className="bg-midnight-800/50 border border-blue-500/10 p-4 text-left hover:border-orange-500/30 hover:bg-midnight-800/80 transition-all group active:scale-[0.98]"
                         >
                           <p className="text-[10px] font-mono text-slate-500 mb-1">{item.code}</p>
                           <p className="text-sm font-bold text-slate-200 group-hover:text-orange-400 transition-colors">{item.name}</p>
@@ -1369,6 +1369,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                   )}
                 </div>
               ) : (
+              <>
+              <div className="hidden sm:block">
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
@@ -1428,7 +1430,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               <div className="flex items-center justify-center gap-1">
                                 <button
                                   onClick={() => { setHistoryItemId(item.id); setHistoryPage(0); setTxModal(null); setShowCreateModal(false); setBulkOpen(false); }}
-                                  className="p-1.5 text-blue-400 hover:bg-blue-500/10 transition-all rounded-sm"
+                                  className="p-1.5 text-blue-400 hover:bg-blue-500/10 transition-all rounded-sm active:scale-95"
                                   title="Ver historial"
                                 >
                                   <History className="w-4 h-4" />
@@ -1440,7 +1442,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                                         deleteItem.mutate(item.id);
                                       }
                                     }}
-                                    className="p-1.5 text-red-600 hover:bg-red-500/10 transition-all rounded-sm"
+                                    className="p-1.5 text-red-600 hover:bg-red-500/10 transition-all rounded-sm active:scale-95"
                                     title="Eliminar insumo"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1461,7 +1463,99 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                   )}
                 </tbody>
               </table>
-            )}
+              </div>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-2 p-3">
+                {itemsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : itemsError ? (
+                  <div className="flex flex-col items-center gap-2 py-8">
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <p className="text-xs text-red-400 font-medium">Error al cargar los insumos</p>
+                  </div>
+                ) : filteredItems && filteredItems.length > 0 ? (
+                  filteredItems.map((item) => {
+                    const isCritical = item.criticalLevel > 0 && item.currentStock <= item.criticalLevel;
+                    const isHealthy = !isCritical && (item.criticalLevel === 0 || item.currentStock > item.criticalLevel * 3);
+                    const stockPct = item.criticalLevel > 0 ? Math.min(100, (item.currentStock / (item.criticalLevel * 3)) * 100) : 100;
+                    const barColor = isCritical ? 'bg-red-500' : stockPct < 40 ? 'bg-orange-500' : 'bg-emerald-500';
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-midnight-800/60 backdrop-blur-md border border-blue-500/10 rounded-lg p-4 space-y-3 active:scale-[0.98] transition-transform duration-150"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-xs font-mono text-slate-500">{item.code}</p>
+                            <p className="text-sm font-bold text-slate-200">{item.name}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-lg font-bold font-mono ${isCritical ? 'text-red-400' : isHealthy ? 'text-emerald-400' : 'text-gold-400'}`}>
+                              {item.currentStock}
+                            </p>
+                            <p className="text-[10px] text-slate-500">{item.unit}</p>
+                          </div>
+                        </div>
+
+                        {/* Stock bar */}
+                        <div className="h-1.5 w-full bg-midnight-700/50 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${stockPct}%` }} />
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-500">
+                          <span>Mínimo: <span className="font-mono text-slate-400">{item.criticalLevel}</span></span>
+                          {isCritical && (
+                            <span className="flex items-center gap-1 text-red-400">
+                              <AlertTriangle className="w-3 h-3" />
+                              Stock crítico
+                            </span>
+                          )}
+                          {isHealthy && (
+                            <span className="flex items-center gap-1 text-emerald-500/70">
+                              <CheckCircle className="w-3 h-3" />
+                              Saludable
+                            </span>
+                          )}
+                        </div>
+
+                        {canAct && (
+                          <div className="flex items-center gap-2 pt-1 border-t border-blue-500/10">
+                            <button
+                              onClick={() => { setHistoryItemId(item.id); setHistoryPage(0); setTxModal(null); setShowCreateModal(false); setBulkOpen(false); }}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold uppercase tracking-widest text-blue-400 hover:bg-blue-500/10 transition-all active:scale-95 rounded-sm"
+                            >
+                              <History className="w-3.5 h-3.5" />
+                              Historial
+                            </button>
+                            {user?.role === 'SUPERADMIN' && (
+                              <button
+                                onClick={() => {
+                                  if (window.confirm('¿Estás seguro de eliminar este insumo? Esta acción no se puede deshacer.')) {
+                                    deleteItem.mutate(item.id);
+                                  }
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/10 transition-all active:scale-95 rounded-sm"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-8 text-center">
+                    <p className="text-xs text-slate-500">{searchQuery.trim() ? 'No se encontraron insumos con ese criterio.' : 'No hay insumos registrados.'}</p>
+                  </div>
+                )}
+              </div>
+              </>
+              )}
             </div>
           </div>
 
@@ -1473,7 +1567,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     <History className="w-4 h-4 text-blue-400" />
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historial de {criticoItemModal.name}</h3>
                   </div>
-                  <button onClick={() => setCriticoItemModal(null)} className="text-slate-500 hover:text-slate-300 transition-colors">
+                  <button onClick={() => setCriticoItemModal(null)} className="text-slate-500 hover:text-slate-300 transition-colors active:scale-95">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -1538,6 +1632,13 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
         }
         .animate-slide-up {
           animation: slideUp 0.2s ease-out;
+        }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>
