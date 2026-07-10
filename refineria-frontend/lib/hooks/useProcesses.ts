@@ -167,48 +167,21 @@ export function useSaveActaUrl() {
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
-      const uniqueFilename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const tokenRes = await fetch('/api/blob/upload', {
+      const res = await fetch('/api/blob/upload-file', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          type: 'blob.generate-client-token',
-          payload: {
-            pathname: uniqueFilename,
-            clientPayload: null,
-            multipart: false,
-          },
-        }),
+        body: formData,
       });
 
-      if (!tokenRes.ok) {
-        const err = await tokenRes.json().catch(() => ({}));
-        throw new Error(err.error || 'Error al obtener token de subida');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Error al subir archivo (${res.status})`);
       }
 
-      const { clientToken, uploadUrl } = await tokenRes.json();
-      const uploadEndpoint = uploadUrl || `https://${clientToken.split('_')[3]}.blob.vercel-storage.com/${uniqueFilename}`;
-
-      const uploadRes = await fetch(uploadEndpoint, {
-        method: 'PUT',
-        credentials: 'omit',
-        headers: {
-          authorization: `Bearer ${clientToken}`,
-          'x-vercel-blob-access': 'public',
-          'x-content-type': file.type || 'application/pdf',
-        },
-        body: file,
-      });
-
-      if (!uploadRes.ok) {
-        const errBody = await uploadRes.text().catch(() => '');
-        console.error('[Vercel Blob PUT Error]', uploadRes.status, errBody);
-        throw new Error(`Error al subir archivo (${uploadRes.status})`);
-      }
-
-      const result = await uploadRes.json();
-      return { url: result.url };
+      const { url } = await res.json();
+      return { url };
     },
   });
 }
