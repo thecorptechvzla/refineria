@@ -361,9 +361,21 @@ export function CriticosProvider({ children }: { children: ReactNode }) {
         updatedQuimicos[qIdx] = updated;
       }
 
+      /* Try to match combustible (GASOIL / DIESEL / COMBUSTIBLE): add negative consumption = increase tank level */
+      const fuelKeywords = ['gasoil', 'diesel', 'combustible', 'gasolina'];
+      const isFuel = fuelKeywords.some((kw) => itemName.toLowerCase().includes(kw));
+      let updatedCombustible = prev.combustible;
+      if (isFuel) {
+        updatedCombustible = {
+          ...prev.combustible,
+          log: [...prev.combustible.log, { date: now(), consumption: -quantity }],
+        };
+      }
+
       return {
         ...prev,
         quimicos: updatedQuimicos,
+        combustible: updatedCombustible,
         historial: [historialEntry, ...prev.historial],
       };
     });

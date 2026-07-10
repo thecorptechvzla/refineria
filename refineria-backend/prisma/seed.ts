@@ -164,6 +164,44 @@ async function main() {
   }
   console.log('Supply items created:', created.join(', '));
 
+  await prisma.supplyItem.upsert({
+    where: { code: 'FUEL01' },
+    update: {},
+    create: {
+      code: 'FUEL01',
+      name: 'GASOIL',
+      category: 'CRITICAL',
+      unit: 'Lts',
+      currentStock: 0,
+      criticalLevel: 1000,
+      isCritical: true,
+      criticalType: 'COMBUSTIBLE',
+    },
+  });
+  console.log('Combustible item created: FUEL01 GASOIL');
+
+  /* ─── Insumos de prueba OPERATIONS ─── */
+  const opsItems = [
+    { code: 'OP001', name: 'Guantes de Nitrilo', unit: 'Par', criticalLevel: 50 },
+    { code: 'OP002', name: 'Tornillos Inoxidables M8', unit: 'Unidad', criticalLevel: 200 },
+  ];
+  for (const op of opsItems) {
+    await prisma.supplyItem.upsert({
+      where: { code: op.code },
+      update: {},
+      create: {
+        code: op.code,
+        name: op.name,
+        category: 'OPERATIONS',
+        unit: op.unit,
+        currentStock: 100,
+        criticalLevel: op.criticalLevel,
+        isCritical: false,
+      },
+    });
+  }
+  console.log('Operations items created:', opsItems.map((o) => o.code).join(', '));
+
   console.log('Seeding complete!');
 }
 

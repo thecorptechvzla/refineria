@@ -186,7 +186,7 @@ export class SuppliesService {
                 itemId: item.itemId,
                 type: 'OUT',
                 quantity: item.quantity,
-                reference: dto.destination,
+                reference: item.reference ?? dto.destination,
               },
             }),
           );
@@ -217,7 +217,7 @@ export class SuppliesService {
                   itemId: item.itemId,
                   type: 'IN',
                   quantity: item.quantity,
-                  reference: dto.destination,
+                  reference: item.reference ?? dto.destination,
                 },
               }),
             );
@@ -259,7 +259,7 @@ export class SuppliesService {
                   itemId: newItem.id,
                   type: 'IN',
                   quantity: item.quantity,
-                  reference: dto.destination,
+                  reference: item.reference ?? dto.destination,
                 },
               }),
             );

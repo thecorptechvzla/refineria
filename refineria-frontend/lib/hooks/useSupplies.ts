@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { SupplyItem, SupplyTransaction, SupplyCategory, SupplyTransactionType } from '@/types';
+import type { SupplyItem, SupplyTransaction, SupplyCategory, SupplyTransactionType, CriticalType } from '@/types';
 
 export function useSupplyItems(category?: string) {
   return useQuery({
@@ -23,6 +23,8 @@ export function useCreateSupplyItem() {
       category: SupplyCategory;
       unit?: string;
       criticalLevel?: number;
+      isCritical?: boolean;
+      criticalType?: CriticalType;
     }) =>
       api<SupplyItem>('/supplies/items', {
         method: 'POST',

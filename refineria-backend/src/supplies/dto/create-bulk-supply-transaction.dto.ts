@@ -35,6 +35,10 @@ class BulkItemDto {
   @IsNumber()
   @Min(1)
   quantity: number;
+
+  @IsOptional()
+  @IsString()
+  reference?: string;
 }
 
 export class CreateBulkSupplyTransactionDto {

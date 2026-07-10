@@ -14,6 +14,7 @@ import { useGold } from '@/lib/GoldContext';
 import SupplyItemForm from '@/components/inventory/SupplyItemForm';
 import ItemAutocomplete from '@/components/inventory/ItemAutocomplete';
 import { useCriticos } from '@/lib/CriticosContext';
+import { useUploadFile } from '@/lib/hooks/useProcesses';
 import type { SupplyItem, SupplyCategory, SupplyTransactionType, CriticalType } from '@/types';
 import {
   Package,
@@ -29,6 +30,7 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from 'lucide-react';
 
 type CategoryFilter = 'OPERATIONS' | 'GENERAL_SERVICES' | 'CRITICAL' | null;
@@ -49,7 +51,7 @@ export default function InsumosPage() {
   const [bulkPageSize, setBulkPageSize] = useState(20);
   const apiCategory = category;
   const { data: items, isLoading: itemsLoading, isError: itemsError } = useSupplyItems(apiCategory ?? undefined);
-  const { data: allItems } = useSupplyItems(apiCategory ?? undefined);
+  const { data: allItems } = useSupplyItems();
   const createItem = useCreateSupplyItem();
   const createTx = useCreateSupplyTransaction();
   const createBulkTx = useCreateBulkSupplyTransaction();
@@ -66,6 +68,7 @@ export default function InsumosPage() {
     category?: string;
     unit?: string;
     criticalLevel?: string;
+    criticalType?: string;
     quantity: string;
   }[]>([]);
   const [bulkRowKey, setBulkRowKey] = useState(0);
@@ -73,6 +76,8 @@ export default function InsumosPage() {
   const [bulkShake, setBulkShake] = useState(0);
   const [bulkPage, setBulkPage] = useState(0);
   const [showBulkCreateOverlay, setShowBulkCreateOverlay] = useState(false);
+  const [combustibleFile, setCombustibleFile] = useState<File | null>(null);
+  const [combustibleFileUrl, setCombustibleFileUrl] = useState<string | null>(null);
 
 const [searchQuery, setSearchQuery] = useState('');
 const [criticoSearch, setCriticoSearch] = useState('');
@@ -86,6 +91,9 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
   const criticoHistoryPageSize = 10;
   const [historyPage, setHistoryPage] = useState(0);
   const historyPageSize = 10;
+
+
+  const uploadFile = useUploadFile();
 
   const queryClient = useQueryClient();
   const allowedRoles = useMemo(() => ['SUPERADMIN', 'OWNER', 'ADMIN'], []);
@@ -257,6 +265,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
     setBulkRowKey(0);
     setBulkPage(0);
     setBulkError('');
+    setCombustibleFile(null);
+    setCombustibleFileUrl(null);
   };
 
   const handleBulkTypeChange = (newType: SupplyTransactionType) => {
@@ -286,6 +296,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
               category: item?.category || r.category,
               unit: item?.unit || r.unit,
               criticalLevel: String(item?.criticalLevel ?? r.criticalLevel ?? '1'),
+              criticalType: item?.criticalType ?? undefined,
             }
           : r
       )
@@ -362,6 +373,8 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
     [bulkRows, gridMode]
   );
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!bulkOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -383,10 +396,33 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
       return;
     }
 
-    const payloadItems = filledRows.map((r) => ({
-      itemId: r.itemId || '',
-      quantity: parseInt(r.quantity, 10),
-    }));
+    /* ── Subir comprobante de combustible ── */
+    let combustiblereceiptUrl = combustibleFileUrl;
+    if (combustibleFile && !combustibleFileUrl) {
+      try {
+        const result = await uploadFile.mutateAsync(combustibleFile);
+        combustiblereceiptUrl = result.url;
+        setCombustibleFileUrl(result.url);
+      } catch {
+        setBulkShake((k) => k + 1);
+        setBulkError('Error al subir el comprobante de combustible');
+        return;
+      }
+    }
+
+    const payloadItems = filledRows.map((r) => {
+      const item = autocompleteItems.find((i) => i.id === r.itemId);
+      const isCombustible = item?.criticalType === 'COMBUSTIBLE';
+      let ref = bulkDestination.trim();
+      if (isCombustible && combustiblereceiptUrl) {
+        ref = `${ref} | RECIBO:${combustiblereceiptUrl}`;
+      }
+      return {
+        itemId: r.itemId || '',
+        quantity: parseInt(r.quantity, 10),
+        reference: isCombustible ? ref.toUpperCase() : ref,
+      };
+    });
 
     const invalid = payloadItems.find((r) => !r.itemId || r.quantity < 1);
 
@@ -470,6 +506,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
       setTxError(msg);
     }
   };
+
 
   return (
     <div className="space-y-5 mx-auto max-w-7xl px-1">
@@ -966,6 +1003,34 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     />
                   </div>
 
+                  {itemForQuantity.item.criticalType === 'COMBUSTIBLE' && (
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,.pdf"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setCombustibleFile(file);
+                          if (e.target) e.target.value = '';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest transition-all ${
+                          combustibleFile
+                            ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400'
+                            : 'bg-orange-600/20 border border-orange-500/30 text-orange-400 hover:bg-orange-600/30'
+                        }`}
+                      >
+                        {combustibleFile ? '✅ COMPROBANTE LISTO' : '📎 ADJUNTAR COMPROBANTE'}
+                      </button>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleQuantityConfirm}
@@ -1130,7 +1195,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     </span>
                   </div>
 
-                  {/* Desktop table */}
+                   {/* Desktop table */}
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
@@ -1140,6 +1205,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                           <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
                           <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cantidad</th>
                           <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Referencia</th>
+                          <th className="px-4 sm:px-5 py-3 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Comprobante</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1161,11 +1227,26 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               </td>
                               <td className={`px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-right ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>{h.tipo === 'CARGO' ? '+' : ''}{h.cantidad}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-400">{h.observacion || '—'}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-center">
+                                {(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0] ? (
+                                  <a
+                                    href={(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors text-xs"
+                                    title="Abrir comprobante"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-600">—</span>
+                                )}
+                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-500">
+                            <td colSpan={6} className="px-5 py-8 text-center text-sm text-slate-500">
                               <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
                               <p>No hay movimientos registrados.</p>
                               <p className="text-xs text-slate-600 mt-1">Los movimientos de insumos críticos aparecerán aquí automáticamente.</p>
@@ -1193,6 +1274,23 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                               <span className="text-[10px] uppercase tracking-wider text-red-400/80 border border-red-500/10 px-1.5 py-0.5 bg-red-500/5">DESCARGO</span>
                             )}
                             <span className="text-[10px] text-slate-500 truncate ml-2">{h.observacion || '—'}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-slate-500">
+                            <span className="uppercase tracking-wider">Comprobante</span>
+                            {(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0] ? (
+                              <a
+                                href={(h.observacion || '').match(/https?:\/\/[^\s|]+/)?.[0]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                                title="Abrir comprobante"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Ver</span>
+                              </a>
+                            ) : (
+                              <span>—</span>
+                            )}
                           </div>
                         </div>
                       ))
