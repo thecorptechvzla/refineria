@@ -1013,7 +1013,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
 
                     {itemForQuantity.item.criticalType === 'COMBUSTIBLE' && (
                       <div>
-                        <input ref={fileInputRef} type="file" accept="image/*,.pdf" capture="environment" className="hidden"
+                        <input ref={fileInputRef} type="file" accept="image/*,.pdf,.jpeg,.jpg,.png" capture="environment" className="hidden"
                           onChange={(e) => { const file = e.target.files?.[0]; if (file) setCombustibleFile(file); if (e.target) e.target.value = ''; }} />
                         <button type="button" onClick={() => fileInputRef.current?.click()}
                           className={`w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${combustibleFile ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400' : 'bg-orange-600/20 border border-orange-500/30 text-orange-400 hover:bg-orange-600/30'}`}>
