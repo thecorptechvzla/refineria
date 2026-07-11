@@ -97,12 +97,16 @@ export default function DashboardPage() {
   }, [filteredProcessList, safePage]);
 function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
   const trend: { v: number }[] = [];
-  let current = currentValue * 0.6;
-  const step = (currentValue - current) / points;
+  const amplitude = Math.max(currentValue * 0.25, 1.5);
+  const startVal = amplitude * 0.35;
+  const peakVal = amplitude * 1.15;
+  const endVal = amplitude * 0.55;
   for (let i = 0; i < points; i++) {
-    const jitter = current * (Math.random() - 0.5) * 0.15;
-    current = Math.max(0.01, current + step + jitter);
-    trend.push({ v: Math.round(current * 100) / 100 });
+    const ratio = i / (points - 1);
+    const bellFactor = Math.sin(ratio * Math.PI);
+    const val = startVal + (peakVal - startVal) * bellFactor + (endVal - startVal) * ratio * 0.15;
+    const jitter = val * (Math.random() - 0.5) * 0.1;
+    trend.push({ v: Math.round(Math.max(0.01, val + jitter) * 100) / 100 });
   }
   return trend;
 }
@@ -293,21 +297,22 @@ function generateDashboardTrend(currentValue: number, points = 14): { v: number 
           return (
             <div
               key={kpi.label}
-              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-[0.98] sm:active:scale-100 group`}
+              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-12 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-[0.98] sm:active:scale-100 group`}
             >
-              {/* Mobile: background sparkline */}
-              <div className="absolute inset-0 sm:hidden pointer-events-none">
+              {/* Mobile: background sparkline at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 max-h-[50px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={kpi.trend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                     <defs>
-                      <linearGradient id={`${grdId}-mobile`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={kpi.sparkColor} stopOpacity={0.35} />
-                        <stop offset="95%" stopColor={kpi.sparkColor} stopOpacity={0.05} />
+                      <linearGradient id={`${grdId}-mobile`} x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor={kpi.sparkColor} stopOpacity={0.3} />
+                        <stop offset="60%" stopColor={kpi.sparkColor} stopOpacity={0.1} />
+                        <stop offset="100%" stopColor={kpi.sparkColor} stopOpacity={0.01} />
                       </linearGradient>
                     </defs>
                     <XAxis hide />
                     <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                    <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={1.5} fill={`url(#${grdId}-mobile)`} dot={false} />
+                    <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={1} fill={`url(#${grdId}-mobile)`} dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
