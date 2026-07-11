@@ -105,9 +105,9 @@ export function ProcessModal({
   const sortedLots = [...detail.lotDetails].sort((a, b) => a.number - b.number);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-2 sm:p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-800/95 backdrop-blur z-30">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel rounded-t-xl sm:rounded-none mt-auto sm:mt-0" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-900/50 backdrop-blur-md">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
               <Crosshair className="w-4 h-4 text-blue-400" />
@@ -363,8 +363,8 @@ export function ProcessModal({
           </div>
         </div>
 
-        <div className="sticky bottom-0 z-30 p-4 sm:p-5 border-t border-blue-500/10 bg-midnight-800/80 backdrop-blur flex sm:justify-end shrink-0">
-          <button onClick={onClose} className="w-full sm:w-auto px-5 py-3 sm:py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all">
+        <div className="sticky bottom-0 z-30 p-4 sm:p-5 border-t border-blue-500/10 bg-midnight-900/50 backdrop-blur-md flex sm:justify-end shrink-0">
+          <button onClick={onClose} className="w-full sm:w-auto px-5 py-3 sm:py-2 bg-blue-500/10 border border-blue-500/20 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all active:scale-95">
             Cerrar
           </button>
         </div>

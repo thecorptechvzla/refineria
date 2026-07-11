@@ -12,6 +12,8 @@ node_modules
 
 # Generated Excel files (templates, exports)
 /excel/
+*.xlsx
+*.xls
 
 # Seed auxiliar (no se sube a prod)
 /prisma/seed-closed-processes.ts

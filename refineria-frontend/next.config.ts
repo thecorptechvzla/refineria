@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
+        source: '/api/:path((?!blob/).*)',
         destination: `${NEXT_PUBLIC_API_URL}/:path*`,
       },
     ];

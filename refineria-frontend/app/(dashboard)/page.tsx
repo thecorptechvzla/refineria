@@ -298,7 +298,7 @@ export default function DashboardPage() {
           return (
             <div
               key={kpi.label}
-              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-12 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-[0.98] sm:active:scale-100 group`}
+              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-12 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-95 sm:active:scale-100 group`}
             >
               {/* Mobile: background sparkline at bottom */}
               <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 max-h-[50px]">

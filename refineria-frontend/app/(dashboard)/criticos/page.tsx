@@ -88,9 +88,9 @@ function Modal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-t-xl sm:rounded-none mt-auto sm:mt-0">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <Icon className="w-5 h-5 text-gold-400" />
@@ -140,7 +140,7 @@ function KpiCard({
       onClick={onClick}
       className={`bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left transition-all duration-200 relative ${
         onClick
-          ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] group'
+          ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-95 group'
           : ''
       }`}
     >
