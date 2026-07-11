@@ -42,9 +42,7 @@ export class NotificationsController {
   }
 
   @Get('cron/daily-summary')
-  async triggerDailySummary(
-    @Headers('authorization') auth: string,
-  ) {
+  async triggerDailySummary(@Headers('authorization') auth: string) {
     const secret = process.env.CRON_SECRET;
 
     if (!secret) {

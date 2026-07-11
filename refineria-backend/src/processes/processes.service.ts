@@ -42,7 +42,8 @@ export class ProcessesService {
       where: { id },
       include: { lots: true },
     });
-    if (!process) throw new NotFoundException(`Process with id ${id} not found`);
+    if (!process)
+      throw new NotFoundException(`Process with id ${id} not found`);
     return process;
   }
 
@@ -60,7 +61,9 @@ export class ProcessesService {
     const data: any = {};
 
     if (dto.status === 'in_progress' && process.status !== 'open') {
-      throw new BadRequestException('Only open processes can be moved to in_progress');
+      throw new BadRequestException(
+        'Only open processes can be moved to in_progress',
+      );
     }
 
     if (dto.status === 'closed') {
@@ -108,7 +111,9 @@ export class ProcessesService {
           where: { id: bar.barId },
           select: { grossWeight: true },
         });
-        const analyticalAg = Number((goldBar.grossWeight * bar.leyAg / 1000).toFixed(2));
+        const analyticalAg = Number(
+          ((goldBar.grossWeight * bar.leyAg) / 1000).toFixed(2),
+        );
         await this.prisma.goldBar.update({
           where: { id: bar.barId },
           data: { leyAg: bar.leyAg, analyticalAg },
@@ -126,7 +131,9 @@ export class ProcessesService {
     const process = await this.findById(processId);
 
     if (process.status !== 'open') {
-      throw new BadRequestException('Cannot add lot to a process that is not open');
+      throw new BadRequestException(
+        'Cannot add lot to a process that is not open',
+      );
     }
 
     const lotCount = await this.prisma.processLot.count({
@@ -157,7 +164,9 @@ export class ProcessesService {
     if (!lot) throw new NotFoundException(`Lot with id ${lotId} not found`);
 
     if (lot.process.status !== 'open') {
-      throw new BadRequestException('Cannot remove bars from a lot in a process that is not open');
+      throw new BadRequestException(
+        'Cannot remove bars from a lot in a process that is not open',
+      );
     }
 
     const remainingBarIds = lot.barIds.filter(
@@ -212,9 +221,7 @@ export class ProcessesService {
       });
     }
 
-    const allLotIds = allProcesses.flatMap((p) =>
-      p.lots.map((l) => l.id),
-    );
+    const allLotIds = allProcesses.flatMap((p) => p.lots.map((l) => l.id));
     if (allLotIds.length > 0) {
       await this.prisma.processLot.deleteMany({
         where: { id: { in: allLotIds } },
@@ -247,9 +254,12 @@ export class ProcessesService {
     },
   ) {
     const data: Record<string, string | null> = {};
-    if (actas.actaRecepcion !== undefined) data.actaRecepcion = actas.actaRecepcion;
-    if (actas.actaFundicion !== undefined) data.actaFundicion = actas.actaFundicion;
-    if (actas.actaConformidad !== undefined) data.actaConformidad = actas.actaConformidad;
+    if (actas.actaRecepcion !== undefined)
+      data.actaRecepcion = actas.actaRecepcion;
+    if (actas.actaFundicion !== undefined)
+      data.actaFundicion = actas.actaFundicion;
+    if (actas.actaConformidad !== undefined)
+      data.actaConformidad = actas.actaConformidad;
 
     return this.prisma.process.update({
       where: { id },
@@ -299,19 +309,25 @@ export class ProcessesService {
       where: { id },
       include: { lots: { orderBy: { number: 'asc' } } },
     });
-    if (!process) throw new NotFoundException(`Process with id ${id} not found`);
+    if (!process)
+      throw new NotFoundException(`Process with id ${id} not found`);
 
     const allBarIds = [...new Set(process.lots.flatMap((l) => l.barIds))];
-    const bars = allBarIds.length > 0
-      ? await this.prisma.goldBar.findMany({ where: { id: { in: allBarIds } } })
-      : [];
+    const bars =
+      allBarIds.length > 0
+        ? await this.prisma.goldBar.findMany({
+            where: { id: { in: allBarIds } },
+          })
+        : [];
     const barMap = new Map(bars.map((b) => [b.id, b]));
 
     return {
       ...process,
       lotDetails: process.lots.map((lot) => ({
         ...lot,
-        bars: lot.barIds.map((id) => barMap.get(id)).filter((b): b is NonNullable<typeof b> => b != null),
+        bars: lot.barIds
+          .map((id) => barMap.get(id))
+          .filter((b): b is NonNullable<typeof b> => b != null),
       })),
     };
   }

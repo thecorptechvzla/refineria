@@ -13,7 +13,14 @@ export class TransactionsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: QueryTransactionDto) {
-    const { type, supplierId, page = 1, limit = 20, startDate, endDate } = query;
+    const {
+      type,
+      supplierId,
+      page = 1,
+      limit = 20,
+      startDate,
+      endDate,
+    } = query;
 
     const where: any = {};
 
@@ -89,7 +96,9 @@ export class TransactionsService {
     }
 
     if (lot.process.status !== 'closed') {
-      throw new BadRequestException('Solo lotes de procesos cerrados pueden egresarse');
+      throw new BadRequestException(
+        'Solo lotes de procesos cerrados pueden egresarse',
+      );
     }
 
     if (!lot.recovered) {
@@ -105,12 +114,13 @@ export class TransactionsService {
       where: { id: { in: lot.barIds } },
     });
 
-    const avgPurity = bars.length > 0
-      ? bars.reduce((sum, b) => {
-          const p = b.grossWeight > 0 ? b.analytical / b.grossWeight : 0;
-          return sum + p;
-        }, 0) / bars.length
-      : 0;
+    const avgPurity =
+      bars.length > 0
+        ? bars.reduce((sum, b) => {
+            const p = b.grossWeight > 0 ? b.analytical / b.grossWeight : 0;
+            return sum + p;
+          }, 0) / bars.length
+        : 0;
 
     const [transaction] = await this.prisma.$transaction([
       this.prisma.transaction.create({

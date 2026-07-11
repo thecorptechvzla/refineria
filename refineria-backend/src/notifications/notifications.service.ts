@@ -33,7 +33,11 @@ export class NotificationsService {
     });
   }
 
-  async checkThresholdCross(itemId: string, oldStock: number, newStock: number) {
+  async checkThresholdCross(
+    itemId: string,
+    oldStock: number,
+    newStock: number,
+  ) {
     const item = await this.prisma.supplyItem.findUnique({
       where: { id: itemId },
     });
@@ -51,7 +55,11 @@ export class NotificationsService {
     await this.sendTelegram(`${title}\n${message}`);
   }
 
-  async createNotification(data: { type: string; title: string; message: string }) {
+  async createNotification(data: {
+    type: string;
+    title: string;
+    message: string;
+  }) {
     return this.prisma.notification.create({ data });
   }
 

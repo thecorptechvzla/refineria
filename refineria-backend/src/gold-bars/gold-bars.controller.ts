@@ -29,7 +29,9 @@ export class GoldBarsController {
   }
 
   @Post('bulk-upload')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async bulkUpload(
     @UploadedFile() file: Express.Multer.File,
     @Body('supplierId') supplierId: string,
@@ -43,7 +45,9 @@ export class GoldBarsController {
 
     const ext = file.originalname.toLowerCase().split('.').pop() ?? '';
     if (!['xlsx', 'xls', 'csv'].includes(ext)) {
-      throw new BadRequestException('Formato no soportado. Use archivos .xlsx, .xls o .csv');
+      throw new BadRequestException(
+        'Formato no soportado. Use archivos .xlsx, .xls o .csv',
+      );
     }
 
     return this.goldBarsService.bulkCreate(file, supplierId);

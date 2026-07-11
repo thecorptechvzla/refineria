@@ -36,7 +36,9 @@ export class CustomFieldsService {
   }
 
   async deleteDefinition(id: string) {
-    const def = await this.prisma.customFieldDefinition.findUnique({ where: { id } });
+    const def = await this.prisma.customFieldDefinition.findUnique({
+      where: { id },
+    });
     if (!def) throw new NotFoundException('Field definition not found');
 
     await this.prisma.customFieldDefinition.delete({ where: { id } });
@@ -55,7 +57,11 @@ export class CustomFieldsService {
     return result;
   }
 
-  async setValues(tableName: string, recordId: string, fields: Record<string, string>) {
+  async setValues(
+    tableName: string,
+    recordId: string,
+    fields: Record<string, string>,
+  ) {
     const definitions = await this.prisma.customFieldDefinition.findMany({
       where: { tableName },
     });
@@ -80,7 +86,10 @@ export class CustomFieldsService {
     });
   }
 
-  async mergeCustomFields<T extends { id: string }>(tableName: string, records: T[]): Promise<(T & { _customFields: Record<string, string | null> })[]> {
+  async mergeCustomFields<T extends { id: string }>(
+    tableName: string,
+    records: T[],
+  ): Promise<(T & { _customFields: Record<string, string | null> })[]> {
     if (records.length === 0) return [];
 
     const recordIds = records.map((r) => r.id);

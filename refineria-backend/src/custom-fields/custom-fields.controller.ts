@@ -28,7 +28,13 @@ export class CustomFieldsController {
   @Roles(Role.SUPERADMIN)
   createDefinition(
     @Param('tableName') tableName: string,
-    @Body() body: { fieldName: string; fieldType: string; required?: boolean; options?: string },
+    @Body()
+    body: {
+      fieldName: string;
+      fieldType: string;
+      required?: boolean;
+      options?: string;
+    },
   ) {
     return this.service.createDefinition({ ...body, tableName });
   }

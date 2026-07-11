@@ -33,7 +33,9 @@ export class SuppliersService {
       throw new NotFoundException(`Supplier with id ${id} not found`);
     }
 
-    const [merged] = await this.customFields.mergeCustomFields('suppliers', [supplier]);
+    const [merged] = await this.customFields.mergeCustomFields('suppliers', [
+      supplier,
+    ]);
     return merged;
   }
 
@@ -68,20 +70,35 @@ export class SuppliersService {
       const supplier = await this.prisma.supplier.create({ data: dto });
 
       if (_customFields) {
-        await this.customFields.setValues('suppliers', supplier.id, _customFields);
+        await this.customFields.setValues(
+          'suppliers',
+          supplier.id,
+          _customFields,
+        );
       }
 
-      const [merged] = await this.customFields.mergeCustomFields('suppliers', [supplier]);
+      const [merged] = await this.customFields.mergeCustomFields('suppliers', [
+        supplier,
+      ]);
       return merged;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new BadRequestException('El RIF ya está registrado por otro proveedor');
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'El RIF ya está registrado por otro proveedor',
+        );
       }
       throw error;
     }
   }
 
-  async update(id: string, dto: UpdateSupplierDto, _customFields?: Record<string, string>) {
+  async update(
+    id: string,
+    dto: UpdateSupplierDto,
+    _customFields?: Record<string, string>,
+  ) {
     await this.findById(id);
 
     const supplier = await this.prisma.supplier.update({
@@ -93,7 +110,9 @@ export class SuppliersService {
       await this.customFields.setValues('suppliers', id, _customFields);
     }
 
-    const [merged] = await this.customFields.mergeCustomFields('suppliers', [supplier]);
+    const [merged] = await this.customFields.mergeCustomFields('suppliers', [
+      supplier,
+    ]);
     return merged;
   }
 

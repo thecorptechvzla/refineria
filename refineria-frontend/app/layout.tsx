@@ -4,7 +4,7 @@ import "./globals.css";
 import { GoldProvider } from "@/lib/GoldContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { Providers } from "./providers";
-// hola
+// hello broda
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

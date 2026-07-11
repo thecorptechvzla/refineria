@@ -5,7 +5,9 @@ import { PrismaClient } from '../generated/prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/goldtrack?schema=public';
+    const connectionString =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:postgres@localhost:5432/goldtrack?schema=public';
     const adapter = new PrismaPg({ connectionString });
     super({ adapter });
   }

@@ -7,7 +7,8 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
-  const isDebug = process.env.LOG_LEVEL === 'debug' || process.env.DEBUG === 'true';
+  const isDebug =
+    process.env.LOG_LEVEL === 'debug' || process.env.DEBUG === 'true';
 
   const logger = new Logger('Bootstrap');
 
@@ -23,7 +24,9 @@ async function bootstrap() {
       const start = Date.now();
       res.on('finish', () => {
         const duration = Date.now() - start;
-        logger.debug(`${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`);
+        logger.debug(
+          `${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`,
+        );
       });
       next();
     });

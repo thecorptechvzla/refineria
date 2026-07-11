@@ -55,10 +55,7 @@ export class ProcessesController {
   }
 
   @Patch(':id/lots/:lotId')
-  updateLot(
-    @Param('lotId') lotId: string,
-    @Body() dto: UpdateLotDto,
-  ) {
+  updateLot(@Param('lotId') lotId: string, @Body() dto: UpdateLotDto) {
     return this.processesService.updateLot(lotId, dto);
   }
 

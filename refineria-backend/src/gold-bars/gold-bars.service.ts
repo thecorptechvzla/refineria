@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGoldBarDto } from './dto/create-gold-bar.dto';
 import { UpdateGoldBarDto } from './dto/update-gold-bar.dto';
@@ -19,13 +23,18 @@ export class GoldBarsService {
     return this.prisma.goldBar.create({ data });
   }
 
-  async bulkCreate(file: Express.Multer.File, supplierId: string): Promise<BulkResult> {
+  async bulkCreate(
+    file: Express.Multer.File,
+    supplierId: string,
+  ): Promise<BulkResult> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(file.buffer as any);
     const sheet = workbook.worksheets[0];
 
     if (!sheet) {
-      throw new BadRequestException('El archivo Excel no contiene hojas de cálculo');
+      throw new BadRequestException(
+        'El archivo Excel no contiene hojas de cálculo',
+      );
     }
 
     const result: BulkResult = { created: 0, skipped: 0, errors: [] };
@@ -39,7 +48,8 @@ export class GoldBarsService {
       if (nVal == null || nVal === '') continue;
 
       const code = String(nVal).trim();
-      if (!code || /^(TOTAL|RESUMEN|SUBTOTAL|SUM|total|resumen)$/i.test(code)) continue;
+      if (!code || /^(TOTAL|RESUMEN|SUBTOTAL|SUM|total|resumen)$/i.test(code))
+        continue;
 
       // Layer A — duplicados dentro del archivo
       if (codeRowMap.has(code)) {
@@ -51,17 +61,23 @@ export class GoldBarsService {
 
       const grossWeight = this.parseNumericCell(row.getCell(2));
       if (grossWeight == null || grossWeight <= 0) {
-        result.errors.push({ row: rowNumber, message: `Peso bruto inválido en fila ${rowNumber}` });
+        result.errors.push({
+          row: rowNumber,
+          message: `Peso bruto inválido en fila ${rowNumber}`,
+        });
         continue;
       }
 
       const ley = this.parseNumericCell(row.getCell(3));
       if (ley == null || ley <= 0) {
-        result.errors.push({ row: rowNumber, message: `LEY Au inválida en fila ${rowNumber}` });
+        result.errors.push({
+          row: rowNumber,
+          message: `LEY Au inválida en fila ${rowNumber}`,
+        });
         continue;
       }
 
-      const analytical = Number((grossWeight * ley / 1000).toFixed(2));
+      const analytical = Number(((grossWeight * ley) / 1000).toFixed(2));
       const expected = analytical * 0.99;
 
       const lotVal = row.getCell(5).value;
@@ -70,7 +86,7 @@ export class GoldBarsService {
       const leyAg = this.parseNumericCell(row.getCell(6));
       let analyticalAg: number | undefined;
       if (leyAg != null && leyAg > 0) {
-        analyticalAg = Number((grossWeight * leyAg / 1000).toFixed(2));
+        analyticalAg = Number(((grossWeight * leyAg) / 1000).toFixed(2));
       } else {
         const rawAnalyticalAg = this.parseNumericCell(row.getCell(7));
         if (rawAnalyticalAg != null && rawAnalyticalAg > 0) {
@@ -93,7 +109,9 @@ export class GoldBarsService {
     }
 
     if (barsToCreate.length === 0) {
-      throw new BadRequestException('No se encontraron barras válidas en el archivo');
+      throw new BadRequestException(
+        'No se encontraron barras válidas en el archivo',
+      );
     }
     const prismaData = barsToCreate.map((b) => ({
       code: b.code,
@@ -108,7 +126,9 @@ export class GoldBarsService {
       analyticalAg: b.analyticalAg,
     }));
 
-    const resultCreate = await this.prisma.goldBar.createMany({ data: prismaData });
+    const resultCreate = await this.prisma.goldBar.createMany({
+      data: prismaData,
+    });
 
     const totalWeight = barsToCreate.reduce((s, b) => s + b.grossWeight, 0);
     const totalAnalytical = barsToCreate.reduce((s, b) => s + b.analytical, 0);
@@ -129,7 +149,8 @@ export class GoldBarsService {
   }
 
   private parseNumericCell(cell: ExcelJS.Cell): number | null {
-    if (cell.result != null && typeof cell.result === 'number') return cell.result;
+    if (cell.result != null && typeof cell.result === 'number')
+      return cell.result;
     if (cell.value != null) {
       const val = cell.value;
       if (typeof val === 'number') return val;
@@ -142,9 +163,8 @@ export class GoldBarsService {
   }
 
   findAll(available?: string) {
-    const where = available !== undefined
-      ? { available: available === 'true' }
-      : {};
+    const where =
+      available !== undefined ? { available: available === 'true' } : {};
     return this.prisma.goldBar.findMany({
       where,
       orderBy: { registrationDate: 'desc' },

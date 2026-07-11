@@ -57,7 +57,10 @@ export class DashboardService {
     return range;
   }
 
-  private buildGoldBarWhere(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private buildGoldBarWhere(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where: any = {};
     if (supplierId) where.supplierId = supplierId;
     if (dateRange?.gte || dateRange?.lte) {
@@ -68,7 +71,10 @@ export class DashboardService {
     return where;
   }
 
-  private buildProcessWhere(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private buildProcessWhere(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where: any = {};
     if (supplierId) where.supplierId = supplierId;
     if (dateRange?.gte || dateRange?.lte) {
@@ -79,7 +85,10 @@ export class DashboardService {
     return where;
   }
 
-  private buildTransactionWhere(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private buildTransactionWhere(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where: any = {};
     if (supplierId) where.supplierId = supplierId;
     if (dateRange?.gte || dateRange?.lte) {
@@ -90,7 +99,10 @@ export class DashboardService {
     return where;
   }
 
-  private async getOroIngresado(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getOroIngresado(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const result = await this.prisma.goldBar.aggregate({
       _sum: { grossWeight: true },
       where: this.buildGoldBarWhere(supplierId, dateRange),
@@ -98,7 +110,10 @@ export class DashboardService {
     return result._sum.grossWeight ?? 0;
   }
 
-  private async getOroEnBoveda(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getOroEnBoveda(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const processWhere: any = { status: { in: ['open', 'closed'] } };
     if (supplierId) processWhere.supplierId = supplierId;
     if (dateRange?.gte || dateRange?.lte) {
@@ -114,15 +129,24 @@ export class DashboardService {
     return Number((result._sum.recovered ?? 0).toFixed(2));
   }
 
-  private async getOroPorProcesar(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getOroPorProcesar(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const result = await this.prisma.goldBar.aggregate({
       _sum: { grossWeight: true },
-      where: { ...this.buildGoldBarWhere(supplierId, dateRange), available: true },
+      where: {
+        ...this.buildGoldBarWhere(supplierId, dateRange),
+        available: true,
+      },
     });
     return result._sum.grossWeight ?? 0;
   }
 
-  private async getOroEnProceso(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getOroEnProceso(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const inProgressLots = await this.prisma.processLot.findMany({
       where: { process: { status: { in: ['open', 'in_progress'] } } },
       select: { barIds: true },
@@ -132,12 +156,18 @@ export class DashboardService {
 
     const result = await this.prisma.goldBar.aggregate({
       _sum: { grossWeight: true },
-      where: { id: { in: allBarIds }, ...this.buildGoldBarWhere(supplierId, dateRange) },
+      where: {
+        id: { in: allBarIds },
+        ...this.buildGoldBarWhere(supplierId, dateRange),
+      },
     });
     return result._sum.grossWeight ?? 0;
   }
 
-  private async getProcessCounts(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getProcessCounts(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where = this.buildProcessWhere(supplierId, dateRange);
     const counts = await this.prisma.process.groupBy({
       by: ['status'],
@@ -145,12 +175,16 @@ export class DashboardService {
       where,
     });
     const open = counts.find((c) => c.status === 'open')?._count ?? 0;
-    const inProgress = counts.find((c) => c.status === 'in_progress')?._count ?? 0;
+    const inProgress =
+      counts.find((c) => c.status === 'in_progress')?._count ?? 0;
     const closed = counts.find((c) => c.status === 'closed')?._count ?? 0;
     return { open, inProgress, closed };
   }
 
-  private async getProcessSummary(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getProcessSummary(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where = this.buildProcessWhere(supplierId, dateRange);
     const processes = await this.prisma.process.findMany({
       where,
@@ -169,7 +203,10 @@ export class DashboardService {
     }));
   }
 
-  private async getSupplierChartData(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getSupplierChartData(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where = supplierId ? { id: supplierId } : {};
     const suppliers = await this.prisma.supplier.findMany({
       where,
@@ -186,13 +223,23 @@ export class DashboardService {
             this.getOroEnProceso(s.id, dateRange),
             this.getOroPorProcesar(s.id, dateRange),
           ]);
-          return { id: s.id, name: s.name, ingresado, boveda, proceso, porRefinar };
+          return {
+            id: s.id,
+            name: s.name,
+            ingresado,
+            boveda,
+            proceso,
+            porRefinar,
+          };
         }),
       ),
     ]);
 
     return rows
-      .filter((r) => r.ingresado > 0 || r.boveda > 0 || r.proceso > 0 || r.porRefinar > 0)
+      .filter(
+        (r) =>
+          r.ingresado > 0 || r.boveda > 0 || r.proceso > 0 || r.porRefinar > 0,
+      )
       .map((r) => {
         const tx = transactionMap.get(r.id);
         const grossIn = Number((tx?.grossIn ?? 0).toFixed(2));
@@ -213,14 +260,20 @@ export class DashboardService {
       });
   }
 
-  private async getTransactionDataBySupplier(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getTransactionDataBySupplier(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where = this.buildTransactionWhere(supplierId, dateRange);
     const transactions = await this.prisma.transaction.findMany({
       where,
       include: { supplier: { select: { name: true } } },
     });
 
-    const map = new Map<string, { grossIn: number; fineIn: number; fineOut: number }>();
+    const map = new Map<
+      string,
+      { grossIn: number; fineIn: number; fineOut: number }
+    >();
     for (const tx of transactions) {
       if (!tx.supplierId) continue;
       const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
@@ -238,7 +291,10 @@ export class DashboardService {
     return map;
   }
 
-  private async getRecentTransactions(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getRecentTransactions(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     const where = this.buildTransactionWhere(supplierId, dateRange);
     return this.prisma.transaction.findMany({
       where,
@@ -247,13 +303,24 @@ export class DashboardService {
     });
   }
 
-  private async getTotalBarCount(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
-    return this.prisma.goldBar.count({ where: this.buildGoldBarWhere(supplierId, dateRange) });
+  private async getTotalBarCount(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
+    return this.prisma.goldBar.count({
+      where: this.buildGoldBarWhere(supplierId, dateRange),
+    });
   }
 
-  private async getAvailableBarCount(supplierId?: string, dateRange?: { gte?: Date; lte?: Date }) {
+  private async getAvailableBarCount(
+    supplierId?: string,
+    dateRange?: { gte?: Date; lte?: Date },
+  ) {
     return this.prisma.goldBar.count({
-      where: { ...this.buildGoldBarWhere(supplierId, dateRange), available: true },
+      where: {
+        ...this.buildGoldBarWhere(supplierId, dateRange),
+        available: true,
+      },
     });
   }
 }

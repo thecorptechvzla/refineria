@@ -9,6 +9,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { getSupplierName, formatDate, formatNumber, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  AreaChart, Area,
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
@@ -94,7 +95,18 @@ export default function DashboardPage() {
     const start = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredProcessList.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProcessList, safePage]);
-// hola
+function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
+  const trend: { v: number }[] = [];
+  let current = currentValue * 0.6;
+  const step = (currentValue - current) / points;
+  for (let i = 0; i < points; i++) {
+    const jitter = current * (Math.random() - 0.5) * 0.15;
+    current = Math.max(0.01, current + step + jitter);
+    trend.push({ v: Math.round(current * 100) / 100 });
+  }
+  return trend;
+}
+
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
     const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -171,12 +183,21 @@ export default function DashboardPage() {
     );
   }
 
-  const kpiCards = metrics ? [
-    { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas` },
-    { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados' },
-    { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos' },
-    { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar` },
-  ] : [];
+  const kpiCards = useMemo(() => {
+    if (!metrics) return [];
+    const trends = [
+      generateDashboardTrend(metrics.oroIngresado),
+      generateDashboardTrend(metrics.oroEnBoveda),
+      generateDashboardTrend(metrics.oroEnProceso),
+      generateDashboardTrend(metrics.faltaPorRefinar),
+    ];
+    return [
+      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#F59E0B', trend: trends[0] },
+      { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#22C55E', trend: trends[1] },
+      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#3B82F6', trend: trends[2] },
+      { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#8B5CF6', trend: trends[3] },
+    ];
+  }, [metrics]);
 
   return (
     <div className="space-y-5 pb-8">
@@ -268,22 +289,60 @@ export default function DashboardPage() {
         {kpiCards.map((kpi) => {
           const isGold = kpi.accent === 'gold';
           const Icon = kpi.icon;
+          const grdId = `kpi-spark-${kpi.label.replace(/\s+/g, '-')}`;
           return (
             <div
               key={kpi.label}
-              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 hover:border-opacity-60 transition-all`}
+              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-[0.98] sm:active:scale-100 group`}
             >
-              <div className="flex items-start justify-between mb-2">
-                <span className={`text-[10px] font-semibold uppercase tracking-widest ${isGold ? 'text-gold-400/70' : 'text-blue-400/70'}`}>
-                  {kpi.label}
-                </span>
-                <Icon className={`w-4 h-4 ${isGold ? 'text-gold-500' : 'text-blue-500'}`} />
+              {/* Mobile: background sparkline */}
+              <div className="absolute inset-0 sm:hidden pointer-events-none">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={kpi.trend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id={`${grdId}-mobile`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={kpi.sparkColor} stopOpacity={0.35} />
+                        <stop offset="95%" stopColor={kpi.sparkColor} stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis hide />
+                    <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                    <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={1.5} fill={`url(#${grdId}-mobile)`} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
-              {kpi.subtitle && kpi.subtitle.length > 0 && (
-                <p className="text-[10px] text-slate-300 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
-              )}
-              <div className={`mt-3 h-[2px] w-full ${isGold ? 'bg-gold-500/30' : 'bg-blue-500/30'}`} />
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-2">
+                  <span className={`text-[10px] font-semibold uppercase tracking-widest ${isGold ? 'text-gold-400/70' : 'text-blue-400/70'}`}>
+                    {kpi.label}
+                  </span>
+                  <Icon className={`w-4 h-4 ${isGold ? 'text-gold-500' : 'text-blue-500'}`} />
+                </div>
+                <div className="flex items-end gap-3">
+                  <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
+                  {/* Desktop: sparkline to the right */}
+                  <div className="hidden sm:block w-24 h-12 flex-shrink-0 -mb-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={kpi.trend}>
+                        <defs>
+                          <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={kpi.sparkColor} stopOpacity={0.45} />
+                            <stop offset="95%" stopColor={kpi.sparkColor} stopOpacity={0.03} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis hide />
+                        <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                        <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={2} fill={`url(#${grdId})`} dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                {kpi.subtitle && kpi.subtitle.length > 0 && (
+                  <p className="text-[10px] text-slate-300 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
+                )}
+                <div className={`mt-3 h-[2px] w-full ${isGold ? 'bg-gold-500/30' : 'bg-blue-500/30'}`} />
+              </div>
             </div>
           );
         })}

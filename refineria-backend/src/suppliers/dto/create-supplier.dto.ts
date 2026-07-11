@@ -7,7 +7,8 @@ export class CreateSupplierDto {
 
   @IsString()
   @Matches(/^[JVEGP]-\d{8,9}-\d$/, {
-    message: 'El RIF debe tener el formato J-12345678-9 (letra, 8-9 dígitos, dígito verificador)',
+    message:
+      'El RIF debe tener el formato J-12345678-9 (letra, 8-9 dígitos, dígito verificador)',
   })
   rif: string;
 

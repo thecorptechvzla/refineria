@@ -1,4 +1,11 @@
-import { IsEnum, IsString, IsOptional, IsInt, IsBoolean, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  Min,
+} from 'class-validator';
 import { SupplyCategory, CriticalType } from '../../generated/prisma/client';
 
 export class CreateSupplyItemDto {

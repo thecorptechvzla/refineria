@@ -73,7 +73,31 @@ async function main() {
     },
   });
 
-  console.log('Users created:', superadminCorp.email, superadmin.email, admin.email, admin1.email, owner2.email);
+  const hashed123 = await bcrypt.hash('123', 10);
+
+  const adminSetup = await prisma.user.upsert({
+    where: { email: 'admin@goldtrack.com' },
+    update: {},
+    create: {
+      name: 'Admin GoldTrack',
+      email: 'admin@goldtrack.com',
+      password: hashed123,
+      role: 'ADMIN',
+    },
+  });
+
+  const ownerSetup = await prisma.user.upsert({
+    where: { email: 'dueno@goldtrack.com' },
+    update: {},
+    create: {
+      name: 'Dueño GoldTrack',
+      email: 'dueno@goldtrack.com',
+      password: hashed123,
+      role: 'OWNER',
+    },
+  });
+
+  console.log('Users created:', superadminCorp.email, superadmin.email, admin.email, admin1.email, owner2.email, adminSetup.email, ownerSetup.email);
 
   // const suppliers = await Promise.all([
   //   prisma.supplier.create({ data: { name: 'Minera Los Andes SAC', rif: 'J-12345678-9', contactInfo: 'contacto@losandes.pe | +51 987 654 321', registrationDate: new Date('2023-01-15T10:00:00Z') } }),

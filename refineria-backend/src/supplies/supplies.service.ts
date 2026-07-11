@@ -24,7 +24,9 @@ export class SuppliesService {
       where: { code: dto.code },
     });
     if (existing) {
-      throw new ConflictException(`Ya existe un insumo con el código "${dto.code}"`);
+      throw new ConflictException(
+        `Ya existe un insumo con el código "${dto.code}"`,
+      );
     }
 
     return this.prisma.supplyItem.create({
@@ -64,7 +66,9 @@ export class SuppliesService {
         where: { code: dto.code },
       });
       if (existing && existing.id !== id) {
-        throw new ConflictException(`Ya existe un insumo con el código "${dto.code}"`);
+        throw new ConflictException(
+          `Ya existe un insumo con el código "${dto.code}"`,
+        );
       }
     }
 
@@ -121,7 +125,9 @@ export class SuppliesService {
 
   async createBulkTransaction(dto: CreateBulkSupplyTransactionDto) {
     // ---- Pre-validación de duplicados (items nuevos) ----
-    const newItems = dto.items.filter((i) => dto.type === 'IN' && !i.itemId && i.name);
+    const newItems = dto.items.filter(
+      (i) => dto.type === 'IN' && !i.itemId && i.name,
+    );
 
     if (newItems.length > 0) {
       // Layer A — nombres duplicados dentro del mismo lote
@@ -248,7 +254,9 @@ export class SuppliesService {
                 unit,
                 criticalLevel,
                 isCritical: item.isCritical ?? false,
-                criticalType: item.isCritical ? (item.criticalType ?? null) : null,
+                criticalType: item.isCritical
+                  ? (item.criticalType ?? null)
+                  : null,
                 currentStock: item.quantity,
               },
             });
@@ -275,8 +283,12 @@ export class SuppliesService {
     }
   }
 
-  private async generateCode(tx: any, category: SupplyCategory): Promise<string> {
-    const prefix = category === 'OPERATIONS' ? 'OP' : category === 'CRITICAL' ? 'CR' : 'SG';
+  private async generateCode(
+    tx: any,
+    category: SupplyCategory,
+  ): Promise<string> {
+    const prefix =
+      category === 'OPERATIONS' ? 'OP' : category === 'CRITICAL' ? 'CR' : 'SG';
     const lastItem = await tx.supplyItem.findFirst({
       where: { code: { startsWith: prefix } },
       orderBy: { code: 'desc' },
