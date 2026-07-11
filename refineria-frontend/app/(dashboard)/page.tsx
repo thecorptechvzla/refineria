@@ -16,6 +16,22 @@ import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
 } from 'lucide-react';
 
+function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
+  const trend: { v: number }[] = [];
+  const amplitude = Math.max(currentValue * 0.25, 1.5);
+  const startVal = amplitude * 0.35;
+  const peakVal = amplitude * 1.15;
+  const endVal = amplitude * 0.55;
+  for (let i = 0; i < points; i++) {
+    const ratio = i / (points - 1);
+    const bellFactor = Math.sin(ratio * Math.PI);
+    const val = startVal + (peakVal - startVal) * bellFactor + (endVal - startVal) * ratio * 0.15;
+    const jitter = val * (Math.random() - 0.5) * 0.1;
+    trend.push({ v: Math.round(Math.max(0.01, val + jitter) * 100) / 100 });
+  }
+  return trend;
+}
+
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useGold();
   const { data: suppliers } = useSuppliers();
@@ -95,21 +111,6 @@ export default function DashboardPage() {
     const start = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredProcessList.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProcessList, safePage]);
-function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
-  const trend: { v: number }[] = [];
-  const amplitude = Math.max(currentValue * 0.25, 1.5);
-  const startVal = amplitude * 0.35;
-  const peakVal = amplitude * 1.15;
-  const endVal = amplitude * 0.55;
-  for (let i = 0; i < points; i++) {
-    const ratio = i / (points - 1);
-    const bellFactor = Math.sin(ratio * Math.PI);
-    const val = startVal + (peakVal - startVal) * bellFactor + (endVal - startVal) * ratio * 0.15;
-    const jitter = val * (Math.random() - 0.5) * 0.1;
-    trend.push({ v: Math.round(Math.max(0.01, val + jitter) * 100) / 100 });
-  }
-  return trend;
-}
 
   const enrichedDetail = useMemo(() => {
     if (!processDetail) return null;
@@ -142,6 +143,22 @@ function generateDashboardTrend(currentValue: number, points = 14): { v: number 
       totalAg, totalLeyAg,
     } as ProcessDetail;
   }, [processDetail]);
+
+  const kpiCards = useMemo(() => {
+    if (!metrics) return [];
+    const trends = [
+      generateDashboardTrend(metrics.oroIngresado),
+      generateDashboardTrend(metrics.oroEnBoveda),
+      generateDashboardTrend(metrics.oroEnProceso),
+      generateDashboardTrend(metrics.faltaPorRefinar),
+    ];
+    return [
+      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#F59E0B', trend: trends[0] },
+      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#22C55E', trend: trends[1] },
+      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#3B82F6', trend: trends[2] },
+      { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#8B5CF6', trend: trends[3] },
+    ];
+  }, [metrics]);
 
   if (authLoading) {
     return (
@@ -186,22 +203,6 @@ function generateDashboardTrend(currentValue: number, points = 14): { v: number 
       </div>
     );
   }
-
-  const kpiCards = useMemo(() => {
-    if (!metrics) return [];
-    const trends = [
-      generateDashboardTrend(metrics.oroIngresado),
-      generateDashboardTrend(metrics.oroEnBoveda),
-      generateDashboardTrend(metrics.oroEnProceso),
-      generateDashboardTrend(metrics.faltaPorRefinar),
-    ];
-    return [
-      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#F59E0B', trend: trends[0] },
-      { label: 'Oro en Bóveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#22C55E', trend: trends[1] },
-      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#3B82F6', trend: trends[2] },
-      { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#8B5CF6', trend: trends[3] },
-    ];
-  }, [metrics]);
 
   return (
     <div className="space-y-5 pb-8">
