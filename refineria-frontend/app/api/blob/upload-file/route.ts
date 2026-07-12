@@ -23,7 +23,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const uniqueFilename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
 
     const blob = await put(uniqueFilename, file, {
-      access: 'public',
+      access: 'private',
     });
 
     return NextResponse.json({ url: blob.url });
