@@ -24,6 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const blob = await put(uniqueFilename, file, {
       access: 'private',
+      token: process.env.BLOB_READ_WRITE_TOKEN 
     });
 
     return NextResponse.json({ url: blob.url });
