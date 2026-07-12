@@ -6,7 +6,7 @@ const NEXT_PUBLIC_API_URL = process.env.NODE_ENV === 'development'
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
-    '192.168.0.138', '192.168.0.107', 'https://refineria-backend.vercel.app'
+    '192.168.0.138', '192.168.9.102', 'https://refineria-backend.vercel.app'
   ],
   async rewrites() {
     return [

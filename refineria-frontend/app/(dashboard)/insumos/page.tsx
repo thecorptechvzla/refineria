@@ -1033,13 +1033,10 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                 </div>
               </div>
 
-              {/* Mobile bottom sheet */}
-              <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end animate-slide-up">
+              {/* Mobile modal — centered */}
+              <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4 animate-slide-up">
                 <div className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm" onClick={() => { setItemForQuantity(null); setGlobalSearchKey((k) => k + 1); }} />
-                <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-6 pb-8 space-y-4 max-h-[80vh] overflow-y-auto">
-                  <div className="flex justify-center -mt-2 mb-1">
-                    <div className="w-10 h-1 rounded-full bg-slate-600" />
-                  </div>
+                <div className="relative w-full max-w-sm glass-panel rounded-xl p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                   <div className="text-center">
                     <p className="text-xs font-mono text-slate-500 mb-1">{itemForQuantity.item.code}</p>
                     <p className="text-base font-bold text-white">{itemForQuantity.item.name}</p>
@@ -1703,13 +1700,10 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
                     {modalContent()}
                   </div>
                 </div>
-                {/* Mobile bottom sheet */}
-                <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end animate-slide-up">
+                {/* Mobile modal — centered */}
+                <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4 animate-slide-up">
                   <div className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm" onClick={() => setCriticoItemModal(null)} />
-                  <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto space-y-4">
-                    <div className="flex justify-center -mt-2 mb-1">
-                      <div className="w-10 h-1 rounded-full bg-slate-600" />
-                    </div>
+                  <div className="relative w-full max-w-lg glass-panel rounded-xl p-5 max-h-[85vh] overflow-y-auto space-y-4">
                     {modalContent(true)}
                   </div>
                 </div>

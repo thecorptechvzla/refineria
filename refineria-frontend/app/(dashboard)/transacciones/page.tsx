@@ -339,35 +339,33 @@ export default function TransaccionesPage() {
                       })}
                     </div>
                   )}
+
+                  {selectedLotIds.size > 0 && (
+                    <div className="glass-panel border border-gold-500/20 rounded-xl p-3 sm:p-4 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-white">
+                          {selectedLotIds.size} Lote{selectedLotIds.size !== 1 ? 's' : ''} seleccionado{selectedLotIds.size !== 1 ? 's' : ''}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Peso total:{' '}
+                          <span className="text-gold-400 font-mono font-bold">{formatLocaleNumber(totalSelectedWeight)} g</span>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAuditSheet(true)}
+                        disabled={isBulkProcessing}
+                        className="px-5 py-2.5 sm:py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm active:scale-95"
+                      >
+                        {isBulkProcessing ? 'Procesando...' : `EJECUTAR SALIDA (${selectedLotIds.size})`}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {selectedLotIds.size > 0 && (
-          <div className="lg:col-span-5 fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4">
-            <div className="max-w-5xl mx-auto glass-panel border border-gold-500/20 rounded-xl p-3 sm:p-4 flex items-center justify-between shadow-2xl">
-              <div className="space-y-0.5">
-                <p className="text-sm font-bold text-white">
-                  {selectedLotIds.size} Lote{selectedLotIds.size !== 1 ? 's' : ''} seleccionado{selectedLotIds.size !== 1 ? 's' : ''}
-                </p>
-                <p className="text-[10px] text-slate-400">
-                  Peso total:{' '}
-                  <span className="text-gold-400 font-mono font-bold">{formatLocaleNumber(totalSelectedWeight)} g</span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAuditSheet(true)}
-                disabled={isBulkProcessing}
-                className="px-5 py-2.5 sm:py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm active:scale-95"
-              >
-                {isBulkProcessing ? 'Procesando...' : `EJECUTAR SALIDA (${selectedLotIds.size})`}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* RIGHT PANEL — Transaction History */}
         <div className="lg:col-span-3">
@@ -428,18 +426,14 @@ export default function TransaccionesPage() {
         </div>
       </div>
 
-      {/* AUDIT BOTTOM SHEET */}
+      {/* CONFIRMACIÓN CENTRADA */}
       {showAuditSheet && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end animate-slide-up">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm"
             onClick={() => setShowAuditSheet(false)}
           />
-          <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-5 sm:p-6 pb-10 space-y-4 max-h-[70vh] overflow-y-auto">
-            <div className="flex justify-center -mt-2 mb-1">
-              <div className="w-10 h-1 rounded-full bg-slate-600" />
-            </div>
-
+          <div className="relative w-full max-w-md glass-panel rounded-xl p-5 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-gold-400" />
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
