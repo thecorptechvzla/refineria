@@ -4,6 +4,7 @@ import { useGold } from '@/lib/GoldContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDashboardMetrics, type ProcessSummaryItem } from '@/lib/hooks/useDashboardMetrics';
 import { useProcessDetail } from '@/lib/hooks/useProcessDetail';
+import { useCriticos } from '@/lib/CriticosContext';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { getSupplierName, formatDate, formatNumber, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
@@ -14,6 +15,7 @@ import {
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
+  AlertTriangle, EyeOff, X, Beaker, History, Fuel,
 } from 'lucide-react';
 
 function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
@@ -30,6 +32,13 @@ function generateDashboardTrend(currentValue: number, points = 14): { v: number 
     trend.push({ v: Math.round(Math.max(0.01, val + jitter) * 100) / 100 });
   }
   return trend;
+}
+
+function autonomyColor(days: number | null): { text: string; bar: string; border: string; bg: string; label: string } {
+  if (days === null) return { text: 'text-slate-500', bar: 'bg-slate-500', border: 'border-slate-500/20', bg: 'bg-slate-500/10', label: '—' };
+  if (days < 5) return { text: 'text-red-400', bar: 'bg-red-500', border: 'border-red-500/20', bg: 'bg-red-500/10', label: 'Crítico' };
+  if (days < 10) return { text: 'text-amber-400', bar: 'bg-amber-500', border: 'border-amber-500/20', bg: 'bg-amber-500/10', label: 'Advertencia' };
+  return { text: 'text-emerald-400', bar: 'bg-emerald-500', border: 'border-emerald-500/20', bg: 'bg-emerald-500/10', label: 'Estable' };
 }
 
 export default function DashboardPage() {
@@ -99,6 +108,30 @@ export default function DashboardPage() {
   const { data: metrics, isLoading: metricsLoading, isError: metricsError, refetch: refetchMetrics } =
     useDashboardMetrics(params, !!user && !authLoading);
   const { data: processDetail, isLoading: detailLoading } = useProcessDetail(viewingProcessId);
+
+  const { quimicos, combustible, historial } = useCriticos();
+  const [showCriticos, setShowCriticos] = useState(false);
+  const criticosRef = useRef<HTMLDivElement>(null);
+  const [selectedCriticoId, setSelectedCriticoId] = useState<string | null>(null);
+
+  const gasoilDays = useMemo(() => {
+    const log = combustible.log;
+    if (log.length < 2) return null;
+    const sorted = [...log].sort((a, b) => {
+      const [ad, am, ay] = a.date.split('/');
+      const [bd, bm, by] = b.date.split('/');
+      return new Date(+by, +bm - 1, +bd).getTime() - new Date(+ay, +am - 1, +ad).getTime();
+    });
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const daysDiff = (
+      new Date(+last.date.split('/')[2], +last.date.split('/')[1] - 1, +last.date.split('/')[0]).getTime() -
+      new Date(+first.date.split('/')[2], +first.date.split('/')[1] - 1, +first.date.split('/')[0]).getTime()
+    ) / (1000 * 60 * 60 * 24);
+    const totalConsumption = sorted.reduce((s, e) => s + Math.abs(e.consumption), 0);
+    const avgDaily = daysDiff > 0 ? totalConsumption / daysDiff : 0;
+    return avgDaily > 0 ? combustible.currentStock / avgDaily : null;
+  }, [combustible]);
 
   const filteredProcessList = useMemo(() => {
     if (!activeStatusFilter || !metrics?.processSummary) return [];
@@ -287,6 +320,19 @@ export default function DashboardPage() {
               />
             </div>
           )}
+          {user.role === 'OWNER' && (
+            <button
+              onClick={() => { setShowCriticos((v) => !v); if (!showCriticos) setTimeout(() => criticosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }}
+              className={`px-3 py-2 text-xs font-medium uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 ${
+                showCriticos
+                  ? 'bg-amber-500/10 border border-amber-500/40 text-amber-400'
+                  : 'bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40'
+              }`}
+            >
+              {showCriticos ? <EyeOff className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+              {showCriticos ? 'Ocultar Críticos' : 'Ver Insumos Críticos'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -301,8 +347,8 @@ export default function DashboardPage() {
               className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-12 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-95 sm:active:scale-100 group`}
             >
               {/* Mobile: background sparkline at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 max-h-[50px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 h-16">
+                <ResponsiveContainer width="100%" height={64}>
                   <AreaChart data={kpi.trend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                     <defs>
                       <linearGradient id={`${grdId}-mobile`} x1="0" y1="1" x2="0" y2="0">
@@ -353,6 +399,185 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* Estado de Operación — Insumos Críticos (Owner) */}
+      {/* ════════════════════════════════════════════════ */}
+      {user.role === 'OWNER' && (
+        <div
+          ref={criticosRef}
+          className={`transition-all duration-500 ease-in-out overflow-hidden ${
+            showCriticos ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="glass-panel p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Estado de Operación — Insumos Críticos</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {quimicos.map((q) => {
+                const ac = autonomyColor(q.daysOfAutonomy);
+                const maxStock = q.initialStock + q.ajuste;
+                const pct = maxStock > 0 ? Math.min(100, (q.currentStock / maxStock) * 100) : 0;
+                const barColor = q.daysOfAutonomy === null ? '#6B7280' : q.daysOfAutonomy < 5 ? '#EF4444' : q.daysOfAutonomy < 10 ? '#F59E0B' : '#10B981';
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setSelectedCriticoId(q.id)}
+                    className={`glass-panel p-3 text-left active:scale-95 transition-all cursor-pointer hover:border-opacity-60 group border ${ac.border}`}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1 truncate">{q.name}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="hud-number text-sm text-white">{formatLocaleNumber(q.currentStock)}</span>
+                      <span className="text-[10px] text-slate-500">{q.unit}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-blue-500/10 rounded-full mb-2 overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded ${ac.bg} ${ac.text}`}>
+                        {q.daysOfAutonomy !== null ? `${Math.round(q.daysOfAutonomy)}d` : '—'}
+                      </span>
+                      <span className="text-[9px] text-slate-600 uppercase tracking-wider">{ac.label}</span>
+                    </div>
+                  </button>
+                );
+              })}
+              {/* Gasoil card */}
+              {(() => {
+                const gDays = gasoilDays;
+                const gAc = gDays !== null ? autonomyColor(gDays) : null;
+                const gPct = combustible.initialAmount > 0 ? Math.min(100, (combustible.currentStock / combustible.initialAmount) * 100) : 0;
+                return (
+                  <button
+                    onClick={() => setSelectedCriticoId('__gasoil__')}
+                    className={`glass-panel p-3 text-left active:scale-95 transition-all cursor-pointer hover:border-opacity-60 group border ${gAc ? gAc.border : 'border-amber-500/20'}`}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Gasoil</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="hud-number text-sm text-white">{formatLocaleNumber(combustible.currentStock)}</span>
+                      <span className="text-[10px] text-slate-500">Lts</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-blue-500/10 rounded-full mb-2 overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${gPct}%`, backgroundColor: '#F59E0B' }} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded ${gAc ? gAc.bg : 'bg-amber-500/10'} ${gAc ? gAc.text : 'text-amber-400'}`}>
+                        {gDays !== null ? `${Math.round(gDays)}d` : `${formatLocaleNumber(combustible.currentStock)}`}
+                      </span>
+                      <span className="text-[9px] text-slate-600 uppercase tracking-wider">
+                        {gDays !== null ? gAc!.label : 'Disponible'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* Bottom Sheet — Historial de Insumo */}
+      {/* ════════════════════════════════════════════════ */}
+      {selectedCriticoId !== null && (() => {
+        const isGasoil = selectedCriticoId === '__gasoil__';
+        const quimico = isGasoil ? null : quimicos.find((q) => q.id === selectedCriticoId) ?? null;
+        const itemName = isGasoil ? 'Gasoil' : quimico?.name ?? '';
+        const fuelKeywords = ['gasoil', 'diesel', 'combustible', 'gasolina'];
+        const relatedHistory = historial.filter((h) =>
+          isGasoil
+            ? fuelKeywords.some((kw) => h.insumo.toLowerCase().includes(kw))
+            : h.insumo.toLowerCase().includes(itemName.toLowerCase())
+        );
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedCriticoId(null)} />
+            <div className="relative w-full sm:max-w-lg max-h-[85vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-t-xl sm:rounded-none mt-auto sm:mt-0">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  {isGasoil ? <Fuel className="w-5 h-5 text-amber-400" /> : <Beaker className="w-5 h-5 text-blue-400" />}
+                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">{itemName}</h2>
+                </div>
+                <button onClick={() => setSelectedCriticoId(null)} className="p-1 hover:bg-blue-500/10 rounded-sm transition-colors">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+              {/* Detail */}
+              {isGasoil ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Disponible</p>
+                    <p className="text-lg font-bold text-amber-400 hud-number">{formatLocaleNumber(combustible.currentStock)} <span className="text-xs text-slate-400">Lts</span></p>
+                  </div>
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Inicial</p>
+                    <p className="text-lg font-bold text-white hud-number">{formatLocaleNumber(combustible.initialAmount)} <span className="text-xs text-slate-400">Lts</span></p>
+                  </div>
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Consumido</p>
+                    <p className="text-lg font-bold text-red-400 hud-number">{formatLocaleNumber(Math.max(0, combustible.initialAmount - combustible.currentStock))} <span className="text-xs text-slate-400">Lts</span></p>
+                  </div>
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Autonomía</p>
+                    <p className={`text-lg font-bold hud-number ${gasoilDays !== null && gasoilDays < 5 ? 'text-red-400' : gasoilDays !== null && gasoilDays < 10 ? 'text-amber-400' : gasoilDays !== null ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {gasoilDays !== null ? `${gasoilDays.toFixed(1)}d` : '—'}
+                    </p>
+                  </div>
+                </div>
+              ) : quimico ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`bg-midnight-900/60 border ${autonomyColor(quimico.daysOfAutonomy).border} p-3 text-center`}>
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Stock Actual</p>
+                    <p className="text-lg font-bold text-white hud-number">{formatLocaleNumber(quimico.currentStock)} <span className="text-xs text-slate-400">{quimico.unit}</span></p>
+                  </div>
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Consumo Diario</p>
+                    <p className="text-lg font-bold text-white hud-number">{quimico.dailyConsumption > 0 ? quimico.dailyConsumption : <span className="text-slate-500">—</span>} <span className="text-xs text-slate-400">{quimico.unit}</span></p>
+                  </div>
+                  <div className={`bg-midnight-900/60 border ${autonomyColor(quimico.daysOfAutonomy).border} p-3 text-center`}>
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Autonomía</p>
+                    <p className={`text-lg font-bold hud-number ${autonomyColor(quimico.daysOfAutonomy).text}`}>
+                      {quimico.daysOfAutonomy !== null ? `${quimico.daysOfAutonomy.toFixed(1)}d` : '—'}
+                    </p>
+                  </div>
+                  <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Mínimo</p>
+                    <p className="text-lg font-bold text-slate-300 hud-number">{quimico.minimum} <span className="text-xs text-slate-400">{quimico.unit}</span></p>
+                  </div>
+                </div>
+              ) : null}
+              {/* History */}
+              <div className="mt-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <History className="w-3.5 h-3.5 text-slate-500" />
+                  <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Historial de Consumo</h3>
+                </div>
+                {relatedHistory.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-4">Sin movimientos registrados.</p>
+                ) : (
+                  <div className="space-y-1 max-h-52 overflow-y-auto">
+                    {relatedHistory.map((h) => (
+                      <div key={h.id} className="flex items-center justify-between bg-midnight-900/40 border border-blue-500/5 px-3 py-2">
+                        <span className="text-[10px] font-mono text-slate-500">{h.date}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-[11px] font-mono font-bold ${h.tipo === 'CARGO' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {h.tipo === 'CARGO' ? '+' : '-'}{formatLocaleNumber(h.cantidad)}
+                          </span>
+                          {h.observacion && (
+                            <span className="text-[10px] text-slate-600 truncate max-w-[120px]">{h.observacion}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Status Cards with Toggle */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
