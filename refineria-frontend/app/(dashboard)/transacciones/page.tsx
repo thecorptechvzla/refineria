@@ -341,7 +341,7 @@ export default function TransaccionesPage() {
                   )}
 
                   {selectedLotIds.size > 0 && (
-                    <div className="glass-panel border border-gold-500/20 rounded-xl p-3 sm:p-4 flex items-center justify-between">
+                    <div className="glass-panel border border-gold-500/20 rounded-xl p-3 sm:p-4 space-y-3">
                       <div className="space-y-0.5">
                         <p className="text-sm font-bold text-white">
                           {selectedLotIds.size} Lote{selectedLotIds.size !== 1 ? 's' : ''} seleccionado{selectedLotIds.size !== 1 ? 's' : ''}
@@ -355,7 +355,7 @@ export default function TransaccionesPage() {
                         type="button"
                         onClick={() => setShowAuditSheet(true)}
                         disabled={isBulkProcessing}
-                        className="px-5 py-2.5 sm:py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm active:scale-95"
+                        className="w-full px-5 py-2.5 sm:py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm active:scale-95"
                       >
                         {isBulkProcessing ? 'Procesando...' : `EJECUTAR SALIDA (${selectedLotIds.size})`}
                       </button>
