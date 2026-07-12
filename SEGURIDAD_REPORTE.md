@@ -129,4 +129,3 @@ La bóveda está cerrada, el guardia está entrenado y las llaves están seguras
 
 ---
 
-*Auditoría realizada por OpenCode Modo Ciberseguridad — Julio 2026*

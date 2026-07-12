@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useGold } from '@/lib/GoldContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Shield, Users, Wrench, Building2, Package, Settings, ArrowLeftRight } from 'lucide-react';
+import { Shield, Users, Wrench, Building2, Package, Settings, ArrowLeftRight, ShieldCheck } from 'lucide-react';
 
 const adminLinks = [
   { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
@@ -14,6 +14,7 @@ const adminLinks = [
   { name: 'Barras', href: '/admin/barras', icon: Package },
   { name: 'Procesos', href: '/admin/procesos', icon: Settings },
   { name: 'Transacciones', href: '/admin/transacciones', icon: ArrowLeftRight },
+  { name: 'Seguridad', href: '/admin/seguridad', icon: ShieldCheck },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
