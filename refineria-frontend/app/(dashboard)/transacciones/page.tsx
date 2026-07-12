@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useClosedProcessesBySupplier } from '@/lib/hooks/useProcesses';
 import { useCreateEgresoLot } from '@/lib/hooks/useTransactions';
 import { useTransactions } from '@/lib/hooks/useTransactions';
 import { formatNumber, formatLocaleNumber, formatDate } from '@/lib/utils';
-import { ArrowLeftRight, CheckCircle, Crosshair, Package, ChevronDown } from 'lucide-react';
+import { ArrowLeftRight, CheckCircle, Crosshair, Package, ChevronDown, Check, AlertTriangle } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 import type { ProcessLot, Process } from '@/types/refinery';
 
@@ -21,8 +21,10 @@ export default function TransaccionesPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
-  const [confirmLotId, setConfirmLotId] = useState<string | null>(null);
+  const [selectedLotIds, setSelectedLotIds] = useState<Set<string>>(new Set());
   const [expandedProcess, setExpandedProcess] = useState<string | null>(null);
+  const [showAuditSheet, setShowAuditSheet] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const supplierRef = useRef<HTMLDivElement>(null);
 
@@ -52,16 +54,91 @@ export default function TransaccionesPage() {
     return lots;
   }, [closedProcesses]);
 
-  const handleEgresar = async (lotId: string) => {
-    setConfirmLotId(null);
+  const toggleLotSelection = useCallback((lotId: string) => {
+    setSelectedLotIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(lotId)) {
+        next.delete(lotId);
+      } else {
+        next.add(lotId);
+      }
+      return next;
+    });
+  }, []);
+
+  const isProcessFullySelected = useCallback(
+    (procId: string) => {
+      const procLots = availableLots.filter((l) => l.process.id === procId);
+      return procLots.length > 0 && procLots.every((l) => selectedLotIds.has(l.lot.id));
+    },
+    [availableLots, selectedLotIds],
+  );
+
+  const isProcessPartiallySelected = useCallback(
+    (procId: string) => {
+      const procLots = availableLots.filter((l) => l.process.id === procId);
+      const selected = procLots.filter((l) => selectedLotIds.has(l.lot.id)).length;
+      return selected > 0 && selected < procLots.length;
+    },
+    [availableLots, selectedLotIds],
+  );
+
+  const toggleProcessSelection = useCallback(
+    (procId: string) => {
+      setSelectedLotIds((prev) => {
+        const next = new Set(prev);
+        const procLots = availableLots.filter((l) => l.process.id === procId);
+        const allSelected = procLots.every((l) => prev.has(l.lot.id));
+        for (const { lot } of procLots) {
+          if (allSelected) {
+            next.delete(lot.id);
+          } else {
+            next.add(lot.id);
+          }
+        }
+        return next;
+      });
+    },
+    [availableLots],
+  );
+
+  const totalSelectedWeight = useMemo(
+    () =>
+      availableLots
+        .filter(({ lot }) => selectedLotIds.has(lot.id))
+        .reduce((sum, { lot }) => sum + (lot.recovered ?? 0) - lot.egresadoG, 0),
+    [availableLots, selectedLotIds],
+  );
+
+  const selectedProcessesSummary = useMemo(() => {
+    const map = new Map<string, { process: Process; lots: typeof availableLots }>();
+    availableLots
+      .filter((item) => selectedLotIds.has(item.lot.id))
+      .forEach((item) => {
+        if (!map.has(item.process.id))
+          map.set(item.process.id, { process: item.process, lots: [] });
+        map.get(item.process.id)!.lots.push(item);
+      });
+    return Array.from(map.values());
+  }, [availableLots, selectedLotIds]);
+
+  const handleBulkEgreso = async () => {
+    setIsBulkProcessing(true);
     setErrorMessage('');
     try {
-      await createEgreso.mutateAsync(lotId);
-      setSuccessMessage('Egreso registrado correctamente');
+      const lots = Array.from(selectedLotIds);
+      await Promise.all(lots.map((id) => createEgreso.mutateAsync(id)));
+      setSelectedLotIds(new Set());
+      setShowAuditSheet(false);
+      setSuccessMessage(
+        `${lots.length} egreso${lots.length !== 1 ? 's' : ''} registrado${lots.length !== 1 ? 's' : ''} correctamente`,
+      );
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch {
-      setErrorMessage('Error al registrar el egreso');
+      setErrorMessage('Error al procesar egresos masivos');
       setShakeKey((k) => k + 1);
+    } finally {
+      setIsBulkProcessing(false);
     }
   };
 
@@ -170,25 +247,79 @@ export default function TransaccionesPage() {
                       {closedProcesses?.map((proc) => {
                         const procLots = availableLots.filter((l) => l.process.id === proc.id);
                         if (procLots.length === 0) return null;
+                        const fullySelected = isProcessFullySelected(proc.id);
+                        const partiallySelected = isProcessPartiallySelected(proc.id);
                         return (
                           <div key={proc.id} className="border border-blue-500/10">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedProcess(expandedProcess === proc.id ? null : proc.id)}
-                              className="w-full px-3 py-2 bg-midnight-800/50 flex items-center justify-between text-left"
-                            >
-                              <span className="text-xs font-semibold text-slate-300">
-                                Proceso #{proc.number} — {procLots.length} lote{procLots.length !== 1 ? 's' : ''}
-                              </span>
-                              <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${expandedProcess === proc.id ? 'rotate-180' : ''}`} />
-                            </button>
+                            <div className="flex items-center px-3 py-2 bg-midnight-800/50">
+                              <div
+                                role="checkbox"
+                                aria-checked={fullySelected}
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleProcessSelection(proc.id);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleProcessSelection(proc.id);
+                                  }
+                                }}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center mr-3 cursor-pointer transition-all flex-shrink-0 ${
+                                  fullySelected
+                                    ? 'bg-gold-500/20 border-gold-500'
+                                    : partiallySelected
+                                      ? 'bg-blue-500/10 border-blue-400'
+                                      : 'border-blue-500/30 hover:border-blue-400'
+                                }`}
+                              >
+                                {fullySelected && <Check className="w-3.5 h-3.5 text-gold-400" />}
+                                {partiallySelected && (
+                                  <div className="w-2 h-0.5 rounded bg-blue-400" />
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedProcess(expandedProcess === proc.id ? null : proc.id)}
+                                className="flex-1 flex items-center justify-between text-left"
+                              >
+                                <span className="text-xs font-semibold text-slate-300">
+                                  Proceso #{proc.number} — {procLots.length} lote{procLots.length !== 1 ? 's' : ''}
+                                </span>
+                                <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${expandedProcess === proc.id ? 'rotate-180' : ''}`} />
+                              </button>
+                            </div>
                             {expandedProcess === proc.id && (
                               <div className="divide-y divide-blue-500/5">
                                 {procLots.map(({ lot }) => {
                                   const available = (lot.recovered ?? 0) - lot.egresadoG;
+                                  const isSelected = selectedLotIds.has(lot.id);
                                   return (
-                                    <div key={lot.id} className="px-3 py-2.5 flex items-center justify-between">
-                                      <div className="space-y-0.5">
+                                    <div
+                                      key={lot.id}
+                                      className="px-3 flex items-center gap-3 cursor-pointer hover:bg-midnight-800/30 transition-colors"
+                                      onClick={() => toggleLotSelection(lot.id)}
+                                    >
+                                      <div
+                                        role="checkbox"
+                                        aria-checked={isSelected}
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            toggleLotSelection(lot.id);
+                                          }
+                                        }}
+                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                          isSelected
+                                            ? 'bg-gold-500/20 border-gold-500'
+                                            : 'border-blue-500/30 hover:border-blue-400'
+                                        }`}
+                                      >
+                                        {isSelected && <Check className="w-3.5 h-3.5 text-gold-400" />}
+                                      </div>
+                                      <div className="py-3 flex-1 min-w-0">
                                         <p className="text-xs font-mono text-gold-500 font-bold">
                                           Lote #{lot.number}
                                         </p>
@@ -198,32 +329,6 @@ export default function TransaccionesPage() {
                                           <span>Disponible: <span className="text-green-400 font-mono">{formatLocaleNumber(available)}</span></span>
                                         </div>
                                       </div>
-                                      {confirmLotId === lot.id ? (
-                                        <div className="flex gap-1.5">
-                                          <button
-                                            type="button"
-                                            onClick={() => handleEgresar(lot.id)}
-                                            className="px-2.5 py-1.5 bg-green-500/20 border border-green-500/40 text-green-400 text-[10px] font-bold uppercase tracking-wider hover:bg-green-500/30 transition-all"
-                                          >
-                                            Confirmar
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setConfirmLotId(null)}
-                                            className="px-2.5 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/20 transition-all"
-                                          >
-                                            Cancelar
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => setConfirmLotId(lot.id)}
-                                          className="px-2.5 py-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500/30 transition-all"
-                                        >
-                                          Egresar
-                                        </button>
-                                      )}
                                     </div>
                                   );
                                 })}
@@ -239,6 +344,30 @@ export default function TransaccionesPage() {
             </div>
           </div>
         </div>
+
+        {selectedLotIds.size > 0 && (
+          <div className="lg:col-span-5 fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4">
+            <div className="max-w-5xl mx-auto glass-panel border border-gold-500/20 rounded-xl p-3 sm:p-4 flex items-center justify-between shadow-2xl">
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-white">
+                  {selectedLotIds.size} Lote{selectedLotIds.size !== 1 ? 's' : ''} seleccionado{selectedLotIds.size !== 1 ? 's' : ''}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  Peso total:{' '}
+                  <span className="text-gold-400 font-mono font-bold">{formatLocaleNumber(totalSelectedWeight)} g</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAuditSheet(true)}
+                disabled={isBulkProcessing}
+                className="px-5 py-2.5 sm:py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm active:scale-95"
+              >
+                {isBulkProcessing ? 'Procesando...' : `EJECUTAR SALIDA (${selectedLotIds.size})`}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* RIGHT PANEL — Transaction History */}
         <div className="lg:col-span-3">
@@ -298,6 +427,86 @@ export default function TransaccionesPage() {
           </div>
         </div>
       </div>
+
+      {/* AUDIT BOTTOM SHEET */}
+      {showAuditSheet && (
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end animate-slide-up">
+          <div
+            className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm"
+            onClick={() => setShowAuditSheet(false)}
+          />
+          <div className="relative bg-midnight-800/95 backdrop-blur-lg border-t border-blue-500/20 rounded-t-2xl p-5 sm:p-6 pb-10 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div className="flex justify-center -mt-2 mb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-600" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-gold-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Confirmar Salida Masiva
+              </h3>
+            </div>
+
+            <div className="space-y-3">
+              {selectedProcessesSummary.map(({ process, lots }) => (
+                <div
+                  key={process.id}
+                  className="border border-blue-500/10 rounded-lg p-3 space-y-1.5"
+                >
+                  <p className="text-xs font-semibold text-slate-300">
+                    Proceso #{process.number}
+                  </p>
+                  <div className="space-y-1">
+                    {lots.map(({ lot }) => {
+                      const available = (lot.recovered ?? 0) - lot.egresadoG;
+                      return (
+                        <div
+                          key={lot.id}
+                          className="flex justify-between text-[11px] text-slate-400"
+                        >
+                          <span>Lote #{lot.number}</span>
+                          <span className="font-mono text-slate-300">
+                            {formatLocaleNumber(available)} g
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-blue-500/10 pt-3 flex items-center justify-between">
+              <span className="text-xs text-slate-400 uppercase tracking-wider">
+                Peso total a egresar
+              </span>
+              <span className="text-sm font-mono font-bold text-gold-400">
+                {formatLocaleNumber(totalSelectedWeight)} g
+              </span>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAuditSheet(false)}
+                className="flex-1 py-3 border border-blue-500/20 text-slate-400 text-xs font-bold uppercase rounded-lg hover:bg-midnight-700/50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkEgreso}
+                disabled={isBulkProcessing}
+                className="flex-1 py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm disabled:opacity-50"
+              >
+                {isBulkProcessing
+                  ? 'Procesando...'
+                  : `Confirmar Salida (${selectedLotIds.size})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
