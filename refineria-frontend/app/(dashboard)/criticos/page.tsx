@@ -62,11 +62,13 @@ function autonomyColor(days: number | null): { text: string; bar: string; label:
 
 function generateMockTrend(baseValue: number, length: number, volatility: number = 0.18): { v: number }[] {
   const trend: { v: number }[] = [];
-  let current = baseValue;
   for (let i = 0; i < length; i++) {
-    const change = current * (Math.random() - 0.5) * volatility;
-    current = Math.max(1, current + change);
-    trend.push({ v: Math.round(current * 10) / 10 });
+    const ratio = length > 1 ? i / (length - 1) : 0;
+    const curveFactor = Math.sin(Math.PI * ratio);
+    const dip = 0.85 + 0.15 * curveFactor;
+    const val = baseValue * dip;
+    const jitter = val * (Math.random() - 0.5) * volatility;
+    trend.push({ v: Math.round(Math.max(1, val + jitter) * 10) / 10 });
   }
   return trend;
 }
@@ -138,48 +140,58 @@ function KpiCard({
   return (
     <Comp
       onClick={onClick}
-      className={`bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left transition-all duration-200 relative ${
+      className={`bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left transition-all duration-200 relative overflow-hidden ${
         onClick
           ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-95 group'
           : ''
       }`}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Icon className={`w-4 h-4 ${iconClass ?? 'text-blue-400'}`} />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{label}</span>
-            {onClick && (
-              <ChevronRight className="w-3 h-3 text-slate-600 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+      {sparklineData && sparklineData.length > 1 && (
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-0 h-16 opacity-50">
+          <ResponsiveContainer width="100%" height={64}>
+            <AreaChart data={sparklineData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis hide />
+              <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke={sparklineColor || '#0ea5e9'}
+                strokeWidth={2.5}
+                fill={`url(#${grdId})`}
+                dot={false}
+                style={{ filter: `drop-shadow(0px 0px 4px ${sparklineColor || '#0ea5e9'})` }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      <div className="relative z-10">
+        <div className="flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Icon className={`w-4 h-4 ${iconClass ?? 'text-blue-400'}`} />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{label}</span>
+              {onClick && (
+                <ChevronRight className="w-3 h-3 text-slate-600 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              )}
+            </div>
+            {value != null && (
+              <p className={`text-2xl font-bold hud-number ${valueClass ?? 'text-white'}`}>
+                {isMounted ? value : '—'}
+              </p>
+            )}
+            {children}
+            {subtext && (
+              <p className="text-[10px] text-slate-500 mt-0.5">{subtext}</p>
             )}
           </div>
-          {value != null && (
-            <p className={`text-2xl font-bold hud-number ${valueClass ?? 'text-white'}`}>
-              {isMounted ? value : '—'}
-            </p>
-          )}
-          {children}
-          {subtext && (
-            <p className="text-[10px] text-slate-500 mt-0.5">{subtext}</p>
-          )}
         </div>
-        {sparklineData && sparklineData.length > 1 && (
-          <div className="w-28 sm:w-32 h-14 sm:h-16 flex-shrink-0 self-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData}>
-                <defs>
-                  <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={sparklineColor || '#3B82F6'} stopOpacity={0.45} />
-                    <stop offset="95%" stopColor={sparklineColor || '#3B82F6'} stopOpacity={0.03} />
-                  </linearGradient>
-                </defs>
-                <XAxis hide />
-                <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                <Area type="monotone" dataKey="v" stroke={sparklineColor || '#3B82F6'} strokeWidth={2} fill={`url(#${grdId})`} dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
       </div>
     </Comp>
   );

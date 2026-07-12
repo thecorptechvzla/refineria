@@ -18,18 +18,16 @@ import {
   AlertTriangle, EyeOff, X, Beaker, History, Fuel,
 } from 'lucide-react';
 
-function generateDashboardTrend(currentValue: number, points = 14): { v: number }[] {
+function generateDashboardTrend(currentValue: number, points = 8): { v: number }[] {
   const trend: { v: number }[] = [];
-  const amplitude = Math.max(currentValue * 0.25, 1.5);
-  const startVal = amplitude * 0.35;
-  const peakVal = amplitude * 1.15;
-  const endVal = amplitude * 0.55;
+  const centerVal = Math.max(Math.abs(currentValue) * 0.15, 1.5);
   for (let i = 0; i < points; i++) {
     const ratio = i / (points - 1);
-    const bellFactor = Math.sin(ratio * Math.PI);
-    const val = startVal + (peakVal - startVal) * bellFactor + (endVal - startVal) * ratio * 0.15;
-    const jitter = val * (Math.random() - 0.5) * 0.1;
-    trend.push({ v: Math.round(Math.max(0.01, val + jitter) * 100) / 100 });
+    const bell = Math.sin(ratio * Math.PI);
+    const base = 0.85 + bell * 0.15;
+    const jitter = 1 + (Math.random() - 0.5) * 0.1;
+    const val = centerVal * base * jitter;
+    trend.push({ v: Math.round(Math.max(0.01, val) * 100) / 100 });
   }
   return trend;
 }
@@ -186,10 +184,10 @@ export default function DashboardPage() {
       generateDashboardTrend(metrics.faltaPorRefinar),
     ];
     return [
-      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#F59E0B', trend: trends[0] },
-      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#22C55E', trend: trends[1] },
-      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#3B82F6', trend: trends[2] },
-      { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#8B5CF6', trend: trends[3] },
+      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#f59e0b', trend: trends[0] },
+      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#10b981', trend: trends[1] },
+      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#0ea5e9', trend: trends[2] },
+      { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#ef4444', trend: trends[3] },
     ];
   }, [metrics]);
 
@@ -341,61 +339,77 @@ export default function DashboardPage() {
           const isGold = kpi.accent === 'gold';
           const Icon = kpi.icon;
           const grdId = `kpi-spark-${kpi.label.replace(/\s+/g, '-')}`;
+          const sc = kpi.sparkColor;
           return (
-            <div
-              key={kpi.label}
-              className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-12 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-95 sm:active:scale-100 group`}
-            >
-              {/* Mobile: background sparkline at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 h-16">
-                <ResponsiveContainer width="100%" height={64}>
-                  <AreaChart data={kpi.trend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                    <defs>
-                      <linearGradient id={`${grdId}-mobile`} x1="0" y1="1" x2="0" y2="0">
-                        <stop offset="0%" stopColor={kpi.sparkColor} stopOpacity={0.3} />
-                        <stop offset="60%" stopColor={kpi.sparkColor} stopOpacity={0.1} />
-                        <stop offset="100%" stopColor={kpi.sparkColor} stopOpacity={0.01} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis hide />
-                    <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                    <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={1} fill={`url(#${grdId}-mobile)`} dot={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Content */}
-              <div className="relative z-10">
+          <div
+            key={kpi.label}
+            className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-16 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-95 sm:active:scale-100 group`}
+          >
+            {/* Mobile: background sparkline at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 h-16 opacity-50">
+              <ResponsiveContainer width="100%" height={64}>
+                <AreaChart data={kpi.trend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id={`${grdId}-mobile`} x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor={sc} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={sc} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis hide />
+                  <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                  <Area
+                    type="monotone"
+                    dataKey="v"
+                    stroke={sc}
+                    strokeWidth={2.5}
+                    fill={`url(#${grdId}-mobile)`}
+                    dot={false}
+                    style={{ filter: `drop-shadow(0px 0px 4px ${sc})` }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Content + Desktop sparkline */}
+            <div className="relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <span className={`text-[10px] font-semibold uppercase tracking-widest ${isGold ? 'text-gold-400/70' : 'text-blue-400/70'}`}>
                     {kpi.label}
                   </span>
                   <Icon className={`w-4 h-4 ${isGold ? 'text-gold-500' : 'text-blue-500'}`} />
                 </div>
-                <div className="flex items-end gap-3">
-                  <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
-                  {/* Desktop: sparkline to the right */}
-                  <div className="hidden sm:block w-24 h-12 flex-shrink-0 -mb-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={kpi.trend}>
-                        <defs>
-                          <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={kpi.sparkColor} stopOpacity={0.45} />
-                            <stop offset="95%" stopColor={kpi.sparkColor} stopOpacity={0.03} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis hide />
-                        <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-                        <Area type="monotone" dataKey="v" stroke={kpi.sparkColor} strokeWidth={2} fill={`url(#${grdId})`} dot={false} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                <p className="hud-number text-lg sm:text-xl text-white tracking-tight break-all">{kpi.value}</p>
                 {kpi.subtitle && kpi.subtitle.length > 0 && (
                   <p className="text-[10px] text-slate-300 mt-1 uppercase tracking-wider">{kpi.subtitle}</p>
                 )}
                 <div className={`mt-3 h-[2px] w-full ${isGold ? 'bg-gold-500/30' : 'bg-blue-500/30'}`} />
               </div>
+              {/* Desktop: sparkline to the right */}
+              <div className="hidden sm:block w-32 h-16 flex-shrink-0 self-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={kpi.trend}>
+                    <defs>
+                      <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={sc} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={sc} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis hide />
+                    <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                    <Area
+                      type="monotone"
+                      dataKey="v"
+                      stroke={sc}
+                      strokeWidth={2.5}
+                      fill={`url(#${grdId})`}
+                      dot={false}
+                      style={{ filter: `drop-shadow(0px 0px 4px ${sc})` }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+          </div>
           );
         })}
       </div>
@@ -492,9 +506,9 @@ export default function DashboardPage() {
             : h.insumo.toLowerCase().includes(itemName.toLowerCase())
         );
         return (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedCriticoId(null)} />
-            <div className="relative w-full sm:max-w-lg max-h-[85vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-t-xl sm:rounded-none mt-auto sm:mt-0">
+            <div className="relative w-full sm:max-w-lg max-h-[85vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-xl shadow-2xl">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   {isGasoil ? <Fuel className="w-5 h-5 text-amber-400" /> : <Beaker className="w-5 h-5 text-blue-400" />}

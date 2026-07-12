@@ -18,3 +18,6 @@ node_modules
 # Seed auxiliar (no se sube a prod)
 /prisma/seed-closed-processes.ts
 
+/prisma/seed.mjs
+/prisma/seed.ts
+

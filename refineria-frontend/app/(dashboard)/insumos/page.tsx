@@ -1075,7 +1075,7 @@ const [globalSearchKey, setGlobalSearchKey] = useState(0);
           )}
 
           {showBulkCreateOverlay && (
-            <div className="absolute inset-0 z-40 bg-midnight-900/95 backdrop-blur-sm flex items-start justify-center pt-12 animate-slide-up">
+            <div className="absolute inset-0 z-40 bg-midnight-900/95 backdrop-blur-sm flex items-center justify-center animate-slide-up">
               <div className="w-full max-w-md">
                 <div className="glass-panel">
                   <div className="p-4 border-b border-blue-500/10 flex items-center justify-between">

@@ -105,8 +105,8 @@ export function ProcessModal({
   const sortedLots = [...detail.lotDetails].sort((a, b) => a.number - b.number);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel rounded-t-xl sm:rounded-none mt-auto sm:mt-0" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-900/50 backdrop-blur-md">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">

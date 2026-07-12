@@ -1055,7 +1055,7 @@ export default function ProcesosPage() {
   const [filterSelectOpen, setFilterSelectOpen] = useState(false);
   const filterSelectRef = useRef<HTMLDivElement>(null);
 
-  const [filterPeriod, setFilterPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('last_two');
+  const [filterPeriod, setFilterPeriod] = useState<'current' | 'previous' | 'last_two' | 'custom'>('current');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   const [filterPeriodOpen, setFilterPeriodOpen] = useState(false);
