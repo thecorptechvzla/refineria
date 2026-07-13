@@ -58,6 +58,8 @@ Si el guardia (Prisma) no está entrenado para detectar esto, obedecería la ord
 | **Autenticación (JWT)** | 🟢 Seguro | Tokens firmados con clave secreta, con expiración de 7 días. |
 | **Headers de seguridad web** | 🟢 Seguro | Configurada protección HSTS, clickjacking y MIME sniffing. |
 | **CORS (acceso cruzado)** | 🟢 Seguro | Solo orígenes autorizados (frontend y localhost). |
+| **Bloqueo anti-intrusión** | 🟢 Seguro | 2 intentos fallidos = bloqueo automático de IP por 24h. |
+| **Log de auditoría** | 🟢 Seguro | Todos los intentos quedan registrados para revisión del SUPERADMIN. |
 
 ---
 
@@ -102,10 +104,53 @@ Si el guardia (Prisma) no está entrenado para detectar esto, obedecería la ord
 | CORS con lista blanca | ✅ | Solo frontend autorizado puede hacer peticiones. |
 | Filtro global de excepciones | ✅ | Errores se manejan sin exponer detalles internos. |
 | Telegram vía environment | ✅ | Token del bot no está hardcodeado. |
+| Bloqueo por intentos fallidos | ✅ | 2 intentos = bloqueo 24h + pantalla de advertencia. |
+| Log de seguridad (SUPERADMIN) | ✅ | Tabla en vivo con IP, correo, intentos y estado. |
 
 ---
 
-## 6. Conclusión de Confianza
+## 6. Monitoreo de Frontera Digital
+
+### 🚨 Bloqueo Automático de Accesos No Autorizados
+
+Hemos implementado un **sistema de guardianía digital** que registra cada intento de acceso con credenciales incorrectas. Ahora, cada vez que alguien intenta entrar con una llave equivocada:
+
+1. **📸 Se toma una foto:** La dirección IP desde donde se intentó el acceso queda registrada automáticamente en la base de datos.
+2. **📝 Se abre un expediente:** Queda grabado el correo electrónico que intentaron usar, cuántas veces lo intentaron y desde qué dirección IP.
+3. **🔒 Se cierra la puerta:** Al **segundo intento fallido**, el sistema **bloquea automáticamente** ese punto de acceso por 24 horas y muestra una pantalla de advertencia roja al intruso.
+
+**Analogía:** Es como tener un guardia de seguridad en la entrada de la bóveda que:
+- Anota en un libro cada vez que alguien da una contraseña incorrecta
+- Toma una foto de la persona (registra su IP)
+- Si la misma persona se equivoca dos veces, cierra la puerta, activa la alarma y llama al supervisor
+
+### 👁️ ¿Quién puede ver estos registros?
+
+Solo el **SUPERADMIN** (el dueño del sistema) tiene acceso al panel **"Registro de Intentos No Autorizados"** en la sección de Seguridad. Allí puede ver en tiempo real:
+
+| Dato | ¿Qué significa? |
+|---|---|
+| **Fecha/Hora** | Cuándo ocurrió el intento |
+| **IP del Intruso** | Desde dónde se conectó (huella digital del dispositivo) |
+| **Correo Intentado** | Qué credencial intentaron usar |
+| **Intentos** | Cuántas veces lo intentaron (máximo 2 antes del bloqueo) |
+| **Estado** | Si está "ACTIVO" (aún puede intentar) o "BLOQUEADO" (ya fue detenido) |
+
+### 📊 Estado actual del sistema anti-intrusión
+
+| Componente | Semáforo | ¿Qué significa? |
+|---|---|---|
+| **Detección de intentos fallidos** | 🟢 Seguro | Cada fallo se registra automáticamente con IP y correo |
+| **Bloqueo por umbral** | 🟢 Seguro | Al segundo fallo, la IP queda bloqueada por 24h |
+| **Pantalla de advertencia** | 🟢 Seguro | El intruso ve una pantalla roja "SISTEMA SELLADO" |
+| **Visor de auditoría (SUPERADMIN)** | 🟢 Seguro | Tabla en vivo con todos los intentos registrados |
+| **Persistencia del bloqueo** | 🟢 Seguro | Cookie `gt_security_lock` por 24h + redirect automático |
+
+Esto significa que **cada intento de intrusión queda documentado** y disponible para la alta gerencia. No hay forma de que un acceso no autorizado pase desapercibido.
+
+---
+
+## 7. Conclusión de Confianza
 
 El sistema **GoldTrack Refinería** está ahora en una posición sólida de seguridad. Al estar hosteado en **Vercel**, nos beneficiamos de su infraestructura empresarial con cifrado SSL/TLS, redes de distribución global y protección DDoS automática.
 
@@ -115,14 +160,16 @@ El sistema **GoldTrack Refinería** está ahora en una posición sólida de segu
 - 🛡️ **Fortalecemos** la validación de datos para rechazar información maliciosa.
 - 🛡️ **Aseguramos** la configuración de Prisma para que siempre use las credenciales correctas.
 - 🛡️ **Agregamos** capas de protección HTTP en el edge de Vercel.
+- 🛡️ **Implementamos** un sistema anti-intrusión que bloquea IPs tras 2 intentos fallidos y registra cada evento en un log de auditoría.
 
 **Tu inversión tecnológica está protegida.** Los datos de inventario de oro, los saldos de proveedores y la información del personal están resguardados bajo múltiples capas de seguridad:
 
 ```
-🔐 Vercel Edge (WAF + HTTPS)
-  → 🔐 NestJS (Validación + Autenticación JWT)
-    → 🔐 Prisma (ORM type-safe, sin SQL Injection)
-      → 🔐 Vercel PostgreSQL (SSL/TLS + Backups)
+🔐 Vercel Edge (WAF + HTTPS + Security Headers)
+  → 🔐 Proxy (Bloqueo por cookie gt_security_lock)
+    → 🔐 NestJS (Validación + Autenticación JWT + Detección de intrusiones)
+      → 🔐 Prisma (ORM type-safe, sin SQL Injection)
+        → 🔐 Vercel PostgreSQL (SSL/TLS + Backups + Log de Auditoría)
 ```
 
 La bóveda está cerrada, el guardia está entrenado y las llaves están seguras.

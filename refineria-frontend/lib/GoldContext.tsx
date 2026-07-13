@@ -17,6 +17,12 @@ export function GoldProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const isLocked = typeof document !== 'undefined' && document.cookie.includes('gt_security_lock=1');
+    if (isLocked) {
+      setIsLoading(false);
+      return;
+    }
+
     api<User>('/auth/profile')
       .then((u) => setUser(u))
       .catch(() => setUser(null))

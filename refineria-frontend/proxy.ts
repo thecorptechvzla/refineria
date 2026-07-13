@@ -13,9 +13,14 @@ function decodeJwtPayload(token: string) {
 
 export function proxy(request: NextRequest) {
   const sessionCookie = request.cookies.get('goldtrack_session')?.value;
+  const lockCookie = request.cookies.get('gt_security_lock')?.value;
   const path = request.nextUrl.pathname;
 
-  if (!sessionCookie && path !== '/login') {
+  if (lockCookie === '1' && path !== '/bloqueo') {
+    return NextResponse.redirect(new URL('/bloqueo', request.url));
+  }
+
+  if (!sessionCookie && path !== '/login' && path !== '/bloqueo') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

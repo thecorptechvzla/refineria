@@ -23,11 +23,11 @@ export default function DashboardLayout({
         />
       )}
 
-      <div className={`fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition duration-200 ease-in-out z-30`}>
+      <div className={`fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:fixed lg:translate-x-0 transition duration-200 ease-in-out z-30`}>
         <Sidebar onClose={() => setIsSidebarOpen(false)} />
       </div>
 
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 lg:pl-64">
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="fixed top-3 left-3 z-40 p-2 bg-midnight-800 border border-blue-500/20 text-slate-400 lg:hidden hover:text-slate-200 hover:border-blue-500/40 transition-all"

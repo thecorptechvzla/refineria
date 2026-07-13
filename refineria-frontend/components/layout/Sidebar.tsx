@@ -59,7 +59,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         </div>
       )}
 
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto scrollbar-thin">
         {links.map((link) => {
           if (user && !(link.allowedRoles as readonly string[]).includes(user.role)) return null;
 
@@ -84,15 +84,21 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         })}
       </nav>
 
-      <div className="p-3 border-t border-blue-500/10">
+      <div className="p-3 border-t border-blue-500/10 mt-auto">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-midnight-700/50 border border-blue-500/10 text-slate-400 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 text-xs uppercase tracking-wider transition-all"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-midnight-700/50 border border-blue-500/10 text-slate-400 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 text-xs uppercase tracking-wider transition-all active:scale-95"
         >
           <LogOut className="w-3.5 h-3.5" />
           Cerrar Sesión
         </button>
       </div>
+      <style>{`
+        .scrollbar-thin::-webkit-scrollbar { width: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.15); border-radius: 2px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(59,130,246,0.3); }
+      `}</style>
     </aside>
   );
 }

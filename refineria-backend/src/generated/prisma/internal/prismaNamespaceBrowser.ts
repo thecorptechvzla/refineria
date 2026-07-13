@@ -63,7 +63,8 @@ export const ModelName = {
   ProcessCounter: 'ProcessCounter',
   SupplyItem: 'SupplyItem',
   SupplyTransaction: 'SupplyTransaction',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  LoginSecurity: 'LoginSecurity'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -259,6 +260,19 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const LoginSecurityScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  ipAddress: 'ipAddress',
+  attempts: 'attempts',
+  isBlocked: 'isBlocked',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LoginSecurityScalarFieldEnum = (typeof LoginSecurityScalarFieldEnum)[keyof typeof LoginSecurityScalarFieldEnum]
 
 
 export const SortOrder = {

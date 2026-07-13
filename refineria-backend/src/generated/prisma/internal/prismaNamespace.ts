@@ -396,7 +396,8 @@ export const ModelName = {
   ProcessCounter: 'ProcessCounter',
   SupplyItem: 'SupplyItem',
   SupplyTransaction: 'SupplyTransaction',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  LoginSecurity: 'LoginSecurity'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue" | "processCounter" | "supplyItem" | "supplyTransaction" | "notification"
+    modelProps: "user" | "supplier" | "transaction" | "goldBar" | "process" | "processLot" | "worker" | "customFieldDefinition" | "customFieldValue" | "processCounter" | "supplyItem" | "supplyTransaction" | "notification" | "loginSecurity"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1379,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LoginSecurity: {
+      payload: Prisma.$LoginSecurityPayload<ExtArgs>
+      fields: Prisma.LoginSecurityFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LoginSecurityFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LoginSecurityFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        findFirst: {
+          args: Prisma.LoginSecurityFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LoginSecurityFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        findMany: {
+          args: Prisma.LoginSecurityFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>[]
+        }
+        create: {
+          args: Prisma.LoginSecurityCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        createMany: {
+          args: Prisma.LoginSecurityCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LoginSecurityCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>[]
+        }
+        delete: {
+          args: Prisma.LoginSecurityDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        update: {
+          args: Prisma.LoginSecurityUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        deleteMany: {
+          args: Prisma.LoginSecurityDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LoginSecurityUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LoginSecurityUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>[]
+        }
+        upsert: {
+          args: Prisma.LoginSecurityUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSecurityPayload>
+        }
+        aggregate: {
+          args: Prisma.LoginSecurityAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLoginSecurity>
+        }
+        groupBy: {
+          args: Prisma.LoginSecurityGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginSecurityGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LoginSecurityCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginSecurityCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1594,6 +1669,19 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const LoginSecurityScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  ipAddress: 'ipAddress',
+  attempts: 'attempts',
+  isBlocked: 'isBlocked',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LoginSecurityScalarFieldEnum = (typeof LoginSecurityScalarFieldEnum)[keyof typeof LoginSecurityScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1923,6 +2011,7 @@ export type GlobalOmitConfig = {
   supplyItem?: Prisma.SupplyItemOmit
   supplyTransaction?: Prisma.SupplyTransactionOmit
   notification?: Prisma.NotificationOmit
+  loginSecurity?: Prisma.LoginSecurityOmit
 }
 
 /* Types for Logging */

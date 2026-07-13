@@ -36,6 +36,11 @@ export default function LoginPage() {
         e instanceof Error
           ? e.message
           : "Credenciales incorrectas. Intenta de nuevo.";
+      if (msg === "ACCOUNT_LOCKDOWN") {
+        document.cookie = "gt_security_lock=1; max-age=86400; path=/";
+        window.location.href = "/bloqueo";
+        return;
+      }
       setShakeKey((k) => k + 1);
       setError(msg);
     }

@@ -104,3 +104,8 @@ export type SupplyTransaction = Prisma.SupplyTransactionModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model LoginSecurity
+ * 
+ */
+export type LoginSecurity = Prisma.LoginSecurityModel
