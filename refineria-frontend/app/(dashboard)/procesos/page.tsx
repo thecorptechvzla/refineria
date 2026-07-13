@@ -32,6 +32,7 @@ function ProcessDetailView({
   saveLotBarsLeyAg,
   uploadFile,
   saveActaUrl,
+  onDeleteEmpty,
 }: {
   processDetail: ProcessDetail;
   availableBars: GoldBar[];
@@ -46,7 +47,16 @@ function ProcessDetailView({
   saveLotBarsLeyAg: (processId: string, lotId: string, bars: { barId: string; leyAg: number }[]) => Promise<unknown>;
   uploadFile: (file: File) => Promise<{ url: string }>;
   saveActaUrl: (data: { processId: string; actaRecepcion?: string | null; actaFundicion?: string | null; actaConformidad?: string | null }) => Promise<unknown>;
+  onDeleteEmpty?: (processId: string) => Promise<void>;
 }) {
+  const latestLotesCount = useRef(processDetail.lotDetails.length);
+  useEffect(() => { latestLotesCount.current = processDetail.lotDetails.length; });
+  useEffect(() => {
+    return () => {
+      if (latestLotesCount.current === 0) onDeleteEmpty?.(processDetail.id);
+    };
+  }, []);
+
   const [selectedBarIds, setSelectedBarIds] = useState<string[]>([]);
   const [lotLeyAg, setLotLeyAg] = useState<Record<string, Record<string, string>>>({});
   const [closeWarning, setCloseWarning] = useState('');
@@ -1264,6 +1274,16 @@ export default function ProcesosPage() {
           saveLotBarsLeyAg={saveLotBarsLeyAg}
           uploadFile={uploadFile}
           saveActaUrl={saveActaUrl}
+          onDeleteEmpty={async (processId: string) => {
+            const proc = processes.find((p) => p.id === processId);
+            if (proc) {
+              const age = Date.now() - new Date(proc.createdAt).getTime();
+              if (age < 5000) return; // margen de gracia de 5s para evitar falso positivo de carga
+            }
+            try {
+              await deleteProcess.mutateAsync(processId);
+            } catch { /* silencioso */ }
+          }}
         />
       </div>
     );

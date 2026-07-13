@@ -202,6 +202,13 @@ export class ProcessesService {
       });
     }
 
+    if (process.status === 'open' && process.lots.length === 0) {
+      await this.prisma.processCounter.update({
+        where: { supplierId: process.supplierId },
+        data: { seq: { decrement: 1 } },
+      });
+    }
+
     await this.prisma.process.delete({ where: { id } });
     return { deleted: true };
   }
