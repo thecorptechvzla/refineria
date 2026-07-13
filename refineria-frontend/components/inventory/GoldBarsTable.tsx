@@ -10,9 +10,10 @@ interface GoldBarsTableProps {
   goldBars: GoldBar[];
   suppliers: Supplier[] | undefined;
   isLoading?: boolean;
+  purityFirst?: boolean;
 }
 
-export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableProps) {
+export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = false }: GoldBarsTableProps) {
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const [supplierId, setSupplierId] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,7 +83,9 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
             <tr className="border-b border-blue-500/10">
               <th className={`${STICKY_CELL} text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500`}>Código</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500">Proveedor</th>
+              {purityFirst && <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">LEY AU</th>}
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500"><span className="hidden sm:inline">Bruto (g)</span><span className="sm:hidden">BRU.</span></th>
+              {!purityFirst && <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">LEY AU</th>}
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">FA</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">FE</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">R</th>
@@ -91,20 +94,22 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
           </thead>
           <tbody>
             {/* Totals row — top of table */}
-            {filteredBars.length > 0 && (
-              <tr className="border-b-2 border-gold-500/30 bg-midnight-900">
-                <td className={`${STICKY_CELL} text-xs sm:text-sm font-bold text-gold-500`}>Totales</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.grossWeight)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.analytical, 1)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.expected, 1)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.recovered, 1)}</td>
-                <td />
-              </tr>
-            )}
+              {filteredBars.length > 0 && (
+                <tr className="border-b-2 border-gold-500/30 bg-midnight-900">
+                  <td className={`${STICKY_CELL} text-xs sm:text-sm font-bold text-gold-500`}>Totales</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
+                  {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.grossWeight)}</td>
+                  {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.analytical, 1)}</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.expected, 1)}</td>
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.recovered, 1)}</td>
+                  <td />
+                </tr>
+              )}
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={purityFirst ? 8 : 7} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-6 h-6 border-2 border-amber-500/30 border-t-amber-500 animate-spin rounded-full" />
                     <span className="text-xs text-slate-500">Cargando barras...</span>
@@ -113,7 +118,7 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
               </tr>
             ) : paginatedBars.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-500">No hay barras registradas.</td>
+                <td colSpan={purityFirst ? 8 : 7} className="px-4 py-12 text-center text-xs text-slate-500">No hay barras registradas.</td>
               </tr>
             ) : (
               paginatedBars.map((bar) => (
@@ -124,7 +129,9 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-300">
                     {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
                   </td>
+                  {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.grossWeight)}</td>
+                  {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.analytical, 1)}</td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.expected, 1)}</td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.recovered, 1)}</td>

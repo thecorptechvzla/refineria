@@ -848,6 +848,7 @@ export default function DashboardPage() {
                 goldBars={goldBars ?? []}
                 suppliers={suppliers}
                 isLoading={barsLoading}
+                purityFirst={true}
               />
             </div>
           </div>
