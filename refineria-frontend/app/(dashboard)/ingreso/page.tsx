@@ -30,8 +30,9 @@ export default function IngresoPage() {
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkError, setBulkError] = useState('');
-  const [filterSupplierId, setFilterSupplierId] = useState('');
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
+  const [activeSupplierTab, setActiveSupplierTab] = useState<string | null>(null);
+  const [searchCode, setSearchCode] = useState('');
   const bulkUpload = useBulkUpload();
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -219,10 +220,16 @@ export default function IngresoPage() {
     URL.revokeObjectURL(url);
   };
 
+  const suppliersWithBars = useMemo(() => {
+    const ids = new Set(goldBars.map((b) => b.supplierId));
+    return suppliers?.filter((s) => ids.has(s.id)) ?? [];
+  }, [goldBars, suppliers]);
+
   const filteredBars = goldBars.filter((b) => {
-    if (filterSupplierId && b.supplierId !== filterSupplierId) return false;
+    if (activeSupplierTab && b.supplierId !== activeSupplierTab) return false;
     if (filterAvailable === 'available' && !b.available) return false;
     if (filterAvailable === 'in_lot' && b.available) return false;
+    if (searchCode && !b.code.toLowerCase().includes(searchCode.toLowerCase())) return false;
     return true;
   });
 
@@ -541,28 +548,59 @@ export default function IngresoPage() {
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">Barras Registradas</h2>
               </div>
               <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={searchCode}
+                  onChange={(e) => { setSearchCode(e.target.value); setCurrentPage(1); }}
+                  placeholder="Buscar por código..."
+                  className="w-36 px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] placeholder-slate-600 outline-none transition-all focus:border-blue-500/40"
+                />
                 <select
                   value={filterAvailable}
-                  onChange={(e) => setFilterAvailable(e.target.value as 'all' | 'available' | 'in_lot')}
+                  onChange={(e) => { setFilterAvailable(e.target.value as 'all' | 'available' | 'in_lot'); setCurrentPage(1); }}
                   className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
                 >
                   <option value="all">Todos</option>
                   <option value="available">Disponibles</option>
                   <option value="in_lot">En Lote</option>
                 </select>
-                <select
-                  value={filterSupplierId}
-                  onChange={(e) => setFilterSupplierId(e.target.value)}
-                  className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
-                >
-                  <option value="">Todos los proveedores</option>
-                  {suppliers?.map((s) => (
-                    <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
-                  ))}
-                </select>
                 <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                   {String(filteredBars.length).padStart(2, '0')}
                 </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto scrollbar-thin border-b border-blue-500/10">
+              <div className="flex gap-0.5 px-4 sm:px-5 min-w-max">
+                <button
+                  onClick={() => { setActiveSupplierTab(null); setCurrentPage(1); }}
+                  className={`relative px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap ${
+                    activeSupplierTab === null
+                      ? 'text-gold-400 bg-gold-500/10'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-blue-500/5'
+                  }`}
+                >
+                  Todos
+                  {activeSupplierTab === null && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gold-500 rounded-full" />
+                  )}
+                </button>
+                {suppliersWithBars.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setActiveSupplierTab(s.id); setCurrentPage(1); }}
+                    className={`relative px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap ${
+                      activeSupplierTab === s.id
+                        ? 'text-gold-400 bg-gold-500/10'
+                        : 'text-slate-500 hover:text-slate-300 hover:bg-blue-500/5'
+                    }`}
+                  >
+                    {s.name}
+                    {activeSupplierTab === s.id && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gold-500 rounded-full" />
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
 
