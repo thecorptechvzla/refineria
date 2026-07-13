@@ -36,6 +36,8 @@ async function bootstrap() {
   const allowedOrigins = [
     'http://localhost:3000',
     process.env.FRONTEND_URL,
+    'https://controlmining.io',
+    'https://www.controlmining.io',
   ].filter(Boolean) as string[];
 
   app.enableCors({
