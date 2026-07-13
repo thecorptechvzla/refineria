@@ -610,8 +610,8 @@ export default function DashboardPage() {
       {/* Status Cards with Toggle */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         {([
-          { key: 'in_progress' as const, label: 'ABIERTOS', icon: Settings, count: metrics?.processCounts.inProgress ?? 0, desc: 'Procesos en curso', border: 'border-blue-500/50', shadow: 'shadow-blue-500/20', bgActive: 'bg-blue-500/10', textLabel: 'text-blue-400/70', textIcon: 'text-blue-500', bar: 'bg-blue-500/30' },
-          { key: 'open' as const, label: 'TERMINADOS', icon: CheckCircle, count: metrics?.processCounts.open ?? 0, desc: 'Listos para cerrar', border: 'border-green-500/50', shadow: 'shadow-green-500/20', bgActive: 'bg-green-500/10', textLabel: 'text-green-400/70', textIcon: 'text-green-500', bar: 'bg-green-500/30' },
+          { key: 'open' as const, label: 'ABIERTOS', icon: Settings, count: metrics?.processCounts.open ?? 0, desc: 'Procesos en curso', border: 'border-blue-500/50', shadow: 'shadow-blue-500/20', bgActive: 'bg-blue-500/10', textLabel: 'text-blue-400/70', textIcon: 'text-blue-500', bar: 'bg-blue-500/30' },
+          { key: 'in_progress' as const, label: 'TERMINADOS', icon: CheckCircle, count: metrics?.processCounts.inProgress ?? 0, desc: 'Listos para cerrar', border: 'border-green-500/50', shadow: 'shadow-green-500/20', bgActive: 'bg-green-500/10', textLabel: 'text-green-400/70', textIcon: 'text-green-500', bar: 'bg-green-500/30' },
           { key: 'closed' as const, label: 'CERRADOS', icon: Crosshair, count: metrics?.processCounts.closed ?? 0, desc: 'Procesos finalizados', border: 'border-gold-500/50', shadow: 'shadow-gold-500/20', bgActive: 'bg-gold-500/10', textLabel: 'text-gold-400/70', textIcon: 'text-gold-500', bar: 'bg-gold-500/30' },
         ]).map((card) => {
           const isActive = activeStatusFilter === card.key;
@@ -646,7 +646,7 @@ export default function DashboardPage() {
           <div className="glass-panel">
             <div className="p-4 border-b border-blue-500/10">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                {activeStatusFilter === 'in_progress' ? 'Procesos en Curso' : activeStatusFilter === 'open' ? 'Procesos Terminados' : 'Procesos Cerrados'}
+                {activeStatusFilter === 'open' ? 'PROCESOS ABIERTOS' : activeStatusFilter === 'in_progress' ? 'PROCESOS EN CURSO / TERMINADOS' : 'PROCESOS CERRADOS'}
               </h3>
             </div>
             <div className="p-3 min-h-[340px] flex flex-col">
