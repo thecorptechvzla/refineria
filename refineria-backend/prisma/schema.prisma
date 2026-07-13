@@ -67,6 +67,7 @@ model GoldBar {
   updatedAt        DateTime @updatedAt @map("updated_at")
   supplier         Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
+  @@unique([supplierId, code])
   @@map("gold_bars")
 }
 

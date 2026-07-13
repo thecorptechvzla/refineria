@@ -344,6 +344,7 @@ export type GoldBarOrderByWithRelationInput = {
 
 export type GoldBarWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  supplierId_code?: Prisma.GoldBarSupplierIdCodeCompoundUniqueInput
   AND?: Prisma.GoldBarWhereInput | Prisma.GoldBarWhereInput[]
   OR?: Prisma.GoldBarWhereInput[]
   NOT?: Prisma.GoldBarWhereInput | Prisma.GoldBarWhereInput[]
@@ -362,7 +363,7 @@ export type GoldBarWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GoldBar"> | Date | string
   supplier?: Prisma.XOR<Prisma.SupplierScalarRelationFilter, Prisma.SupplierWhereInput>
-}, "id">
+}, "id" | "supplierId_code">
 
 export type GoldBarOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -541,6 +542,11 @@ export type GoldBarListRelationFilter = {
 
 export type GoldBarOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type GoldBarSupplierIdCodeCompoundUniqueInput = {
+  supplierId: string
+  code: string
 }
 
 export type GoldBarCountOrderByAggregateInput = {

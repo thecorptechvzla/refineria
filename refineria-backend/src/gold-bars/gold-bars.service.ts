@@ -19,7 +19,16 @@ export class GoldBarsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateGoldBarDto) {
-    const data = { ...dto, recovered: dto.recovered ?? 0 };
+    const code = dto.code.toUpperCase();
+    const existing = await this.prisma.goldBar.findFirst({
+      where: { code, supplierId: dto.supplierId },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        `El código "${code}" ya existe para este proveedor`,
+      );
+    }
+    const data = { ...dto, code, recovered: dto.recovered ?? 0 };
     return this.prisma.goldBar.create({ data });
   }
 
@@ -113,8 +122,22 @@ export class GoldBarsService {
         'No se encontraron barras válidas en el archivo',
       );
     }
+    // Verificar duplicados contra la base de datos por proveedor
+    const existingCodes = await this.prisma.goldBar.findMany({
+      where: { supplierId, code: { in: barsToCreate.map((b) => b.code) } },
+      select: { code: true },
+    });
+    const existingCodeSet = new Set(existingCodes.map((e) => e.code));
+    for (const b of barsToCreate) {
+      if (existingCodeSet.has(b.code)) {
+        throw new BadRequestException(
+          `El código "${b.code}" ya existe en la base de datos para este proveedor`,
+        );
+      }
+    }
+
     const prismaData = barsToCreate.map((b) => ({
-      code: b.code,
+      code: b.code.toUpperCase(),
       supplierId: b.supplierId,
       grossWeight: b.grossWeight,
       ley: b.ley,
