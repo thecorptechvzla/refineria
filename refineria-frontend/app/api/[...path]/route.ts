@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE = process.env.NODE_ENV === 'development'
   ? 'http://localhost:4000'
-  : 'https://refineria-backend.vercel.app';
+  : 'https://controlmining.io/';
+  // : 'https://refineria-backend.vercel.app';
 
 async function proxy(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
