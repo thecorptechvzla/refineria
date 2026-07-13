@@ -15,9 +15,10 @@ import {
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
 import { GoldBarsTable } from '@/components/inventory/GoldBarsTable';
+import { CriticosQuickView } from '@/components/criticos/CriticosQuickView';
 import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
-  AlertTriangle, EyeOff, X, Beaker, History, Fuel, ArrowUpRight,
+  AlertTriangle, CircleAlert, EyeOff, X, Beaker, History, Fuel, ArrowUpRight,
 } from 'lucide-react';
 
 function generateDashboardTrend(currentValue: number, points = 8): { v: number }[] {
@@ -114,6 +115,7 @@ export default function DashboardPage() {
   const criticosRef = useRef<HTMLDivElement>(null);
   const [selectedCriticoId, setSelectedCriticoId] = useState<string | null>(null);
   const [showIngresoModal, setShowIngresoModal] = useState(false);
+  const [showCriticosQuickView, setShowCriticosQuickView] = useState(false);
   const { data: goldBars, isLoading: barsLoading } = useGoldBars();
 
   const gasoilDays = useMemo(() => {
@@ -250,6 +252,15 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Resumen Ejecutivo — Tiempo Real</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {(user.role === 'OWNER' || user.role === 'SUPERADMIN') && (
+            <button
+              onClick={() => { setShowCriticosQuickView(true); }}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500/20 transition-all rounded-lg flex items-center gap-2 shadow-lg shadow-amber-500/10"
+            >
+              <CircleAlert className="w-4 h-4" />
+              Reporte de Críticos
+            </button>
+          )}
           <div ref={selectRef} className="relative w-full sm:w-auto">
             <button
               onClick={() => setSelectOpen(!selectOpen)}
@@ -853,6 +864,10 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showCriticosQuickView && (
+        <CriticosQuickView onClose={() => setShowCriticosQuickView(false)} />
       )}
 
       {viewingProcessId && !detailLoading && enrichedDetail && (
