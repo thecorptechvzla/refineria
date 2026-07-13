@@ -36,7 +36,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
             <img src="/icon.png" alt="Control Mining" width={36} height={36} className="rounded-sm" />
             <div>
               <h1 className="text-lg font-bold text-white tracking-tight">Control<span className="text-gold-500">Mining</span></h1>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Smart Refinery Control Mining</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Smart Refinery Management</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-slate-500 hover:text-slate-300 transition-colors">

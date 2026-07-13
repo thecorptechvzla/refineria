@@ -67,7 +67,7 @@ export default function LoginPage() {
             Gold<span className="text-gold-500">Track</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1 tracking-wider uppercase">
-            Smart Refinery Control Mining
+            Smart Refinery Management
           </p>
         </div>
 
