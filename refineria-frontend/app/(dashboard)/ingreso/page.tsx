@@ -30,6 +30,7 @@ export default function IngresoPage() {
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkError, setBulkError] = useState('');
+  const [filterSupplierId, setFilterSupplierId] = useState('');
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const bulkUpload = useBulkUpload();
   const [currentPage, setCurrentPage] = useState(1);
@@ -219,7 +220,7 @@ export default function IngresoPage() {
   };
 
   const filteredBars = goldBars.filter((b) => {
-    if (supplierId && b.supplierId !== supplierId) return false;
+    if (filterSupplierId && b.supplierId !== filterSupplierId) return false;
     if (filterAvailable === 'available' && !b.available) return false;
     if (filterAvailable === 'in_lot' && b.available) return false;
     return true;
@@ -550,8 +551,8 @@ export default function IngresoPage() {
                   <option value="in_lot">En Lote</option>
                 </select>
                 <select
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
+                  value={filterSupplierId}
+                  onChange={(e) => setFilterSupplierId(e.target.value)}
                   className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
                 >
                   <option value="">Todos los proveedores</option>

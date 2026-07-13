@@ -25,6 +25,7 @@ export class GoldBarsController {
 
   @Post()
   create(@Body() dto: CreateGoldBarDto) {
+    console.log(`[GoldBars] Recibida petición de registro: Barra "${dto.code}" para Proveedor ID: ${dto.supplierId}`);
     return this.goldBarsService.create(dto);
   }
 

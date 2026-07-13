@@ -25,7 +25,7 @@ export class GoldBarsService {
     });
     if (existing) {
       throw new BadRequestException(
-        `El código "${code}" ya existe para este proveedor`,
+        `La barra con código "${code}" ya existe para el proveedor ID: ${dto.supplierId}`,
       );
     }
     const data = { ...dto, code, recovered: dto.recovered ?? 0 };
