@@ -4,18 +4,21 @@ import { useGold } from '@/lib/GoldContext';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDashboardMetrics, type ProcessSummaryItem } from '@/lib/hooks/useDashboardMetrics';
 import { useProcessDetail } from '@/lib/hooks/useProcessDetail';
+import { useGoldBars } from '@/lib/hooks/useGoldBars';
 import { useCriticos } from '@/lib/CriticosContext';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getSupplierName, formatDate, formatNumber, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area,
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
+import { GoldBarsTable } from '@/components/inventory/GoldBarsTable';
 import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
-  AlertTriangle, EyeOff, X, Beaker, History, Fuel,
+  AlertTriangle, EyeOff, X, Beaker, History, Fuel, ArrowUpRight,
 } from 'lucide-react';
 
 function generateDashboardTrend(currentValue: number, points = 8): { v: number }[] {
@@ -42,6 +45,7 @@ function autonomyColor(days: number | null): { text: string; bar: string; border
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useGold();
   const { data: suppliers } = useSuppliers();
+  const router = useRouter();
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('all');
   const [selectOpen, setSelectOpen] = useState(false);
@@ -111,6 +115,8 @@ export default function DashboardPage() {
   const [showCriticos, setShowCriticos] = useState(false);
   const criticosRef = useRef<HTMLDivElement>(null);
   const [selectedCriticoId, setSelectedCriticoId] = useState<string | null>(null);
+  const [showIngresoModal, setShowIngresoModal] = useState(false);
+  const { data: goldBars, isLoading: barsLoading } = useGoldBars();
 
   const gasoilDays = useMemo(() => {
     const log = combustible.log;
@@ -184,9 +190,9 @@ export default function DashboardPage() {
       generateDashboardTrend(metrics.faltaPorRefinar),
     ];
     return [
-      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#f59e0b', trend: trends[0] },
-      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#10b981', trend: trends[1] },
-      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#0ea5e9', trend: trends[2] },
+      { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#f59e0b', trend: trends[0], onClick: () => setShowIngresoModal(true) },
+      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#10b981', trend: trends[1], route: '/admin/barras?disponibles=1' },
+      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#0ea5e9', trend: trends[2], route: '/procesos' },
       { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#ef4444', trend: trends[3] },
     ];
   }, [metrics]);
@@ -343,8 +349,18 @@ export default function DashboardPage() {
           return (
           <div
             key={kpi.label}
-            className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-16 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all cursor-default active:scale-95 sm:active:scale-100 group`}
+            onClick={kpi.onClick ?? (kpi.route ? () => router.push(kpi.route!) : undefined)}
+            role={kpi.onClick || kpi.route ? 'button' : undefined}
+            tabIndex={kpi.onClick || kpi.route ? 0 : undefined}
+            onKeyDown={kpi.onClick || kpi.route ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (kpi.onClick ?? (() => router.push(kpi.route!)))(); } } : undefined}
+            className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-16 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all ${kpi.onClick || kpi.route ? 'cursor-pointer' : 'cursor-default'} active:scale-95 sm:active:scale-100 group`}
           >
+            {/* Arrow indicator */}
+            {(kpi.onClick || kpi.route) && (
+              <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <ArrowUpRight className={`w-4 h-4 ${isGold ? 'text-gold-400' : 'text-blue-400'}`} />
+              </div>
+            )}
             {/* Mobile: background sparkline at bottom */}
             <div className="absolute bottom-0 left-0 right-0 sm:hidden pointer-events-none z-0 h-16 opacity-50">
               <ResponsiveContainer width="100%" height={64}>
@@ -805,6 +821,40 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* Modal — Desglose de Oro Ingresado */}
+      {/* ════════════════════════════════════════════════ */}
+      {showIngresoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-md p-4" onClick={() => setShowIngresoModal(false)}>
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-900/50 backdrop-blur-md rounded-t-xl">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-sm bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                  <Database className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-lg font-bold text-white tracking-tight">Desglose de Oro Ingresado</h2>
+                  <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-widest">
+                    {barsLoading ? 'Cargando...' : `${goldBars?.length ?? 0} barras registradas`}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowIngresoModal(false)} className="p-2 text-slate-500 hover:text-slate-300 transition-colors shrink-0">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+              <GoldBarsTable
+                goldBars={goldBars ?? []}
+                suppliers={suppliers}
+                isLoading={barsLoading}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewingProcessId && !detailLoading && enrichedDetail && (
         <ProcessModal
