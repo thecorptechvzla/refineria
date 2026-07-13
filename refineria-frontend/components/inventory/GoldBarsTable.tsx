@@ -47,6 +47,8 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
     recovered: filteredBars.reduce((s, b) => s + b.recovered, 0),
   }), [filteredBars]);
 
+  const STICKY_CELL = 'sticky left-0 z-20 bg-midnight-900 px-2 sm:px-3 py-2 sm:py-3 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]';
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
@@ -78,7 +80,7 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
         <table className="min-w-full text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-blue-500/10">
-              <th className="sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-2 sm:py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-r border-blue-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]">Código</th>
+              <th className={`${STICKY_CELL} text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500`}>Código</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500">Proveedor</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500"><span className="hidden sm:inline">Bruto (g)</span><span className="sm:hidden">BRU.</span></th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">FA</th>
@@ -88,6 +90,18 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
             </tr>
           </thead>
           <tbody>
+            {/* Totals row — top of table */}
+            {filteredBars.length > 0 && (
+              <tr className="border-b-2 border-gold-500/30 bg-midnight-900">
+                <td className={`${STICKY_CELL} text-xs sm:text-sm font-bold text-gold-500`}>Totales</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.grossWeight)}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.analytical, 1)}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.expected, 1)}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.recovered, 1)}</td>
+                <td />
+              </tr>
+            )}
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center">
@@ -104,7 +118,7 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
             ) : (
               paginatedBars.map((bar) => (
                 <tr key={bar.id} className="terminal-row">
-                  <td className="sticky left-0 z-20 bg-midnight-800 px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]">
+                  <td className={`${STICKY_CELL} whitespace-nowrap text-xs sm:text-sm font-mono text-slate-200`}>
                     {bar.code}
                   </td>
                   <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-300">
@@ -127,21 +141,6 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading }: GoldBarsTableP
               ))
             )}
           </tbody>
-          {filteredBars.length > 0 && (
-            <tfoot>
-              <tr className="border-t-2 border-amber-500/30 bg-amber-500/5">
-                <td className="sticky left-0 z-20 bg-amber-500/5 px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm font-bold text-amber-400 border-r border-amber-500/10 shadow-[2px_0_6px_-3px_rgba(0,0,0,0.6)]">
-                  Totales
-                </td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-slate-100">{formatNumber(totals.grossWeight)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-slate-100">{formatNumber(totals.analytical, 1)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-slate-100">{formatNumber(totals.expected, 1)}</td>
-                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-slate-100">{formatNumber(totals.recovered, 1)}</td>
-                <td />
-              </tr>
-            </tfoot>
-          )}
         </table>
       </div>
 

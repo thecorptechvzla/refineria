@@ -33,9 +33,9 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
       <div className="p-5 border-b border-blue-500/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon.png" alt="GoldTrack" width={36} height={36} className="rounded-sm" />
+            <img src="/icon.png" alt="Control Mining" width={36} height={36} className="rounded-sm" />
             <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">Gold<span className="text-gold-500">Track</span></h1>
+              <h1 className="text-lg font-bold text-white tracking-tight">Control<span className="text-gold-500">Mining</span></h1>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest">Refinería</p>
             </div>
           </div>

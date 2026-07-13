@@ -8,7 +8,6 @@ import { useGoldBars } from '@/lib/hooks/useGoldBars';
 import { useCriticos } from '@/lib/CriticosContext';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { getSupplierName, formatDate, formatNumber, formatLocaleWeight, formatLocaleNumber } from '@/lib/utils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -45,7 +44,6 @@ function autonomyColor(days: number | null): { text: string; bar: string; border
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useGold();
   const { data: suppliers } = useSuppliers();
-  const router = useRouter();
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('all');
   const [selectOpen, setSelectOpen] = useState(false);
@@ -191,8 +189,8 @@ export default function DashboardPage() {
     ];
     return [
       { label: 'Oro Ingresado', value: formatLocaleWeight(metrics.oroIngresado), icon: Database, accent: 'gold', subtitle: `${formatNumber(metrics.totalBarCount, 0)} barras registradas`, sparkColor: '#f59e0b', trend: trends[0], onClick: () => setShowIngresoModal(true) },
-      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#10b981', trend: trends[1], route: '/admin/barras?disponibles=1' },
-      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#0ea5e9', trend: trends[2], route: '/procesos' },
+      { label: 'Oro en Boveda', value: formatLocaleWeight(metrics.oroEnBoveda), icon: Shield, accent: 'gold', subtitle: 'Procesos Terminados y Cerrados', sparkColor: '#10b981', trend: trends[1] },
+      { label: 'Oro en Proceso', value: formatLocaleWeight(metrics.oroEnProceso), icon: Settings, accent: 'blue', subtitle: 'Procesos Abiertos', sparkColor: '#0ea5e9', trend: trends[2] },
       { label: 'Oro Faltante / Por Refinar', value: formatLocaleWeight(metrics.faltaPorRefinar), icon: Wallet, accent: 'blue', subtitle: `${formatNumber(metrics.availableBarCount, 0)} barras sin procesar`, sparkColor: '#ef4444', trend: trends[3] },
     ];
   }, [metrics]);
@@ -349,14 +347,14 @@ export default function DashboardPage() {
           return (
           <div
             key={kpi.label}
-            onClick={kpi.onClick ?? (kpi.route ? () => router.push(kpi.route!) : undefined)}
-            role={kpi.onClick || kpi.route ? 'button' : undefined}
-            tabIndex={kpi.onClick || kpi.route ? 0 : undefined}
-            onKeyDown={kpi.onClick || kpi.route ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (kpi.onClick ?? (() => router.push(kpi.route!)))(); } } : undefined}
-            className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-16 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all ${kpi.onClick || kpi.route ? 'cursor-pointer' : 'cursor-default'} active:scale-95 sm:active:scale-100 group`}
+            onClick={kpi.onClick}
+            role={kpi.onClick ? 'button' : undefined}
+            tabIndex={kpi.onClick ? 0 : undefined}
+            onKeyDown={kpi.onClick ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kpi.onClick?.(); } } : undefined}
+            className={`relative ${isGold ? 'glass-panel-gold' : 'glass-panel'} p-4 sm:p-5 pb-16 sm:pb-5 overflow-hidden hover:border-opacity-60 transition-all ${kpi.onClick ? 'cursor-pointer' : 'cursor-default'} active:scale-95 sm:active:scale-100 group`}
           >
             {/* Arrow indicator */}
-            {(kpi.onClick || kpi.route) && (
+            {kpi.onClick && (
               <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <ArrowUpRight className={`w-4 h-4 ${isGold ? 'text-gold-400' : 'text-blue-400'}`} />
               </div>
