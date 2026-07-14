@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   AlertTriangle, Beaker, Cylinder, Fuel, FlaskConical,
-  ChevronRight, X,
+  ChevronRight, X, Calendar,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
@@ -55,6 +55,7 @@ function KpiCard({
   isMounted,
   sparklineData,
   sparklineColor,
+  onClick,
   children,
 }: {
   icon: React.ElementType;
@@ -66,36 +67,43 @@ function KpiCard({
   isMounted?: boolean;
   sparklineData?: { v: number }[];
   sparklineColor?: string;
+  onClick?: () => void;
   children?: React.ReactNode;
 }) {
+  const Comp = onClick ? 'button' : 'div';
   const grdId = `qspark-${label.replace(/\s+/g, '-')}`;
   return (
-    <div className="bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left relative overflow-hidden">
-      {sparklineData && sparklineData.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-0 h-16 opacity-50">
-          <ResponsiveContainer width="100%" height={64}>
-            <AreaChart data={sparklineData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis hide />
-              <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke={sparklineColor || '#0ea5e9'}
-                strokeWidth={2.5}
-                fill={`url(#${grdId})`}
-                dot={false}
-                style={{ filter: `drop-shadow(0px 0px 4px ${sparklineColor || '#0ea5e9'})` }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <Comp
+        onClick={onClick}
+        className={`bg-midnight-900/50 border border-white/10 backdrop-blur-md p-4 text-left relative overflow-hidden transition-all duration-200 ${
+          onClick ? 'cursor-pointer hover:bg-midnight-700/40 hover:shadow-lg hover:shadow-blue-500/5 active:scale-95 group' : ''
+        }`}
+      >
+        {sparklineData && sparklineData.length > 1 && (
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-0 h-16 opacity-50">
+            <ResponsiveContainer width="100%" height={64}>
+              <AreaChart data={sparklineData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id={grdId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={sparklineColor || '#0ea5e9'} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis hide />
+                <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
+                <Area
+                  type="monotone"
+                  dataKey="v"
+                  stroke={sparklineColor || '#0ea5e9'}
+                  strokeWidth={2.5}
+                  fill={`url(#${grdId})`}
+                  dot={false}
+                  style={{ filter: `drop-shadow(0px 0px 4px ${sparklineColor || '#0ea5e9'})` }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       <div className="relative z-10">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -115,7 +123,7 @@ function KpiCard({
           </div>
         </div>
       </div>
-    </div>
+    </Comp>
   );
 }
 
@@ -167,6 +175,27 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
     return generateMockTrend(combustible.currentStock, 7);
   }, [combustible]);
 
+  const [activeSubModal, setActiveSubModal] = useState<'autonomia' | 'criticos' | 'gases' | 'combustible' | null>(null);
+
+  const top3Criticos = useMemo(() => {
+    return quimicosActivos
+      .filter((q) => q.daysOfAutonomy !== null)
+      .sort((a, b) => (a.daysOfAutonomy ?? 0) - (b.daysOfAutonomy ?? 0))
+      .slice(0, 3);
+  }, [quimicosActivos]);
+
+  const combustibleWeeklyAvg = useMemo(() => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const recent = combustible.log.filter((e) => {
+      const [d, m, y] = e.date.split('/');
+      const dt = new Date(+(y || '2026'), +m - 1, +d);
+      return dt >= weekAgo;
+    });
+    if (recent.length === 0) return 0;
+    return Math.round(recent.reduce((s, e) => s + e.consumption, 0) / recent.length);
+  }, [combustible]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-xl p-4" onClick={onClose}>
       <div className="w-full max-w-5xl max-h-[85vh] flex flex-col glass-panel rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -195,6 +224,7 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
               iconClass={isMounted && minAutonomy !== null ? autonomyColor(minAutonomy).text : 'text-blue-400'}
               valueClass={isMounted && minAutonomy !== null ? autonomyColor(minAutonomy).text : 'text-white'}
               value={minAutonomy !== null ? minAutonomy.toFixed(1) : '—'}
+              onClick={() => setActiveSubModal('autonomia')}
               sparklineData={isMounted ? autonomySparkline : []}
               sparklineColor="#3B82F6"
             >
@@ -211,6 +241,7 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
               isMounted={isMounted}
               value={criticosBajos.length.toString()}
               subtext="con &lt;5 días de autonomía"
+              onClick={() => setActiveSubModal('criticos')}
               sparklineData={isMounted ? criticosSparkline : []}
               sparklineColor="#EF4444"
             />
@@ -221,6 +252,7 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
               isMounted={isMounted}
               value={gases.length.toString()}
               subtext="tipos registrados"
+              onClick={() => setActiveSubModal('gases')}
               sparklineData={isMounted ? gasesSparkline : []}
               sparklineColor="#06B6D4"
             />
@@ -231,6 +263,7 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
               isMounted={isMounted}
               value={combustible.currentStock.toLocaleString()}
               subtext="litros disponibles"
+              onClick={() => setActiveSubModal('combustible')}
               sparklineData={isMounted ? combustibleSparkline : []}
               sparklineColor="#F59E0B"
             />
@@ -430,6 +463,228 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SUB-MODAL: Proyección de Agotamiento */}
+      {/* ════════════════════════════════════════════════════════ */}
+      {activeSubModal === 'autonomia' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setActiveSubModal(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gold-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Proyección de Agotamiento</h2>
+              </div>
+              <button onClick={() => setActiveSubModal(null)} className="p-1 hover:bg-blue-500/10 rounded-sm transition-colors">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {top3Criticos.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-4">No hay insumos con consumo activo.</p>
+              )}
+              {top3Criticos.map((q, i) => {
+                if (q.daysOfAutonomy === null) return null;
+                const depletionDate = addDays(new Date(), q.daysOfAutonomy);
+                return (
+                  <div key={q.id} className="bg-midnight-800/60 border border-blue-500/10 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-gold-400 uppercase tracking-wider">#{i + 1}</span>
+                      {q.daysOfAutonomy < 5 && (
+                        <span className="text-[10px] text-red-400 font-semibold uppercase tracking-widest blink-warning">Crítico</span>
+                      )}
+                    </div>
+                    <p className="text-sm font-bold text-white">{q.name}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-slate-500">Stock actual:</span>
+                        <span className="ml-1 font-mono text-slate-200">{Number(q.currentStock || 0).toLocaleString('de-DE')} {q.unit}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Consumo/día:</span>
+                        <span className="ml-1 font-mono text-slate-200">{q.dailyConsumption}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Autonomía:</span>
+                        <span className={`ml-1 font-mono ${autonomyColor(q.daysOfAutonomy).text}`}>{q.daysOfAutonomy.toFixed(1)} días</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Se agota:</span>
+                        <span className="ml-1 font-mono text-amber-400">{formatDate(depletionDate)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SUB-MODAL: Insumos Críticos (< 5 días) */}
+      {/* ════════════════════════════════════════════════════════ */}
+      {activeSubModal === 'criticos' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setActiveSubModal(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-gold-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Insumos Críticos</h2>
+              </div>
+              <button onClick={() => setActiveSubModal(null)} className="p-1 hover:bg-blue-500/10 rounded-sm transition-colors">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            {criticosBajos.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">No hay insumos con autonomía crítica.</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {criticosBajos.map((q) => (
+                  <div key={q.id} className="flex items-center justify-between bg-midnight-800/60 border border-red-500/10 p-3">
+                    <div className="flex-1 min-w-0 mr-3">
+                      <p className="text-sm font-bold text-slate-200 truncate">{q.name}</p>
+                      <p className="text-[10px] text-slate-500 font-mono">{q.unit}</p>
+                    </div>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-[9px] text-slate-500 uppercase tracking-widest">Stock</p>
+                        <p className="text-xs font-mono font-bold text-gold-500">{Number(q.currentStock || 0).toLocaleString('de-DE')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-slate-500 uppercase tracking-widest">Consumo</p>
+                        <p className="text-xs font-mono text-slate-300">{q.dailyConsumption}/día</p>
+                      </div>
+                      <div className="text-right min-w-[60px]">
+                        <p className="text-[9px] text-slate-500 uppercase tracking-widest">Autonomía</p>
+                        <p className={`text-xs font-mono font-bold ${autonomyColor(q.daysOfAutonomy).text}`}>{q.daysOfAutonomy?.toFixed(1)}d</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SUB-MODAL: Desglose de Gases */}
+      {/* ════════════════════════════════════════════════════════ */}
+      {activeSubModal === 'gases' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setActiveSubModal(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Cylinder className="w-5 h-5 text-gold-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Desglose de Cilindros</h2>
+              </div>
+              <button onClick={() => setActiveSubModal(null)} className="p-1 hover:bg-blue-500/10 rounded-sm transition-colors">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {gases.map((g) => (
+                <div key={g.id} className="bg-midnight-800/60 border border-blue-500/10 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-white">{g.name}</h3>
+                    <span className={`text-xs font-mono font-bold ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      {g.available} disponibles
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-amber-400 hud-number">{g.full}</p>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1">Llenas</p>
+                    </div>
+                    <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-blue-400 hud-number">{g.inUse}</p>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1">En Uso</p>
+                    </div>
+                    <div className="bg-midnight-900/60 border border-blue-500/10 p-3 text-center">
+                      <p className={`text-lg font-bold hud-number ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>{g.available}</p>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest mt-1">Vacíos</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SUB-MODAL: Detalle de Combustible */}
+      {/* ════════════════════════════════════════════════════════ */}
+      {activeSubModal === 'combustible' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setActiveSubModal(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-panel p-5 sm:p-6 z-10 rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Fuel className="w-5 h-5 text-gold-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Detalle de Combustible</h2>
+              </div>
+              <button onClick={() => setActiveSubModal(null)} className="p-1 hover:bg-blue-500/10 rounded-sm transition-colors">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-midnight-800/60 border border-blue-500/10 p-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-40 bg-midnight-900 border border-blue-500/15 rounded-sm overflow-hidden flex-shrink-0">
+                    <div
+                      className="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out"
+                      style={{
+                        height: `${Math.round((combustible.currentStock / combustible.initialAmount) * 100)}%`,
+                        background: 'linear-gradient(to top, #D97706, #F59E0B, #FBBF24)',
+                        boxShadow: '0 0 12px rgba(245,158,11,0.3)',
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-3xl font-bold text-amber-400 hud-number">{combustible.currentStock.toLocaleString()}</p>
+                    <p className="text-[11px] text-slate-500 font-mono">de {combustible.initialAmount.toLocaleString()} Lts</p>
+                    <div className="mt-2 w-full bg-midnight-800 rounded-sm h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-sm"
+                        style={{ width: `${Math.min(100, (combustible.currentStock / combustible.initialAmount) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400 font-mono mt-1">
+                      {((combustible.currentStock / combustible.initialAmount) * 100).toFixed(1)}% de capacidad
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-midnight-800/60 border border-blue-500/10 p-4">
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Consumo Promedio (última semana)</p>
+                <p className="text-2xl font-bold text-white hud-number">{combustibleWeeklyAvg.toLocaleString()} <span className="text-sm text-slate-400">Lts/día</span></p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Proyección restante: ~{combustibleWeeklyAvg > 0 ? Math.round(combustible.currentStock / combustibleWeeklyAvg) : '—'} días
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Últimos movimientos</p>
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {combustible.log.slice(-5).reverse().map((entry, i) => (
+                    <div key={i} className="flex items-center justify-between bg-midnight-900/40 border border-blue-500/5 px-3 py-2">
+                      <span className="text-xs font-mono text-slate-400">{entry.date}</span>
+                      <span className="text-xs font-mono text-red-400">-{entry.consumption.toLocaleString()} Lts</span>
+                      <span className="text-xs font-mono text-slate-500">{entry.remaining.toLocaleString()} restantes</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
