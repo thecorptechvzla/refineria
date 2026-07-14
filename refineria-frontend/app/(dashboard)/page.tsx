@@ -14,7 +14,7 @@ import {
   AreaChart, Area,
 } from 'recharts';
 import { ProcessModal, type ProcessDetail, type LotDetail } from '@/components/shared/ProcessModal';
-import { GoldBarsTable } from '@/components/inventory/GoldBarsTable';
+import { SupplierDirectory } from '@/components/inventory/SupplierDirectory';
 import { CriticosQuickView } from '@/components/criticos/CriticosQuickView';
 import {
   Wallet, Activity, Crosshair, Settings, ChevronDown, ChevronLeft, ChevronRight, Database, Shield, CheckCircle,
@@ -855,7 +855,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-              <GoldBarsTable
+              <SupplierDirectory
                 goldBars={goldBars ?? []}
                 suppliers={suppliers}
                 isLoading={barsLoading}
