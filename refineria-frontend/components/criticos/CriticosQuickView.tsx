@@ -307,6 +307,127 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
               </table>
             </div>
           </div>
+
+          {/* Gases + Combustible */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            {/* Gases — Mini-cards tipo cilindro */}
+            <div className="glass-panel">
+              <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center gap-2">
+                <Cylinder className="w-4 h-4 text-cyan-400" />
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Gases</h2>
+              </div>
+              <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {gases.map((g) => {
+                  const total = g.full + g.inUse + g.available;
+                  const fullPct = total > 0 ? (g.full / total) * 100 : 0;
+                  return (
+                    <div key={g.id} className="bg-midnight-800/60 border border-cyan-500/15 p-4 rounded-sm flex flex-col items-center gap-3 hover:border-cyan-500/30 transition-colors group">
+                      <div className="relative w-12 h-20 bg-midnight-900 border-2 border-cyan-500/20 rounded-full overflow-hidden">
+                        <div
+                          className="absolute bottom-0 left-0 right-0 transition-all duration-700"
+                          style={{
+                            height: `${fullPct}%`,
+                            background: 'linear-gradient(to top, #06B6D4, #22D3EE)',
+                            boxShadow: '0 0 8px rgba(6,182,212,0.2)',
+                          }}
+                        />
+                        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-1 bg-cyan-500/30 rounded-full" />
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-1.5 bg-cyan-500/30 rounded-full" />
+                      </div>
+                      <h3 className="text-sm font-bold text-white text-center">{g.name}</h3>
+                      <div className="w-full grid grid-cols-3 gap-1 text-center">
+                        <div className="bg-midnight-900/60 border border-amber-500/10 p-2 rounded-sm">
+                          <p className="text-sm font-bold font-mono text-amber-400">{g.full}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Llenas</p>
+                        </div>
+                        <div className="bg-midnight-900/60 border border-blue-500/10 p-2 rounded-sm">
+                          <p className="text-sm font-bold font-mono text-blue-400">{g.inUse}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">En Uso</p>
+                        </div>
+                        <div className="bg-midnight-900/60 border border-green-500/10 p-2 rounded-sm">
+                          <p className={`text-sm font-bold font-mono ${g.available === 0 ? 'text-red-400' : 'text-green-400'}`}>{g.available}</p>
+                          <p className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Disp.</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Combustible — fuel dispenser */}
+            <div className="glass-panel">
+              <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Fuel className="w-4 h-4 text-amber-400" />
+                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">Combustible</h2>
+                </div>
+                <span className="text-[10px] font-mono text-slate-600 border border-blue-500/10 px-2 py-0.5">GASOIL</span>
+              </div>
+              <div className="p-4 sm:p-5">
+                {isMounted ? (
+                <div className="flex items-center gap-5">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className="relative w-16 h-52 bg-midnight-900 border-2 border-blue-500/15 rounded-sm overflow-hidden">
+                      <div className="absolute inset-0 flex flex-col justify-between py-1">
+                        {[100, 75, 50, 25, 0].map((pct) => (
+                          <div key={pct} className="flex items-center gap-1">
+                            <span className="text-[7px] font-mono text-slate-600 w-5 text-right leading-none">{pct}%</span>
+                            <div className="flex-1 border-t border-blue-500/8" />
+                          </div>
+                        ))}
+                      </div>
+                      <div
+                        className="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out fuel-glow"
+                        style={{
+                          height: `${Math.round((combustible.currentStock / combustible.initialAmount) * 100)}%`,
+                          background: 'linear-gradient(to top, #D97706, #F59E0B, #FBBF24)',
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
+                    </div>
+                    <Fuel className="w-5 h-5 text-amber-500/60 -rotate-45" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="bg-midnight-900 border border-blue-500/15 p-4 text-center">
+                      <p className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold mb-1">Disponible</p>
+                      <p className="text-3xl font-bold text-amber-400 hud-number tracking-wider font-mono tabular-nums">
+                        {combustible.currentStock.toLocaleString()}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">LITROS</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-midnight-900/60 border border-blue-500/10 p-2.5 text-center">
+                        <p className="text-[8px] text-slate-600 uppercase tracking-widest">Inicial</p>
+                        <p className="text-xs font-mono font-bold text-slate-300">{combustible.initialAmount.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-midnight-900/60 border border-blue-500/10 p-2.5 text-center">
+                        <p className="text-[8px] text-slate-600 uppercase tracking-widest">Consumido</p>
+                        <p className="text-xs font-mono font-bold text-red-400">{(combustible.initialAmount - combustible.currentStock).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-midnight-800 rounded-sm h-1.5 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-sm transition-all duration-700"
+                        style={{ width: `${Math.min(100, (combustible.currentStock / combustible.initialAmount) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-600 text-center font-mono">
+                      {((combustible.currentStock / combustible.initialAmount) * 100).toFixed(1)}% · {combustible.log.length} movimientos
+                    </p>
+                  </div>
+                </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Fuel className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">Cargando datos de combustible...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
