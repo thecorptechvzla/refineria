@@ -266,7 +266,7 @@ export default function DashboardPage() {
               onClick={() => setSelectOpen(!selectOpen)}
               className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
             >
-              <span className="truncate">{selectedSupplierId === 'all' ? 'Todos los proveedores' : suppliers?.find((s) => s.id === selectedSupplierId)?.name}</span>
+              <span className="truncate">{selectedSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === selectedSupplierId)?.name}</span>
               <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${selectOpen ? 'rotate-180' : ''}`} />
             </button>
             {selectOpen && (
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                 <li
                   className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${selectedSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
                   onClick={() => { setSelectedSupplierId('all'); setSelectOpen(false); }}
-                >Todos los proveedores</li>
+                >Todos los clientes</li>
                 {suppliers?.map((s) => (
                   <li
                     key={s.id}
@@ -774,7 +774,7 @@ export default function DashboardPage() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-500">
-                      No hay datos de proveedores.
+                      No hay datos de clientes.
                     </td>
                   </tr>
                 )}

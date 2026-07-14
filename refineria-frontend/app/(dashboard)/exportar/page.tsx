@@ -128,7 +128,7 @@ export default function ExportarPage() {
               onChange={(e) => { setFilterSupplierId(e.target.value); setSelectedIds(new Set()); setSelectAll(false); }}
               className="w-full px-3 py-2 bg-midnight-900 border border-blue-500/20 text-slate-200 text-sm outline-none focus:border-gold-500/50"
             >
-              <option value="all">Todos los proveedores</option>
+              <option value="all">Todos los clientes</option>
               {supplierIds.map((sid) => (
                 <option key={sid} value={sid}>
                   {suppliers ? getSupplierName(suppliers, sid) : sid}

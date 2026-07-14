@@ -10,7 +10,7 @@ import { Shield, Users, Wrench, Building2, Package, Settings, ArrowLeftRight, Sh
 const adminLinks = [
   { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
   { name: 'Trabajadores', href: '/admin/trabajadores', icon: Wrench },
-  { name: 'Proveedores', href: '/admin/proveedores', icon: Building2 },
+  { name: 'Clientes', href: '/admin/proveedores', icon: Building2 },
   { name: 'Barras', href: '/admin/barras', icon: Package },
   { name: 'Procesos', href: '/admin/procesos', icon: Settings },
   { name: 'Transacciones', href: '/admin/transacciones', icon: ArrowLeftRight },

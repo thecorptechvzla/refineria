@@ -268,7 +268,7 @@ export default function AdminProveedoresPage() {
             <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Proveedores</h2>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Clientes</h2>
               </div>
               <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                 {String(suppliers?.length ?? 0).padStart(2, '0')}

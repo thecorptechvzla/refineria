@@ -5,7 +5,7 @@ import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteGoldBar, useBulkUpload } from '@/lib/hooks/useGoldBars';
-import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
+import { parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
 import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
@@ -30,12 +30,9 @@ export default function IngresoPage() {
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkError, setBulkError] = useState('');
-  const [activeSupplierTab, setActiveSupplierTab] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState('');
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (supplierId: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [supplierId]: !prev[supplierId] }));
-  };
+  const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
+  const [supplierBarPages, setSupplierBarPages] = useState<Record<string, number>>({});
   const bulkUpload = useBulkUpload();
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -223,85 +220,57 @@ export default function IngresoPage() {
     URL.revokeObjectURL(url);
   };
 
-  const suppliersWithBars = useMemo(() => {
-    const ids = new Set(goldBars.map((b) => b.supplierId));
-    return suppliers?.filter((s) => ids.has(s.id)) ?? [];
-  }, [goldBars, suppliers]);
+  const SUPPLIERS_PER_PAGE = 10;
+  const BARS_PER_PAGE = 10;
 
-  const filteredBars = goldBars.filter((b) => {
-    if (activeSupplierTab && b.supplierId !== activeSupplierTab) return false;
-    if (searchCode && !b.code.toLowerCase().includes(searchCode.toLowerCase())) return false;
-    return true;
-  });
+  const supplierData = useMemo(() => {
+    const latestDate = new Map<string, number>();
+    const grouped = new Map<string, typeof goldBars>();
+    const q = searchCode.toLowerCase();
 
-  const sortedBars = useMemo(() => {
-    return [...filteredBars].sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime());
-  }, [filteredBars]);
-
-  const ITEMS_PER_PAGE = 10;
-
-  // Group ALL sorted bars (group-aware pagination: groups are never split across pages)
-  const allGroupedBars = useMemo(() => {
-    const map = new Map<string, { supplierId: string; supplierName: string; bars: typeof sortedBars }>();
-    for (const bar of sortedBars) {
-      if (!map.has(bar.supplierId)) {
-        map.set(bar.supplierId, {
-          supplierId: bar.supplierId,
-          supplierName: suppliers ? getSupplierName(suppliers, bar.supplierId) : bar.supplierId,
-          bars: [],
-        });
+    for (const bar of goldBars) {
+      if (!grouped.has(bar.supplierId)) {
+        grouped.set(bar.supplierId, []);
       }
-      map.get(bar.supplierId)!.bars.push(bar);
+      grouped.get(bar.supplierId)!.push(bar);
+      const d = new Date(bar.registrationDate).getTime();
+      const prev = latestDate.get(bar.supplierId) ?? 0;
+      if (d > prev) latestDate.set(bar.supplierId, d);
     }
-    return Array.from(map.values()).sort((a, b) => {
-      const aMax = Math.max(...a.bars.map((bar) => new Date(bar.registrationDate).getTime()));
-      const bMax = Math.max(...b.bars.map((bar) => new Date(bar.registrationDate).getTime()));
-      return bMax - aMax;
-    });
-  }, [sortedBars, suppliers]);
 
-  // Distribute groups across pages — page boundaries fall between groups, never within
-  const groupPages = useMemo(() => {
-    const pages: number[][] = [];
-    let cur: number[] = [];
-    let count = 0;
-    allGroupedBars.forEach((g, idx) => {
-      if (count + g.bars.length > ITEMS_PER_PAGE && cur.length > 0) {
-        pages.push(cur);
-        cur = [];
-        count = 0;
-      }
-      cur.push(idx);
-      count += g.bars.length;
-    });
-    if (cur.length > 0) pages.push(cur);
-    return pages;
-  }, [allGroupedBars]);
+    for (const [, bars] of grouped) {
+      bars.sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime());
+    }
 
-  const isTodosView = activeSupplierTab === null;
-  const totalPagesFlat = Math.max(1, Math.ceil(sortedBars.length / ITEMS_PER_PAGE));
-  const totalPagesGrouped = Math.max(1, groupPages.length);
-  const totalPages = isTodosView ? totalPagesGrouped : totalPagesFlat;
-  const currentPageSafe = Math.min(currentPage, totalPages);
+    const filtered = (suppliers ?? [])
+      .filter((s) => {
+        if (!latestDate.has(s.id)) return false;
+        if (!q) return true;
+        return grouped.get(s.id)?.some((b) => b.code.toLowerCase().includes(q)) ?? false;
+      })
+      .sort((a, b) => (latestDate.get(b.id) ?? 0) - (latestDate.get(a.id) ?? 0));
 
-  // For TODOS view: complete groups on the current page
-  const paginatedGroups = useMemo(() => {
-    if (!isTodosView) return [];
-    const indices = groupPages[currentPageSafe - 1] || [];
-    return indices.map((idx) => allGroupedBars[idx]);
-  }, [groupPages, currentPageSafe, allGroupedBars, isTodosView]);
+    return { filtered, grouped };
+  }, [goldBars, suppliers, searchCode]);
 
-  // For specific-tab view: simple bar-level slice pagination
-  const paginatedBars = isTodosView
-    ? []
-    : sortedBars.slice((currentPageSafe - 1) * ITEMS_PER_PAGE, currentPageSafe * ITEMS_PER_PAGE);
+  const { filtered: visibleSuppliers, grouped: barsBySupplier } = supplierData;
+  const supplierTotalPages = Math.max(1, Math.ceil(visibleSuppliers.length / SUPPLIERS_PER_PAGE));
+  const safeSupplierPage = Math.min(currentPage, supplierTotalPages);
+  const paginatedSuppliers = visibleSuppliers.slice(
+    (safeSupplierPage - 1) * SUPPLIERS_PER_PAGE,
+    safeSupplierPage * SUPPLIERS_PER_PAGE
+  );
 
-  const totals = useMemo(() => ({
-    grossWeight: filteredBars.reduce((s, b) => s + b.grossWeight, 0),
-    analytical: filteredBars.reduce((s, b) => s + b.analytical, 0),
-    expected: filteredBars.reduce((s, b) => s + b.expected, 0),
-    recovered: filteredBars.reduce((s, b) => s + b.recovered, 0),
-  }), [filteredBars]);
+  const grandTotal = useMemo(() => {
+    const ids = new Set(visibleSuppliers.map((s) => s.id));
+    const visible = goldBars.filter((b) => ids.has(b.supplierId));
+    return {
+      grossWeight: visible.reduce((s, b) => s + b.grossWeight, 0),
+      analytical: visible.reduce((s, b) => s + b.analytical, 0),
+      expected: visible.reduce((s, b) => s + b.expected, 0),
+      recovered: visible.reduce((s, b) => s + b.recovered, 0),
+    };
+  }, [goldBars, visibleSuppliers]);
 
   return (
     <div className="space-y-5">
@@ -605,235 +574,211 @@ export default function IngresoPage() {
                   className="w-36 px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] placeholder-slate-600 outline-none transition-all focus:border-blue-500/40"
                 />
                 <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-                  {String(filteredBars.length).padStart(2, '0')}
+                  {String(visibleSuppliers.length).padStart(2, '0')}
                 </span>
               </div>
             </div>
 
-            <div className="overflow-x-auto scrollbar-thin border-b border-blue-500/10">
-              <div className="flex gap-0.5 px-4 sm:px-5 min-w-max">
-                <button
-                  onClick={() => { setActiveSupplierTab(null); setCurrentPage(1); }}
-                  className={`relative px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap ${
-                    activeSupplierTab === null
-                      ? 'text-gold-400 bg-gold-500/10'
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-blue-500/5'
-                  }`}
-                >
-                  Todos
-                  {activeSupplierTab === null && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gold-500 rounded-full" />
-                  )}
-                </button>
-                {suppliersWithBars.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setActiveSupplierTab(s.id); setCurrentPage(1); }}
-                    className={`relative px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap ${
-                      activeSupplierTab === s.id
-                        ? 'text-gold-400 bg-gold-500/10'
-                        : 'text-slate-500 hover:text-slate-300 hover:bg-blue-500/5'
-                    }`}
-                  >
-                    {s.name}
-                    {activeSupplierTab === s.id && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gold-500 rounded-full" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {paginatedSuppliers.length > 0 ? (
+              <div className="flex-1 overflow-y-auto scrollbar-thin">
+                {paginatedSuppliers.map((s) => {
+                  const supplierBars = barsBySupplier.get(s.id) ?? [];
+                  const barPage = supplierBarPages[s.id] ?? 1;
+                  const barTotalPages = Math.max(1, Math.ceil(supplierBars.length / BARS_PER_PAGE));
+                  const safeBarPage = Math.min(barPage, barTotalPages);
+                  const paginatedBars = supplierBars.slice(
+                    (safeBarPage - 1) * BARS_PER_PAGE,
+                    safeBarPage * BARS_PER_PAGE
+                  );
+                  const supplierTotals = {
+                    grossWeight: supplierBars.reduce((s, b) => s + b.grossWeight, 0),
+                    analytical: supplierBars.reduce((s, b) => s + b.analytical, 0),
+                    expected: supplierBars.reduce((s, b) => s + b.expected, 0),
+                    recovered: supplierBars.reduce((s, b) => s + b.recovered, 0),
+                  };
 
-            <div className="flex-1 overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-blue-500/10">
-                    <th className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">Código</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FA (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FE (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">R (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Ag (‰)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>
-                    <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isTodosView ? (
-                    paginatedGroups.length > 0 ? (
-                      paginatedGroups.map((group) => (
-                        <Fragment key={group.supplierId}>
-                          <tr
-                            className="bg-blue-500/[0.08] cursor-pointer hover:bg-blue-500/[0.12] transition-colors select-none border-b border-blue-500/10"
-                            onClick={() => toggleGroup(group.supplierId)}
-                          >
-                            <td colSpan={11} className="px-4 sm:px-5 py-2.5">
-                              <div className="flex items-center gap-2">
-                                <Building2 className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-                                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{group.supplierName}</span>
-                                <span className="text-[10px] font-mono text-slate-500">— {group.bars.length} BARRAS</span>
-                                <ChevronDown
-                                  className={`w-3 h-3 text-slate-500 ml-auto transition-transform duration-200 ${
-                                    collapsedGroups[group.supplierId] ? '' : 'rotate-180'
-                                  }`}
-                                />
+                  return (
+                    <Fragment key={s.id}>
+                      <div className="px-4 sm:px-5 pt-4 sm:pt-5 first:pt-0">
+                        <div
+                          className="glass-panel cursor-pointer active:scale-[0.98] transition-all hover:bg-blue-500/[0.04]"
+                          onClick={() => setExpandedSupplierId((prev) => prev === s.id ? null : s.id)}
+                        >
+                          <div className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Building2 className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-bold text-white uppercase tracking-wider">{s.name}</p>
+                                <p className="text-[10px] text-slate-500 font-mono">RIF: {s.rif}</p>
                               </div>
-                            </td>
-                          </tr>
-                          {!collapsedGroups[group.supplierId] && group.bars.map((bar) => (
-                            <tr key={bar.id} className="terminal-row">
-                              <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">{bar.code}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
-                                {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
-                              </td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
-                                  bar.available
-                                    ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
-                                    : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
-                                }`}>
-                                  {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
-                                </span>
-                              </td>
-                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
-                                {confirmDeleteId === bar.id ? (
-                                  <div className="flex items-center gap-1 justify-end">
-                                    <button
-                                      onClick={() => handleDeleteBar(bar.id)}
-                                      className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
-                                    >
-                                      Confirmar
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmDeleteId(null)}
-                                      className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
-                                    >
-                                      Cancelar
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => setConfirmDeleteId(bar.id)}
-                                    className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                                    title="Eliminar barra"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </Fragment>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
-                          No hay barras registradas.
-                        </td>
-                      </tr>
-                    )
-                  ) : (
-                    paginatedBars.length > 0 ? (
-                      paginatedBars.map((bar) => (
-                        <tr key={bar.id} className="terminal-row">
-                          <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">{bar.code}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
-                            {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
-                          </td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
-                              bar.available
-                                ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
-                                : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
-                            }`}>
-                              {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
-                            </span>
-                          </td>
-                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
-                            {confirmDeleteId === bar.id ? (
-                              <div className="flex items-center gap-1 justify-end">
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
+                                {supplierBars.length} BARRAS
+                              </span>
+                              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${expandedSupplierId === s.id ? 'rotate-180' : ''}`} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {expandedSupplierId === s.id && (
+                        <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+                          <div className="overflow-x-auto border border-blue-500/10">
+                            <table className="min-w-full">
+                              <thead>
+                                <tr className="border-b border-blue-500/10 bg-midnight-900/50">
+                                  <th className="sticky left-0 z-10 bg-midnight-900/50 px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">Código</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">FA (g)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">FE (g)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">R (g)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Ley Ag (‰)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Ag (g)</th>
+                                  <th className="px-3 py-2 text-left text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>
+                                  <th className="px-3 py-2 text-right text-[9px] font-semibold text-slate-500 uppercase tracking-widest"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {paginatedBars.map((bar, idx) => (
+                                  <tr key={bar.id} className={`${idx % 2 === 0 ? 'bg-midnight-900/30' : 'bg-midnight-800/20'} hover:bg-blue-500/[0.04] transition-colors`}>
+                                    <td className="sticky left-0 z-10 px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]"
+                                        style={{ backgroundColor: 'inherit' }}>
+                                      {bar.code}
+                                    </td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap">
+                                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 ${
+                                        bar.available
+                                          ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
+                                          : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
+                                      }`}>
+                                        {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2.5 whitespace-nowrap text-right">
+                                      {confirmDeleteId === bar.id ? (
+                                        <div className="flex items-center gap-1 justify-end">
+                                          <button
+                                            onClick={() => handleDeleteBar(bar.id)}
+                                            className="px-1.5 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[9px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                                          >
+                                            Confirmar
+                                          </button>
+                                          <button
+                                            onClick={() => setConfirmDeleteId(null)}
+                                            className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-400 text-[9px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                                          >
+                                            Cancelar
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => setConfirmDeleteId(bar.id)}
+                                          className="p-1 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                          title="Eliminar barra"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                              {supplierBars.length > 0 && (
+                                <tfoot>
+                                  <tr className="border-t border-blue-500/10 bg-midnight-800/50">
+                                    <td className="sticky left-0 z-10 bg-midnight-800/50 px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">Total {s.name}</td>
+                                    <td className="px-3 py-2 text-xs font-mono text-slate-200">{formatLocaleNumber(supplierTotals.grossWeight)}</td>
+                                    <td className="px-3 py-2"></td>
+                                    <td className="px-3 py-2 text-xs font-mono text-slate-200">{formatLocaleNumber(supplierTotals.analytical)}</td>
+                                    <td className="px-3 py-2 text-xs font-mono text-slate-200">{formatLocaleNumber(supplierTotals.expected)}</td>
+                                    <td className="px-3 py-2 text-xs font-mono text-slate-200">{formatLocaleNumber(supplierTotals.recovered)}</td>
+                                    <td colSpan={4}></td>
+                                  </tr>
+                                </tfoot>
+                              )}
+                            </table>
+                          </div>
+                          {barTotalPages > 1 && (
+                            <div className="flex items-center justify-center gap-3 pt-2">
+                              <span className="text-[9px] font-mono text-slate-500">
+                                Página {safeBarPage} de {barTotalPages}
+                              </span>
+                              <div className="flex items-center gap-1">
                                 <button
-                                  onClick={() => handleDeleteBar(bar.id)}
-                                  className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                                  onClick={() => setSupplierBarPages((prev) => ({ ...prev, [s.id]: safeBarPage - 1 }))}
+                                  disabled={safeBarPage <= 1}
+                                  className="p-1 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
                                 >
-                                  Confirmar
+                                  <ChevronLeft className="w-3 h-3" />
                                 </button>
                                 <button
-                                  onClick={() => setConfirmDeleteId(null)}
-                                  className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                                  onClick={() => setSupplierBarPages((prev) => ({ ...prev, [s.id]: safeBarPage + 1 }))}
+                                  disabled={safeBarPage >= barTotalPages}
+                                  className="p-1 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
                                 >
-                                  Cancelar
+                                  <ChevronRight className="w-3 h-3" />
                                 </button>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => setConfirmDeleteId(bar.id)}
-                                className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                                title="Eliminar barra"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
-                          No hay barras registradas.
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-                {filteredBars.length > 0 && (
-                  <tfoot>
-                    <tr className="border-t border-blue-500/10 bg-midnight-800/50">
-                      <td colSpan={2} className="sticky left-0 z-10 bg-midnight-800/50 px-4 sm:px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Totales</td>
-                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.grossWeight)}</td>
-                      <td className="px-4 sm:px-5 py-3"></td>
-                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.analytical)}</td>
-                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.expected)}</td>
-                      <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.recovered)}</td>
-                      <td colSpan={4}></td>
-                    </tr>
-                  </tfoot>
-                )}
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <div className="px-4 sm:px-5 py-3 border-t border-blue-500/10 flex items-center justify-between">
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-sm text-slate-500">No hay barras registradas.</p>
+              </div>
+            )}
+
+            {visibleSuppliers.length > 0 && (
+              <div className="border-t border-blue-500/10">
+                <div className="px-4 sm:px-5 py-3 flex items-center justify-between bg-midnight-800/50">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">GRAN TOTAL</span>
+                  <div className="flex items-center gap-6">
+                    <span className="text-[11px] font-mono text-slate-200">
+                      Bruto: <span className="text-gold-400">{formatLocaleNumber(grandTotal.grossWeight)} g</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-200">
+                      FA: <span className="text-gold-400">{formatLocaleNumber(grandTotal.analytical)} g</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-200">
+                      FE: <span className="text-gold-400">{formatLocaleNumber(grandTotal.expected)} g</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-200">
+                      R: <span className="text-gold-400">{formatLocaleNumber(grandTotal.recovered)} g</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {supplierTotalPages > 1 && (
+              <div className="px-4 sm:px-5 py-3 border-t border-blue-500/10 flex items-center justify-center gap-4">
                 <span className="text-[10px] font-mono text-slate-500">
-                  Página {currentPageSafe} de {totalPages}
+                  Página {safeSupplierPage} de {supplierTotalPages}
                 </span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPageSafe <= 1}
+                    disabled={safeSupplierPage <= 1}
                     className="p-1.5 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPageSafe >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(supplierTotalPages, p + 1))}
+                    disabled={safeSupplierPage >= supplierTotalPages}
                     className="p-1.5 text-slate-500 hover:text-slate-300 disabled:text-slate-700 disabled:cursor-not-allowed transition-all"
                   >
                     <ChevronRight className="w-4 h-4" />

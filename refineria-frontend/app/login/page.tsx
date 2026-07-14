@@ -50,6 +50,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-midnight-900 flex flex-col justify-center relative overflow-hidden bg-grid">
       <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[150px]" />
       <div className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-gold-500/8 rounded-full blur-[120px]" />
+      <div className="absolute bottom-8 left-0 right-0 text-center z-10">
+        <p className="text-xs text-slate-600/50 select-none">
+          Desarrollado por The Corp Tech ®
+        </p>
+      </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
         <div className="flex flex-col items-center mb-8">

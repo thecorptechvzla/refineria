@@ -52,7 +52,7 @@ export default function ProveedoresPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <Building2 className="w-5 h-5 text-gold-500" />
-            Directorio de Proveedores
+            Directorio de Clientes
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Empresas que suministran oro a la refinería</p>
         </div>
@@ -142,7 +142,7 @@ export default function ProveedoresPage() {
             <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Proveedores Registrados</h2>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Clientes Registrados</h2>
               </div>
               <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                 {String(suppliers?.length ?? 0).padStart(2, '0')}
@@ -186,7 +186,7 @@ export default function ProveedoresPage() {
                   ) : (
                     <tr>
                       <td colSpan={4} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay proveedores registrados aún.
+                        No hay Clientes registrados aún.
                       </td>
                     </tr>
                   )}

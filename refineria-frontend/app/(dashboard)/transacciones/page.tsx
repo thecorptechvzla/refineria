@@ -150,7 +150,7 @@ export default function TransaccionesPage() {
             <ArrowLeftRight className="w-5 h-5 text-gold-500" />
             Salida de Material
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Egreso de Oro por Lote — Proveedores</p>
+          <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-widest">Egreso de Oro por Lote — Clientes</p>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ export default function TransaccionesPage() {
                           </button>
                         ))
                       ) : (
-                        <div className="px-3 py-2 text-xs text-slate-500">No hay proveedores registrados</div>
+                        <div className="px-3 py-2 text-xs text-slate-500">No hay clientes registrados</div>
                       )}
                     </div>
                   )}
