@@ -167,21 +167,21 @@ export function useSaveActaUrl() {
 export function useUploadFile() {
   return useMutation({
     mutationFn: async (file: File): Promise<{ url: string }> => {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/blob/upload-file', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Error al subir archivo (${res.status})`);
+      if (file.size > 50 * 1024 * 1024) {
+        throw new Error('El archivo excede el límite de 50 MB');
       }
 
-      const { url } = await res.json();
-      return { url };
+      const { upload } = await import('@vercel/blob/client');
+
+      const cleanName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+
+      const blob = await upload(cleanName, file, {
+        access: 'private',
+        handleUploadUrl: '/api/blob/upload-file',
+        clientPayload: JSON.stringify({ fileSize: file.size }),
+      });
+
+      return { url: blob.url };
     },
   });
 }

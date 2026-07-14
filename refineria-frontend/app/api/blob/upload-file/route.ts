@@ -1,39 +1,40 @@
-import { put } from '@vercel/blob';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const maxDuration = 30;
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const body = (await request.json()) as HandleUploadBody;
+
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (clientPayload?: string) => {
+        let fileSize = 0;
+        try {
+          const parsed = clientPayload ? JSON.parse(clientPayload) : {};
+          fileSize = parsed.fileSize || 0;
+        } catch {}
 
-    if (!file) {
-      return NextResponse.json({ error: 'No se recibió ningún archivo' }, { status: 400 });
-    }
+        if (fileSize > 50 * 1024 * 1024) {
+          throw new Error('El archivo excede el límite de 50 MB');
+        }
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error('[upload-file] BLOB_READ_WRITE_TOKEN no está configurado');
-      return NextResponse.json(
-        { error: 'Error de configuración: BLOB_READ_WRITE_TOKEN no está definido. Configúralo en las variables de entorno de Vercel.' },
-        { status: 500 },
-      );
-    }
-
-    const uniqueFilename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-
-    const blob = await put(uniqueFilename, file, {
-      access: 'private',
-      token: process.env.BLOB_READ_WRITE_TOKEN 
+        return {
+          maximumSizeInBytes: 50 * 1024 * 1024,
+          allowedContentTypes: ['application/pdf'],
+        };
+      },
+      onUploadCompleted: async ({ blob }) => {
+        console.log('[upload-file] Subida completada:', blob.url);
+      },
     });
 
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json(jsonResponse);
   } catch (error) {
-    const err = error as Error;
-    console.error('[upload-file] Error completo:', err.message, err.stack);
+    console.error('[upload-file] error', error);
     return NextResponse.json(
-      { error: err.message, stack: process.env.NODE_ENV === 'development' ? err.stack : undefined },
-      { status: 500 },
+      { error: (error as Error).message },
+      { status: 400 },
     );
   }
 }
