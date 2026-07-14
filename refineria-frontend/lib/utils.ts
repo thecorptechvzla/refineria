@@ -65,7 +65,7 @@ export function calculateFineWeight(weight: number, purity: number): number {
 
 export function getSupplierName(suppliers: { id: string; name: string }[], id?: string): string {
   if (!id) return '—';
-  return suppliers.find((s) => s.id === id)?.name || 'Proveedor Desconocido';
+  return suppliers.find((s) => s.id === id)?.name || 'Cliente Desconocido';
 }
 
 export function formatDate(iso: string): string {

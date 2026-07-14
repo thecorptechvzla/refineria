@@ -73,13 +73,13 @@ export default function AdminProveedoresPage() {
           method: 'POST',
           body,
         });
-        setSuccessMessage('Proveedor creado con éxito.');
+        setSuccessMessage('Cliente creado con éxito.');
       } else if (editId) {
         await api<Supplier>(`/suppliers/${editId}`, {
           method: 'PATCH',
           body,
         });
-        setSuccessMessage('Proveedor actualizado con éxito.');
+        setSuccessMessage('Cliente actualizado con éxito.');
       }
       resetForm();
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
@@ -141,10 +141,10 @@ export default function AdminProveedoresPage() {
       await api<void>(`/suppliers/${impactModal.id}`, { method: 'DELETE' });
       setImpactModal(null);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      setSuccessMessage('Proveedor y registros asociados eliminados permanentemente.');
+      setSuccessMessage('Cliente y registros asociados eliminados permanentemente.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch {
-      setErrorMessage('No se pudo eliminar el proveedor.');
+      setErrorMessage('No se pudo eliminar el Cliente.');
     } finally {
       setDeleting(false);
     }
@@ -172,7 +172,7 @@ export default function AdminProveedoresPage() {
                   <Edit3 className="w-4 h-4 text-blue-400" />
                 )}
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  {formMode === 'create' ? 'Nuevo Proveedor' : 'Editar Proveedor'}
+                  {formMode === 'create' ? 'Nuevo Cliente' : 'Editar Cliente'}
                 </h2>
               </div>
               {formMode === 'edit' && (
@@ -255,7 +255,7 @@ export default function AdminProveedoresPage() {
                 disabled={createSupplier.isPending}
                 className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 transition-all"
               >
-                {createSupplier.isPending ? 'Guardando...' : formMode === 'create' ? 'Registrar Proveedor' : 'Guardar Cambios'}
+                {createSupplier.isPending ? 'Guardando...' : formMode === 'create' ? 'Registrar Cliente' : 'Guardar Cambios'}
               </button>
             </form>
           </div>
@@ -328,7 +328,7 @@ export default function AdminProveedoresPage() {
                   ) : (
                     <tr>
                       <td colSpan={colSpan} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay proveedores registrados.
+                        No hay cientes registrados.
                       </td>
                     </tr>
                   )}

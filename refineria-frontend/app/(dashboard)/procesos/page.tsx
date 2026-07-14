@@ -440,7 +440,7 @@ function ProcessDetailView({
                       </div>
                 ) : (
                   <p className="text-center text-sm text-slate-500 py-6">
-                    {filterLot ? `No hay barras en el lote ${filterLot}.` : 'No hay barras disponibles para este proveedor.'}
+                    {filterLot ? `No hay barras en el lote ${filterLot}.` : 'No hay barras disponibles para este cliente.'}
                   </p>
                 )}
 
@@ -1233,7 +1233,7 @@ export default function ProcesosPage() {
             <div className="flex-1 max-w-xs">
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                 <Package className="w-3 h-3 inline mr-1" />
-                Empresa / Proveedor
+                Empresa / Cliente
               </label>
               <select
                 value={newProcessSupplierId}
@@ -1496,7 +1496,7 @@ export default function ProcesosPage() {
           <div className="glass-panel p-8 text-center">
             <p className="text-sm text-slate-500">{cfg[activeTab].emptyTitle}</p>
             {activeTab === 'open' && (
-              <p className="text-[10px] text-slate-600 mt-1">Selecciona un proveedor y abre un nuevo proceso.</p>
+              <p className="text-[10px] text-slate-600 mt-1">Selecciona un cliente y abre un nuevo proceso.</p>
             )}
           </div>
         );

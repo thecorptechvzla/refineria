@@ -121,7 +121,7 @@ export default function ExportarPage() {
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-1.5 min-w-[200px]">
             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-              Proveedor
+              Cliente
             </label>
             <select
               value={filterSupplierId}
@@ -192,7 +192,7 @@ export default function ExportarPage() {
                     />
                   </th>
                   <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proceso</th>
-                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                  <th className="px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Lotes</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                   <th className="px-3 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">FA (g)</th>
@@ -240,7 +240,7 @@ export default function ExportarPage() {
         <div className="glass-panel p-12 text-center">
           <div className="flex flex-col items-center gap-3">
             <Search className="w-8 h-8 text-slate-700" />
-            <p className="text-sm text-slate-500">No hay procesos cerrados{filterSupplierId !== 'all' ? ' para este proveedor' : ''}.</p>
+            <p className="text-sm text-slate-500">No hay procesos cerrados{filterSupplierId !== 'all' ? ' para este Cliente' : ''}.</p>
           </div>
         </div>
       )}

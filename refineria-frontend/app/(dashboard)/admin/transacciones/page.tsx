@@ -140,9 +140,9 @@ export default function AdminTransaccionesPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Proveedor</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Cliente</label>
                 <select value={editSupplierId} onChange={(e) => setEditSupplierId(e.target.value)} className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none">
-                  <option value="">— Sin proveedor —</option>
+                  <option value="">— Sin Cliente —</option>
                   {suppliers?.map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
@@ -180,7 +180,7 @@ export default function AdminTransaccionesPage() {
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso</th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Pureza (‰)</th>
-                  <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                  <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                   <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
                   <th className="px-4 sm:px-5 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Acciones</th>
                 </tr>

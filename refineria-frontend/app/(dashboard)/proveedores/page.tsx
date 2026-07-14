@@ -63,7 +63,7 @@ export default function ProveedoresPage() {
           <div className="glass-panel">
             <div className="p-4 border-b border-blue-500/10 flex items-center gap-2">
               <Building className="w-4 h-4 text-blue-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Nuevo Proveedor</h2>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Nuevo Cliente</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
@@ -131,7 +131,7 @@ export default function ProveedoresPage() {
                 disabled={createSupplier.isPending}
                 className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 transition-all"
               >
-                {createSupplier.isPending ? 'Guardando...' : 'Registrar Proveedor'}
+                {createSupplier.isPending ? 'Guardando...' : 'Registrar Cliente'}
               </button>
             </form>
           </div>

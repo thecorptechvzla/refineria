@@ -329,7 +329,7 @@ export default function IngresoPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Package className="w-3 h-3 inline mr-1" />
-                  Proveedor / Empresa
+                  Cliente / Empresa
                 </label>
                 <select
                   required
@@ -337,7 +337,7 @@ export default function IngresoPage() {
                   onChange={(e) => setSupplierId(e.target.value)}
                   className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm outline-none transition-all"
                 >
-                  <option value="" disabled>Seleccionar proveedor...</option>
+                  <option value="" disabled>Seleccionar cliente...</option>
                   {suppliers?.map((s) => (
                     <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
                   ))}
@@ -504,14 +504,14 @@ export default function IngresoPage() {
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                     <Package className="w-3 h-3 inline mr-1" />
-                    Proveedor
+                    Cliente
                   </label>
                   <select
                     value={bulkSupplierId}
                     onChange={(e) => setBulkSupplierId(e.target.value)}
                     className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-slate-200 text-sm"
                   >
-                    <option value="">Seleccionar proveedor...</option>
+                    <option value="">Seleccionar cliente...</option>
                     {suppliers?.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}

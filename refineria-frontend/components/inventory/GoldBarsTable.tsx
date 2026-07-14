@@ -96,7 +96,7 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = fa
           <thead>
             <tr className="border-b border-blue-500/10">
               <th className={`${STICKY_CELL} text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500`}>Código</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500">Proveedor</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500">Cliente</th>
               {purityFirst && <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">LEY AU</th>}
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500"><span className="hidden sm:inline">Bruto (g)</span><span className="sm:hidden">BRU.</span></th>
               {!purityFirst && <th className="px-2 sm:px-3 py-2 sm:py-3 text-right text-[10px] font-semibold uppercase tracking-widest text-slate-500">LEY AU</th>}

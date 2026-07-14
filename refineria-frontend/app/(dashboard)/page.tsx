@@ -718,7 +718,7 @@ export default function DashboardPage() {
         <div className="p-4 sm:p-5 border-b border-blue-500/10">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-blue-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Volumen por Proveedor</h2>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Volumen por Cliente</h2>
           </div>
         </div>
         <div className="p-4 sm:p-5 w-full overflow-x-auto pb-4">
@@ -751,7 +751,7 @@ export default function DashboardPage() {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-blue-500/10">
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
@@ -796,7 +796,7 @@ export default function DashboardPage() {
             <thead>
               <tr className="border-b border-blue-500/10">
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
-                <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso</th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Pureza</th>
                 <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>

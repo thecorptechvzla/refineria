@@ -179,7 +179,7 @@ export default function TransaccionesPage() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
                   <Package className="w-3 h-3 inline mr-1" />
-                  Proveedor
+                  Cliente
                 </label>
                 <div className="relative" ref={supplierRef}>
                   <button
@@ -188,7 +188,7 @@ export default function TransaccionesPage() {
                     className="w-full px-3 py-2.5 bg-midnight-800 border border-blue-500/20 text-sm text-left flex items-center justify-between text-slate-200"
                   >
                     <span className={selectedSupplier ? 'text-slate-200' : 'text-slate-600'}>
-                      {selectedSupplier ? selectedSupplier.name : 'Seleccionar proveedor...'}
+                      {selectedSupplier ? selectedSupplier.name : 'Seleccionar cliente...'}
                     </span>
                     <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${supplierSelectOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -229,13 +229,13 @@ export default function TransaccionesPage() {
 
                   {!createEgreso.isPending && closedProcesses && closedProcesses.length === 0 && (
                     <div className="text-xs text-slate-500 py-4 text-center">
-                      No hay procesos cerrados para este proveedor.
+                      No hay procesos cerrados para este cliente.
                     </div>
                   )}
 
                   {!createEgreso.isPending && availableLots.length === 0 && closedProcesses && closedProcesses.length > 0 && (
                     <div className="text-xs text-slate-500 py-4 text-center">
-                      Todos los lotes de este proveedor ya fueron egresados.
+                      Todos los lotes de este cliente ya fueron egresados.
                     </div>
                   )}
 
@@ -381,7 +381,7 @@ export default function TransaccionesPage() {
                 <thead>
                   <tr className="border-b border-blue-500/10">
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Tipo</th>
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
+                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Peso Fino (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Pureza</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha</th>
