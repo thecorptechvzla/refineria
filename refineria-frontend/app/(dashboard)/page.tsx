@@ -836,7 +836,7 @@ export default function DashboardPage() {
       {/* ════════════════════════════════════════════════ */}
       {showIngresoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/80 backdrop-blur-md p-4" onClick={() => setShowIngresoModal(false)}>
-          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col glass-panel rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[95%] max-w-lg sm:max-w-4xl max-h-[85vh] flex flex-col glass-panel rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="p-4 sm:p-5 border-b border-blue-500/10 flex items-center justify-between shrink-0 bg-midnight-900/50 backdrop-blur-md rounded-t-xl">
               <div className="flex items-center gap-3 min-w-0">
@@ -854,7 +854,7 @@ export default function DashboardPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+            <div className="flex-1 flex flex-col overflow-hidden p-4 sm:p-5">
               <SupplierDirectory
                 goldBars={goldBars ?? []}
                 suppliers={suppliers}

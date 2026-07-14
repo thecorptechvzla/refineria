@@ -103,7 +103,7 @@ export function SupplierDirectory({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-0 flex-1">
       {showSearch && (
         <div className="px-4 sm:px-5 py-3 border-b border-blue-500/10 flex items-center justify-end gap-2">
           <div className="relative">
@@ -135,7 +135,7 @@ export function SupplierDirectory({
       )}
 
       {paginatedSuppliers.length > 0 ? (
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
+        <div className="flex-1 overflow-y-auto scrollbar-thin pb-40 touch-pan-y">
           {paginatedSuppliers.map((s) => {
             const supplierBars = barsBySupplier.get(s.id) ?? [];
             const barPage = supplierBarPages[s.id] ?? 1;
@@ -365,12 +365,13 @@ export function SupplierDirectory({
       )}
 
       {visibleSuppliers.length > 0 && (
-        <div className="border-t border-blue-500/10">
-          <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between bg-gradient-to-r from-midnight-800/80 to-midnight-900/80">
+        <div className="flex-shrink-0 border-t border-gold-500/30 bg-midnight-900 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+          {/* ── Desktop: horizontal row ── */}
+          <div className="hidden sm:flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5">
             <span className="text-xs font-bold text-slate-200 uppercase tracking-widest drop-shadow-sm">
               GRAN TOTAL
             </span>
-            <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-5">
               <span className="text-xs font-mono text-slate-300">
                 Bruto:{' '}
                 <span className="text-gold-400 font-bold text-sm">
@@ -378,7 +379,7 @@ export function SupplierDirectory({
                 </span>{' '}
                 <span className="text-[10px] text-slate-500">g</span>
               </span>
-              <span className="hidden sm:inline text-[10px] text-slate-600">|</span>
+              <span className="text-[10px] text-slate-600">|</span>
               <span className="text-xs font-mono text-slate-300">
                 FA:{' '}
                 <span className="text-gold-400 font-bold text-sm">
@@ -386,7 +387,7 @@ export function SupplierDirectory({
                 </span>{' '}
                 <span className="text-[10px] text-slate-500">g</span>
               </span>
-              <span className="hidden sm:inline text-[10px] text-slate-600">|</span>
+              <span className="text-[10px] text-slate-600">|</span>
               <span className="text-xs font-mono text-slate-300">
                 FE:{' '}
                 <span className="text-gold-400 font-bold text-sm">
@@ -394,7 +395,7 @@ export function SupplierDirectory({
                 </span>{' '}
                 <span className="text-[10px] text-slate-500">g</span>
               </span>
-              <span className="hidden sm:inline text-[10px] text-slate-600">|</span>
+              <span className="text-[10px] text-slate-600">|</span>
               <span className="text-xs font-mono text-slate-300">
                 R:{' '}
                 <span className="text-gold-400 font-bold text-sm">
@@ -402,6 +403,43 @@ export function SupplierDirectory({
                 </span>{' '}
                 <span className="text-[10px] text-slate-500">g</span>
               </span>
+            </div>
+          </div>
+
+          {/* ── Mobile: 2x2 grid ── */}
+          <div className="sm:hidden px-4 py-3">
+            <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-2">
+              GRAN TOTAL
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Bruto</div>
+                <div className="text-[13px] font-mono font-bold text-gold-400 leading-tight whitespace-nowrap">
+                  {formatNumber(grandTotal.grossWeight)}{' '}
+                  <span className="text-[10px] font-normal text-slate-500">g</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">FA</div>
+                <div className="text-[13px] font-mono font-bold text-gold-400 leading-tight whitespace-nowrap">
+                  {formatNumber(grandTotal.analytical)}{' '}
+                  <span className="text-[10px] font-normal text-slate-500">g</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">FE</div>
+                <div className="text-[13px] font-mono font-bold text-gold-400 leading-tight whitespace-nowrap">
+                  {formatNumber(grandTotal.expected)}{' '}
+                  <span className="text-[10px] font-normal text-slate-500">g</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">R</div>
+                <div className="text-[13px] font-mono font-bold text-gold-400 leading-tight whitespace-nowrap">
+                  {formatNumber(grandTotal.recovered)}{' '}
+                  <span className="text-[10px] font-normal text-slate-500">g</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
