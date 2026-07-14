@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { useState, FormEvent, useEffect, useMemo, Fragment } from 'react';
 import { useProcess } from '@/lib/ProcessContext';
 import { useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useDeleteGoldBar, useBulkUpload } from '@/lib/hooks/useGoldBars';
 import { getSupplierName, parseLocaleNumber, formatLocaleNumber, formatInputNumber } from '@/lib/utils';
-import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ClipboardList, CheckCircle, Package, Weight, Ruler, Crosshair, FlaskConical, Trash2, Upload, ChevronDown, Download, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 
 export default function IngresoPage() {
@@ -30,9 +30,12 @@ export default function IngresoPage() {
   const [bulkSupplierId, setBulkSupplierId] = useState('');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkError, setBulkError] = useState('');
-  const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
   const [activeSupplierTab, setActiveSupplierTab] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState('');
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (supplierId: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [supplierId]: !prev[supplierId] }));
+  };
   const bulkUpload = useBulkUpload();
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -43,7 +46,7 @@ export default function IngresoPage() {
   const pesoExceeds = pBruto > 24900;
   const leyRestriction = pLey > 0 && pLey < 850 && pBruto > 1000;
 
-  const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pLey > 0;
+  // const canSubmit = supplierId && codigo.trim().length >= 2 && pBruto > 0 && pLey > 0;
 
   useEffect(() => {
     if (pBruto > 0 && pLey > 0) {
@@ -64,7 +67,7 @@ export default function IngresoPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    // if (!canSubmit) return;
 
     const rawE = pBruto * pLey / 1000;
     const rawF = rawE * 0.99;
@@ -227,25 +230,71 @@ export default function IngresoPage() {
 
   const filteredBars = goldBars.filter((b) => {
     if (activeSupplierTab && b.supplierId !== activeSupplierTab) return false;
-    if (filterAvailable === 'available' && !b.available) return false;
-    if (filterAvailable === 'in_lot' && b.available) return false;
     if (searchCode && !b.code.toLowerCase().includes(searchCode.toLowerCase())) return false;
     return true;
   });
 
-  const extractCodeNumber = (code: string): number => {
-    const match = code.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-  };
-
   const sortedBars = useMemo(() => {
-    return [...filteredBars].sort((a, b) => extractCodeNumber(a.code) - extractCodeNumber(b.code));
+    return [...filteredBars].sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime());
   }, [filteredBars]);
 
   const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.max(1, Math.ceil(sortedBars.length / ITEMS_PER_PAGE));
+
+  // Group ALL sorted bars (group-aware pagination: groups are never split across pages)
+  const allGroupedBars = useMemo(() => {
+    const map = new Map<string, { supplierId: string; supplierName: string; bars: typeof sortedBars }>();
+    for (const bar of sortedBars) {
+      if (!map.has(bar.supplierId)) {
+        map.set(bar.supplierId, {
+          supplierId: bar.supplierId,
+          supplierName: suppliers ? getSupplierName(suppliers, bar.supplierId) : bar.supplierId,
+          bars: [],
+        });
+      }
+      map.get(bar.supplierId)!.bars.push(bar);
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const aMax = Math.max(...a.bars.map((bar) => new Date(bar.registrationDate).getTime()));
+      const bMax = Math.max(...b.bars.map((bar) => new Date(bar.registrationDate).getTime()));
+      return bMax - aMax;
+    });
+  }, [sortedBars, suppliers]);
+
+  // Distribute groups across pages — page boundaries fall between groups, never within
+  const groupPages = useMemo(() => {
+    const pages: number[][] = [];
+    let cur: number[] = [];
+    let count = 0;
+    allGroupedBars.forEach((g, idx) => {
+      if (count + g.bars.length > ITEMS_PER_PAGE && cur.length > 0) {
+        pages.push(cur);
+        cur = [];
+        count = 0;
+      }
+      cur.push(idx);
+      count += g.bars.length;
+    });
+    if (cur.length > 0) pages.push(cur);
+    return pages;
+  }, [allGroupedBars]);
+
+  const isTodosView = activeSupplierTab === null;
+  const totalPagesFlat = Math.max(1, Math.ceil(sortedBars.length / ITEMS_PER_PAGE));
+  const totalPagesGrouped = Math.max(1, groupPages.length);
+  const totalPages = isTodosView ? totalPagesGrouped : totalPagesFlat;
   const currentPageSafe = Math.min(currentPage, totalPages);
-  const paginatedBars = sortedBars.slice((currentPageSafe - 1) * ITEMS_PER_PAGE, currentPageSafe * ITEMS_PER_PAGE);
+
+  // For TODOS view: complete groups on the current page
+  const paginatedGroups = useMemo(() => {
+    if (!isTodosView) return [];
+    const indices = groupPages[currentPageSafe - 1] || [];
+    return indices.map((idx) => allGroupedBars[idx]);
+  }, [groupPages, currentPageSafe, allGroupedBars, isTodosView]);
+
+  // For specific-tab view: simple bar-level slice pagination
+  const paginatedBars = isTodosView
+    ? []
+    : sortedBars.slice((currentPageSafe - 1) * ITEMS_PER_PAGE, currentPageSafe * ITEMS_PER_PAGE);
 
   const totals = useMemo(() => ({
     grossWeight: filteredBars.reduce((s, b) => s + b.grossWeight, 0),
@@ -457,7 +506,7 @@ export default function IngresoPage() {
 
               <button
                 type="submit"
-                disabled={!canSubmit}
+                // disabled={!canSubmit}
                 className="w-full py-2.5 bg-gold-500 text-midnight-900 text-xs font-bold uppercase tracking-widest glow-gold-sm hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <span className="flex items-center justify-center gap-2">
@@ -555,15 +604,6 @@ export default function IngresoPage() {
                   placeholder="Buscar por código..."
                   className="w-36 px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] placeholder-slate-600 outline-none transition-all focus:border-blue-500/40"
                 />
-                <select
-                  value={filterAvailable}
-                  onChange={(e) => { setFilterAvailable(e.target.value as 'all' | 'available' | 'in_lot'); setCurrentPage(1); }}
-                  className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
-                >
-                  <option value="all">Todos</option>
-                  <option value="available">Disponibles</option>
-                  <option value="in_lot">En Lote</option>
-                </select>
                 <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
                   {String(filteredBars.length).padStart(2, '0')}
                 </span>
@@ -608,7 +648,7 @@ export default function IngresoPage() {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
-                    <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
+                    <th className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
@@ -622,69 +662,151 @@ export default function IngresoPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedBars.length > 0 ? (
-                    paginatedBars.map((bar) => (
-                      <tr key={bar.id} className="terminal-row">
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
-                          {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
-                        </td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
-                            bar.available
-                              ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
-                              : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
-                          }`}>
-                            {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
-                          </span>
-                        </td>
-                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
-                          {confirmDeleteId === bar.id ? (
-                            <div className="flex items-center gap-1 justify-end">
-                              <button
-                                onClick={() => handleDeleteBar(bar.id)}
-                                className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
-                              >
-                                Confirmar
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteId(null)}
-                                className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setConfirmDeleteId(bar.id)}
-                              className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                              title="Eliminar barra"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                  {isTodosView ? (
+                    paginatedGroups.length > 0 ? (
+                      paginatedGroups.map((group) => (
+                        <Fragment key={group.supplierId}>
+                          <tr
+                            className="bg-blue-500/[0.08] cursor-pointer hover:bg-blue-500/[0.12] transition-colors select-none border-b border-blue-500/10"
+                            onClick={() => toggleGroup(group.supplierId)}
+                          >
+                            <td colSpan={11} className="px-4 sm:px-5 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{group.supplierName}</span>
+                                <span className="text-[10px] font-mono text-slate-500">— {group.bars.length} BARRAS</span>
+                                <ChevronDown
+                                  className={`w-3 h-3 text-slate-500 ml-auto transition-transform duration-200 ${
+                                    collapsedGroups[group.supplierId] ? '' : 'rotate-180'
+                                  }`}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                          {!collapsedGroups[group.supplierId] && group.bars.map((bar) => (
+                            <tr key={bar.id} className="terminal-row">
+                              <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
+                                {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
+                              </td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
+                                  bar.available
+                                    ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
+                                    : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
+                                }`}>
+                                  {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
+                                </span>
+                              </td>
+                              <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
+                                {confirmDeleteId === bar.id ? (
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <button
+                                      onClick={() => handleDeleteBar(bar.id)}
+                                      className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                                    >
+                                      Confirmar
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setConfirmDeleteId(bar.id)}
+                                    className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    title="Eliminar barra"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </Fragment>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
+                          No hay barras registradas.
                         </td>
                       </tr>
-                    ))
+                    )
                   ) : (
-                    <tr>
-                      <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
-                        No hay barras registradas.
-                      </td>
-                    </tr>
+                    paginatedBars.length > 0 ? (
+                      paginatedBars.map((bar) => (
+                        <tr key={bar.id} className="terminal-row">
+                          <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
+                            {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
+                          </td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.grossWeight)}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.ley != null ? formatLocaleNumber(bar.ley) : '—'}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.analytical)}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.expected)}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{formatLocaleNumber(bar.recovered)}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.leyAg != null ? formatLocaleNumber(bar.leyAg) : '—'}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.analyticalAg != null ? formatLocaleNumber(bar.analyticalAg) : '—'}</td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${
+                              bar.available
+                                ? 'text-gold-500 bg-gold-500/10 border border-gold-500/20'
+                                : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
+                            }`}>
+                              {bar.available ? 'DISPONIBLE' : 'EN LOTE'}
+                            </span>
+                          </td>
+                          <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
+                            {confirmDeleteId === bar.id ? (
+                              <div className="flex items-center gap-1 justify-end">
+                                <button
+                                  onClick={() => handleDeleteBar(bar.id)}
+                                  className="px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all"
+                                >
+                                  Confirmar
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="px-2 py-1 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] uppercase tracking-wider hover:bg-slate-700 transition-all"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteId(bar.id)}
+                                className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                title="Eliminar barra"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={11} className="px-5 py-8 text-center text-sm text-slate-500">
+                          No hay barras registradas.
+                        </td>
+                      </tr>
+                    )
                   )}
                 </tbody>
                 {filteredBars.length > 0 && (
                   <tfoot>
                     <tr className="border-t border-blue-500/10 bg-midnight-800/50">
-                      <td colSpan={2} className="px-4 sm:px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Totales</td>
+                      <td colSpan={2} className="sticky left-0 z-10 bg-midnight-800/50 px-4 sm:px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Totales</td>
                       <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.grossWeight)}</td>
                       <td className="px-4 sm:px-5 py-3"></td>
                       <td className="px-4 sm:px-5 py-3 text-sm font-mono text-slate-200">{formatLocaleNumber(totals.analytical)}</td>
