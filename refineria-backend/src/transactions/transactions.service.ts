@@ -78,7 +78,7 @@ export class TransactionsService {
         weight: dto.weight!,
         weightUnit: dto.weightUnit!,
         purity: dto.purity!,
-        supplierId: dto.type === 'OUT' ? undefined : dto.supplierId,
+        supplierId: dto.supplierId,
       },
     });
   }
@@ -128,7 +128,7 @@ export class TransactionsService {
           type: 'OUT',
           weight: lot.recovered,
           weightUnit: 'g',
-          purity: avgPurity,
+          purity: 1,
           supplierId: lot.process.supplierId,
         },
       }),

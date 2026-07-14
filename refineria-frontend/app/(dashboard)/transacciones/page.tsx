@@ -3,12 +3,13 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSuppliers } from '@/lib/hooks/useSuppliers';
 import { useClosedProcessesBySupplier } from '@/lib/hooks/useProcesses';
-import { useCreateEgresoLot } from '@/lib/hooks/useTransactions';
+import { useCreateEgresoLot, useCreateTransaction } from '@/lib/hooks/useTransactions';
 import { useTransactions } from '@/lib/hooks/useTransactions';
 import { formatNumber, formatLocaleNumber, formatDate } from '@/lib/utils';
 import { ArrowLeftRight, CheckCircle, Crosshair, Package, ChevronDown, Check, AlertTriangle } from 'lucide-react';
 import ShakeAlert from '@/components/ShakeAlert';
 import type { ProcessLot, Process } from '@/types/refinery';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function TransaccionesPage() {
   const { data: suppliers } = useSuppliers();
@@ -25,6 +26,9 @@ export default function TransaccionesPage() {
   const [expandedProcess, setExpandedProcess] = useState<string | null>(null);
   const [showAuditSheet, setShowAuditSheet] = useState(false);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showGeneralEgresoConfirm, setShowGeneralEgresoConfirm] = useState(false);
+  const queryClient = useQueryClient();
+  const createTransaction = useCreateTransaction();
 
   const supplierRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +113,21 @@ export default function TransaccionesPage() {
         .reduce((sum, { lot }) => sum + (lot.recovered ?? 0) - lot.egresadoG, 0),
     [availableLots, selectedLotIds],
   );
+
+  const supplierGeneralBalance = useMemo(() => {
+    if (!closedProcesses || !transactions || !selectedSupplierId) return 0;
+    const totalRecuperadoR = closedProcesses.reduce(
+      (sum, p) => sum + p.lots.reduce((s, lot) => s + (lot.recovered ?? 0), 0),
+      0,
+    );
+    const totalOutFine = transactions
+      .filter((tx) => tx.type === 'OUT' && tx.supplierId === selectedSupplierId)
+      .reduce((sum, tx) => {
+        const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
+        return sum + grams * tx.purity;
+      }, 0);
+    return Math.max(0, totalRecuperadoR - totalOutFine);
+  }, [closedProcesses, transactions, selectedSupplierId]);
 
   const selectedProcessesSummary = useMemo(() => {
     const map = new Map<string, { process: Process; lots: typeof availableLots }>();
@@ -234,8 +253,31 @@ export default function TransaccionesPage() {
                   )}
 
                   {!createEgreso.isPending && availableLots.length === 0 && closedProcesses && closedProcesses.length > 0 && (
-                    <div className="text-xs text-slate-500 py-4 text-center">
-                      Todos los lotes de este cliente ya fueron egresados.
+                    <div>
+                      <div className="text-xs text-slate-500 py-4 text-center">
+                        Todos los lotes de este cliente ya fueron egresados.
+                      </div>
+                      {supplierGeneralBalance > 0 && (
+                        <div className="border-t border-gold-500/20 pt-4 mt-2">
+                          <div className="glass-panel border border-gold-500/20 p-3 space-y-2">
+                            <div className="flex items-center gap-2 text-amber-400">
+                              <AlertTriangle className="w-4 h-4" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">Saldo Pendiente General</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500">
+                              Este cliente tiene un balance global de{' '}
+                              <span className="text-gold-400 font-mono font-bold">{formatLocaleNumber(supplierGeneralBalance)} g</span>{' '}
+                              que no está asignado a ningún lote específico.
+                            </p>
+                            <button
+                              onClick={() => setShowGeneralEgresoConfirm(true)}
+                              className="w-full py-2 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-amber-500/30 transition-all glow-gold-sm active:scale-95"
+                            >
+                              Egresar Saldo Pendiente General ({formatLocaleNumber(supplierGeneralBalance)} g)
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -337,6 +379,27 @@ export default function TransaccionesPage() {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {!createEgreso.isPending && availableLots.length > 0 && supplierGeneralBalance > 0 && (
+                    <div className="border-t border-gold-500/20 pt-3 mt-1">
+                      <div className="glass-panel border border-gold-500/20 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Saldo Pendiente General</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500">
+                          Balance global no asignado a lotes:{' '}
+                          <span className="text-gold-400 font-mono font-bold">{formatLocaleNumber(supplierGeneralBalance)} g</span>
+                        </p>
+                        <button
+                          onClick={() => setShowGeneralEgresoConfirm(true)}
+                          className="w-full py-2 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-amber-500/30 transition-all glow-gold-sm active:scale-95"
+                        >
+                          Egresar Saldo Pendiente General ({formatLocaleNumber(supplierGeneralBalance)} g)
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -496,6 +559,67 @@ export default function TransaccionesPage() {
                 {isBulkProcessing
                   ? 'Procesando...'
                   : `Confirmar Salida (${selectedLotIds.size})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGeneralEgresoConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-midnight-900/70 backdrop-blur-sm"
+            onClick={() => setShowGeneralEgresoConfirm(false)}
+          />
+          <div className="relative w-full max-w-md glass-panel rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-gold-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Confirmar Egreso de Saldo Pendiente
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400">
+              Se registrará una salida de{' '}
+              <span className="text-gold-400 font-mono font-bold">
+                {formatLocaleNumber(supplierGeneralBalance)} g
+              </span>{' '}
+              para <span className="text-slate-200 font-semibold">{selectedSupplier?.name ?? 'este cliente'}</span>.
+              Esto actualizará el balance del cliente y la bóveda del Dashboard.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowGeneralEgresoConfirm(false)}
+                className="flex-1 py-3 border border-blue-500/20 text-slate-400 text-xs font-bold uppercase rounded-lg hover:bg-midnight-700/50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await createTransaction.mutateAsync({
+                      type: 'OUT' as const,
+                      weight: supplierGeneralBalance,
+                      weightUnit: 'g' as const,
+                      purity: 1,
+                      supplierId: selectedSupplierId,
+                    });
+                    setShowGeneralEgresoConfirm(false);
+                    setSuccessMessage(
+                      `Egreso de ${formatLocaleNumber(supplierGeneralBalance)} g registrado correctamente`,
+                    );
+                    setTimeout(() => setSuccessMessage(''), 4000);
+                    queryClient.invalidateQueries({ queryKey: ['dashboard', 'metrics'] });
+                  } catch {
+                    setErrorMessage('Error al registrar el egreso general');
+                    setShakeKey((k) => k + 1);
+                  }
+                }}
+                disabled={createTransaction.isPending}
+                className="flex-1 py-3 bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs font-bold uppercase rounded-lg hover:bg-gold-500/30 transition-all glow-gold-sm disabled:opacity-50"
+              >
+                {createTransaction.isPending
+                  ? 'Procesando...'
+                  : `Egresar ${formatLocaleNumber(supplierGeneralBalance)} g`}
               </button>
             </div>
           </div>
