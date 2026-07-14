@@ -57,9 +57,9 @@ Abrir [http://localhost:3000](http://localhost:3000). El backend debe estar corr
 
 ## Funcionalidades
 
-- **Dashboard Ejecutivo** — KPIs (ingresos/egresos/balance), métricas de colaboradores, gráfico de volumen por proveedor (Recharts), feed de últimas transacciones.
+- **Dashboard Ejecutivo** — KPIs (ingresos/egresos/balance), métricas de colaboradores, gráfico de volumen por cliente (Recharts), feed de últimas transacciones.
 - **Registro de Operaciones** — Formulario de ingreso/egreso con cálculo automático de peso fino, historial desde la API.
-- **Directorio de Proveedores** — Registro y listado de empresas proveedoras vía API.
+- **Directorio de Clientes** — Registro y listado de empresas clientes vía API.
 
 ## Arquitectura
 

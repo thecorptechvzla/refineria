@@ -18,9 +18,8 @@ export type SupplierChartRow = {
   boveda: number;
   proceso: number;
   porRefinar: number;
-  grossIn: number;
-  fineIn: number;
-  fineOut: number;
+  recuperadoR: number;
+  egresos: number;
   balance: number;
 };
 

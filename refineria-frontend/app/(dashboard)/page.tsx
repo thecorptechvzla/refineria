@@ -753,8 +753,8 @@ export default function DashboardPage() {
                 <tr className="border-b border-blue-500/10">
                   <th className="px-4 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Cliente</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ingreso Bruto (g)</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Oro Fino (g)</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos Finos (g)</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Recuperado R (g)</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Egresos (g)</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Balance (g)</th>
                 </tr>
               </thead>
@@ -763,11 +763,11 @@ export default function DashboardPage() {
                   (metrics?.supplierChartData ?? []).map((row) => (
                     <tr key={row.id} className="terminal-row">
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">{row.name}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatLocaleNumber(row.grossIn)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatLocaleNumber(row.fineIn)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatLocaleNumber(row.fineOut)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-gold-500">{formatNumber(row.ingresado)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-amber-400">{formatNumber(row.recuperadoR)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-mono text-blue-400">{formatNumber(row.egresos)}</td>
                       <td className={`px-4 py-3 whitespace-nowrap text-right text-sm font-mono ${row.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {row.balance >= 0 ? '+' : ''}{formatLocaleNumber(row.balance)}
+                        {row.balance >= 0 ? '+' : ''}{formatNumber(row.balance)}
                       </td>
                     </tr>
                   ))

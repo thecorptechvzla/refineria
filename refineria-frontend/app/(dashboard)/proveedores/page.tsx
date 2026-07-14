@@ -28,7 +28,7 @@ export default function ProveedoresPage() {
 
     try {
       await createSupplier.mutateAsync({ name: name.toUpperCase().trim(), rif, contactInfo: contactInfo.toUpperCase() });
-      setSuccessMessage('Proveedor registrado con éxito.');
+      setSuccessMessage('Cliente registrado con éxito.');
       setName('');
       setRif('');
       setContactInfo('');

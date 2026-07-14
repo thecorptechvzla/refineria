@@ -8,8 +8,9 @@ export class DashboardService {
   async getMetrics(supplierId?: string, startDate?: string, endDate?: string) {
     const dateRange = this.parseDateRange(startDate, endDate);
 
+    const oroIngresado = await this.getOroIngresado(supplierId, dateRange);
+
     const [
-      oroIngresado,
       oroEnBoveda,
       oroEnProceso,
       faltaPorRefinar,
@@ -20,10 +21,9 @@ export class DashboardService {
       totalBarCount,
       availableBarCount,
     ] = await Promise.all([
-      this.getOroIngresado(supplierId, dateRange),
       this.getOroEnBoveda(supplierId, dateRange),
       this.getOroEnProceso(supplierId, dateRange),
-      this.getOroPorProcesar(supplierId, dateRange),
+      this.getOroPorProcesar(supplierId, dateRange, oroIngresado),
       this.getProcessCounts(supplierId, dateRange),
       this.getProcessSummary(supplierId, dateRange),
       this.getSupplierChartData(supplierId, dateRange),
@@ -114,7 +114,7 @@ export class DashboardService {
     supplierId?: string,
     dateRange?: { gte?: Date; lte?: Date },
   ) {
-    const processWhere: any = { status: { in: ['open', 'closed'] } };
+    const processWhere: any = { status: 'closed' };
     if (supplierId) processWhere.supplierId = supplierId;
     if (dateRange?.gte || dateRange?.lte) {
       processWhere.createdAt = {};
@@ -122,25 +122,47 @@ export class DashboardService {
       if (dateRange.lte) processWhere.createdAt.lte = dateRange.lte;
     }
 
-    const result = await this.prisma.processLot.aggregate({
-      _sum: { recovered: true },
-      where: { process: processWhere },
-    });
-    return Number((result._sum.recovered ?? 0).toFixed(2));
+    const [recoveredResult, outTransactions] = await Promise.all([
+      this.prisma.processLot.aggregate({
+        _sum: { recovered: true },
+        where: { process: processWhere },
+      }),
+      this.prisma.transaction.findMany({
+        where: {
+          type: 'OUT',
+          ...this.buildTransactionWhere(supplierId, dateRange),
+        },
+      }),
+    ]);
+
+    const recovered = Number((recoveredResult._sum.recovered ?? 0).toFixed(2));
+    const outFine = outTransactions.reduce((sum, tx) => {
+      const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
+      return sum + grams * tx.purity;
+    }, 0);
+    return Number(Math.max(0, recovered - outFine).toFixed(2));
   }
 
   private async getOroPorProcesar(
     supplierId?: string,
     dateRange?: { gte?: Date; lte?: Date },
+    oroIngresadoTotal?: number,
   ) {
+    const allLots = await this.prisma.processLot.findMany({
+      select: { barIds: true },
+    });
+    const allBarIds = [...new Set(allLots.flatMap((l) => l.barIds))];
+    if (allBarIds.length === 0) return oroIngresadoTotal ?? 0;
+
     const result = await this.prisma.goldBar.aggregate({
       _sum: { grossWeight: true },
       where: {
+        id: { in: allBarIds },
         ...this.buildGoldBarWhere(supplierId, dateRange),
-        available: true,
       },
     });
-    return result._sum.grossWeight ?? 0;
+    const enProcesos = result._sum.grossWeight ?? 0;
+    return Number(Math.max(0, (oroIngresadoTotal ?? 0) - enProcesos).toFixed(2));
   }
 
   private async getOroEnProceso(
@@ -207,88 +229,91 @@ export class DashboardService {
     supplierId?: string,
     dateRange?: { gte?: Date; lte?: Date },
   ) {
-    const where = supplierId ? { id: supplierId } : {};
+    const supplierWhere = supplierId ? { id: supplierId } : {};
     const suppliers = await this.prisma.supplier.findMany({
-      where,
+      where: supplierWhere,
       select: { id: true, name: true },
     });
 
-    const [transactionMap, rows] = await Promise.all([
-      this.getTransactionDataBySupplier(supplierId, dateRange),
-      Promise.all(
-        suppliers.map(async (s) => {
-          const [ingresado, boveda, proceso, porRefinar] = await Promise.all([
-            this.getOroIngresado(s.id, dateRange),
-            this.getOroEnBoveda(s.id, dateRange),
-            this.getOroEnProceso(s.id, dateRange),
-            this.getOroPorProcesar(s.id, dateRange),
-          ]);
-          return {
-            id: s.id,
-            name: s.name,
-            ingresado,
-            boveda,
-            proceso,
-            porRefinar,
-          };
-        }),
-      ),
-    ]);
+    const dateFilter =
+      dateRange?.gte || dateRange?.lte
+        ? {
+            createdAt: {
+              ...(dateRange.gte ? { gte: dateRange.gte } : {}),
+              ...(dateRange.lte ? { lte: dateRange.lte } : {}),
+            },
+          }
+        : {};
 
-    return rows
-      .filter(
-        (r) =>
-          r.ingresado > 0 || r.boveda > 0 || r.proceso > 0 || r.porRefinar > 0,
-      )
-      .map((r) => {
-        const tx = transactionMap.get(r.id);
-        const grossIn = Number((tx?.grossIn ?? 0).toFixed(2));
-        const fineIn = Number((tx?.fineIn ?? 0).toFixed(2));
-        const fineOut = Number((tx?.fineOut ?? 0).toFixed(2));
+    const rows = await Promise.all(
+      suppliers.map(async (s) => {
+        // ── INGRESO BRUTO ──
+        const ingresado = await this.getOroIngresado(s.id, dateRange);
+
+        // ── RECUPERADO R — recovered from CLOSED processes ──
+        const closedProcesses = await this.prisma.process.findMany({
+          where: { supplierId: s.id, status: 'closed', ...dateFilter },
+          select: { lots: { select: { recovered: true } } },
+        });
+        const recuperadoR = closedProcesses.reduce(
+          (sum, p) =>
+            sum + p.lots.reduce((s2, lot) => s2 + (lot.recovered ?? 0), 0),
+          0,
+        );
+
+        // ── EGRESOS — OUT transactions ──
+        const outTxns = await this.prisma.transaction.findMany({
+          where: {
+            type: 'OUT',
+            supplierId: s.id,
+            ...(dateRange?.gte || dateRange?.lte
+              ? {
+                  date: {
+                    ...(dateRange.gte ? { gte: dateRange.gte } : {}),
+                    ...(dateRange.lte ? { lte: dateRange.lte } : {}),
+                  },
+                }
+              : {}),
+          },
+        });
+        const egresos = outTxns.reduce((sum, tx) => {
+          const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
+          return sum + grams * tx.purity;
+        }, 0);
+
+        // ── BALANCE ──
+        const balance = Number((recuperadoR - egresos).toFixed(2));
+
+        // ── KPI fields for bar chart (backward compat) ──
+        const [boveda, proceso, porRefinar] = await Promise.all([
+          this.getOroEnBoveda(s.id, dateRange),
+          this.getOroEnProceso(s.id, dateRange),
+          this.getOroPorProcesar(s.id, dateRange, ingresado),
+        ]);
+
         return {
-          id: r.id,
-          name: r.name,
-          ingresado: Number(r.ingresado.toFixed(2)),
-          boveda: Number(r.boveda.toFixed(2)),
-          proceso: Number(r.proceso.toFixed(2)),
-          porRefinar: Number(r.porRefinar.toFixed(2)),
-          grossIn,
-          fineIn,
-          fineOut,
-          balance: Number((fineIn - fineOut).toFixed(2)),
+          id: s.id,
+          name: s.name,
+          ingresado: Number(ingresado.toFixed(2)),
+          boveda: Number(boveda.toFixed(2)),
+          proceso: Number(proceso.toFixed(2)),
+          porRefinar: Number((porRefinar ?? 0).toFixed(2)),
+          recuperadoR: Number(recuperadoR.toFixed(2)),
+          egresos: Number(egresos.toFixed(2)),
+          balance,
         };
-      });
-  }
+      }),
+    );
 
-  private async getTransactionDataBySupplier(
-    supplierId?: string,
-    dateRange?: { gte?: Date; lte?: Date },
-  ) {
-    const where = this.buildTransactionWhere(supplierId, dateRange);
-    const transactions = await this.prisma.transaction.findMany({
-      where,
-      include: { supplier: { select: { name: true } } },
-    });
-
-    const map = new Map<
-      string,
-      { grossIn: number; fineIn: number; fineOut: number }
-    >();
-    for (const tx of transactions) {
-      if (!tx.supplierId) continue;
-      const grams = tx.weightUnit === 'kg' ? tx.weight * 1000 : tx.weight;
-      if (!map.has(tx.supplierId)) {
-        map.set(tx.supplierId, { grossIn: 0, fineIn: 0, fineOut: 0 });
-      }
-      const entry = map.get(tx.supplierId)!;
-      if (tx.type === 'IN') {
-        entry.grossIn += grams;
-        entry.fineIn += grams * tx.purity;
-      } else if (tx.type === 'OUT') {
-        entry.fineOut += grams;
-      }
-    }
-    return map;
+    return rows.filter(
+      (r) =>
+        r.ingresado > 0 ||
+        r.boveda > 0 ||
+        r.proceso > 0 ||
+        r.porRefinar > 0 ||
+        r.recuperadoR > 0 ||
+        r.egresos > 0,
+    );
   }
 
   private async getRecentTransactions(
