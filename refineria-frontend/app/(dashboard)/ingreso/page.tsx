@@ -648,7 +648,7 @@ export default function IngresoPage() {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-blue-500/10">
-                    <th className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Código</th>
+                    <th className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">Código</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Proveedor</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Bruto (g)</th>
                     <th className="px-4 sm:px-5 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Ley Au (‰)</th>
@@ -685,7 +685,7 @@ export default function IngresoPage() {
                           </tr>
                           {!collapsedGroups[group.supplierId] && group.bars.map((bar) => (
                             <tr key={bar.id} className="terminal-row">
-                              <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
+                              <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">{bar.code}</td>
                               <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
                                 {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
                               </td>
@@ -746,7 +746,7 @@ export default function IngresoPage() {
                     paginatedBars.length > 0 ? (
                       paginatedBars.map((bar) => (
                         <tr key={bar.id} className="terminal-row">
-                          <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200">{bar.code}</td>
+                          <td className="sticky left-0 z-10 bg-midnight-900 px-4 sm:px-5 py-3 whitespace-nowrap text-sm font-mono text-slate-200 border-r border-blue-500/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">{bar.code}</td>
                           <td className="px-4 sm:px-5 py-3 whitespace-nowrap text-sm text-slate-300">
                             {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
                           </td>

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { getSupplierName, formatNumber } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import type { GoldBar } from '@/types/refinery';
 import type { Supplier } from '@/types';
 
@@ -11,36 +11,69 @@ interface GoldBarsTableProps {
   suppliers: Supplier[] | undefined;
   isLoading?: boolean;
   purityFirst?: boolean;
+  filterSupplierId?: string;
 }
 
-export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = false }: GoldBarsTableProps) {
-  const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'in_lot'>('all');
-  const [supplierId, setSupplierId] = useState('');
+export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = false, filterSupplierId }: GoldBarsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const extractCodeNumber = (code: string): number => {
-    const match = code.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-  };
-
+  /* ── Filter ── */
   const filteredBars = useMemo(() => {
     return goldBars.filter((b) => {
-      if (supplierId && b.supplierId !== supplierId) return false;
-      if (filterAvailable === 'available' && !b.available) return false;
-      if (filterAvailable === 'in_lot' && b.available) return false;
+      if (filterSupplierId && b.supplierId !== filterSupplierId) return false;
       return true;
     });
-  }, [goldBars, supplierId, filterAvailable]);
+  }, [goldBars, filterSupplierId]);
 
-  const sortedBars = useMemo(() => {
-    return [...filteredBars].sort((a, b) => extractCodeNumber(a.code) - extractCodeNumber(b.code));
-  }, [filteredBars]);
+  /* ── Group by supplier, order blocks by newest bar, bars newest-first ── */
+  const allGroupedBars = useMemo(() => {
+    const map = new Map<string, { supplierId: string; supplierName: string; bars: GoldBar[] }>();
+    for (const bar of filteredBars) {
+      if (!map.has(bar.supplierId)) {
+        map.set(bar.supplierId, {
+          supplierId: bar.supplierId,
+          supplierName: suppliers ? getSupplierName(suppliers, bar.supplierId) : bar.supplierId,
+          bars: [],
+        });
+      }
+      map.get(bar.supplierId)!.bars.push(bar);
+    }
+    // Within each group, sort newest-first
+    for (const group of map.values()) {
+      group.bars.sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime());
+    }
+    // Sort groups by their most recent bar's date
+    return Array.from(map.values()).sort((a, b) => {
+      const aMax = new Date(a.bars[0].registrationDate).getTime();
+      const bMax = new Date(b.bars[0].registrationDate).getTime();
+      return bMax - aMax;
+    });
+  }, [filteredBars, suppliers]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedBars.length / ITEMS_PER_PAGE));
+  /* ── Group-aware pagination ── */
+  const groupPages = useMemo(() => {
+    const pages: number[][] = [];
+    let cur: number[] = [];
+    let count = 0;
+    allGroupedBars.forEach((g, idx) => {
+      if (count + g.bars.length > ITEMS_PER_PAGE && cur.length > 0) {
+        pages.push(cur);
+        cur = [];
+        count = 0;
+      }
+      cur.push(idx);
+      count += g.bars.length;
+    });
+    if (cur.length > 0) pages.push(cur);
+    return pages;
+  }, [allGroupedBars]);
+
+  const totalPages = Math.max(1, groupPages.length);
   const currentPageSafe = Math.min(currentPage, totalPages);
-  const paginatedBars = sortedBars.slice((currentPageSafe - 1) * ITEMS_PER_PAGE, currentPageSafe * ITEMS_PER_PAGE);
+  const paginatedGroups = (groupPages[currentPageSafe - 1] || []).map((idx) => allGroupedBars[idx]);
 
+  /* ── Totals (across all filtered bars) ── */
   const totals = useMemo(() => ({
     grossWeight: filteredBars.reduce((s, b) => s + b.grossWeight, 0),
     analytical: filteredBars.reduce((s, b) => s + b.analytical, 0),
@@ -52,30 +85,11 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = fa
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <select
-          value={filterAvailable}
-          onChange={(e) => { setFilterAvailable(e.target.value as 'all' | 'available' | 'in_lot'); setCurrentPage(1); }}
-          className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
-        >
-          <option value="all">Todos</option>
-          <option value="available">Disponibles</option>
-          <option value="in_lot">En Lote</option>
-        </select>
-        <select
-          value={supplierId}
-          onChange={(e) => { setSupplierId(e.target.value); setCurrentPage(1); }}
-          className="px-2 py-1.5 bg-midnight-800 border border-blue-500/20 text-slate-400 text-[10px] outline-none"
-        >
-          <option value="">Todos los proveedores</option>
-          {suppliers?.map((s) => (
-            <option key={s.id} value={s.id} className="bg-midnight-800">{s.name}</option>
-          ))}
-        </select>
-        <span className="text-[10px] font-mono text-slate-500 bg-blue-500/10 px-2 py-0.5 border border-blue-500/10">
-          {String(filteredBars.length).padStart(2, '0')}
-        </span>
-      </div>
+      {filterSupplierId && (
+        <div className="mb-3 text-[10px] text-amber-400 font-semibold uppercase tracking-widest">
+          Filtrado por: {suppliers ? getSupplierName(suppliers, filterSupplierId) : filterSupplierId}
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-xs sm:text-sm">
@@ -94,19 +108,20 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = fa
           </thead>
           <tbody>
             {/* Totals row — top of table */}
-              {filteredBars.length > 0 && (
-                <tr className="border-b-2 border-gold-500/30 bg-midnight-900">
-                  <td className={`${STICKY_CELL} text-xs sm:text-sm font-bold text-gold-500`}>Totales</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
-                  {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.grossWeight)}</td>
-                  {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.analytical, 1)}</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.expected, 1)}</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.recovered, 1)}</td>
-                  <td />
-                </tr>
-              )}
+            {filteredBars.length > 0 && (
+              <tr className="border-b-2 border-gold-500/30 bg-midnight-900">
+                <td className={`${STICKY_CELL} text-xs sm:text-sm font-bold text-gold-500`}>Totales</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-500">{filteredBars.length} barras</td>
+                {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.grossWeight)}</td>
+                {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-500" />}
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.analytical, 1)}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.expected, 1)}</td>
+                <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono font-bold text-gold-500">{formatNumber(totals.recovered, 1)}</td>
+                <td />
+              </tr>
+            )}
+
             {isLoading ? (
               <tr>
                 <td colSpan={purityFirst ? 8 : 7} className="px-4 py-12 text-center">
@@ -116,36 +131,58 @@ export function GoldBarsTable({ goldBars, suppliers, isLoading, purityFirst = fa
                   </div>
                 </td>
               </tr>
-            ) : paginatedBars.length === 0 ? (
+            ) : paginatedGroups.length === 0 && filteredBars.length === 0 ? (
               <tr>
                 <td colSpan={purityFirst ? 8 : 7} className="px-4 py-12 text-center text-xs text-slate-500">No hay barras registradas.</td>
               </tr>
             ) : (
-              paginatedBars.map((bar) => (
-                <tr key={bar.id} className="terminal-row">
-                  <td className={`${STICKY_CELL} whitespace-nowrap text-xs sm:text-sm font-mono text-slate-200`}>
-                    {bar.code}
-                  </td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-300">
-                    {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
-                  </td>
-                  {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.grossWeight)}</td>
-                  {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.analytical, 1)}</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.expected, 1)}</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.recovered, 1)}</td>
-                  <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right">
-                    <span className={`inline-block px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${
-                      bar.available
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    }`}>
-                      {bar.available ? 'Disponible' : 'En Proceso'}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              <>
+                {filteredBars.length > 0 && paginatedGroups.length === 0 && (
+                  <tr>
+                    <td colSpan={purityFirst ? 8 : 7} className="px-4 py-12 text-center text-xs text-slate-500">No hay barras en esta página.</td>
+                  </tr>
+                )}
+                {paginatedGroups.length > 0 && paginatedGroups.map((group) => (
+                  <Fragment key={group.supplierId}>
+                    {/* Group header */}
+                    <tr className="bg-blue-500/[0.08] border-b border-blue-500/10">
+                      <td colSpan={purityFirst ? 8 : 7} className="px-2 sm:px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{group.supplierName}</span>
+                          <span className="text-[10px] font-mono text-slate-500">— {group.bars.length} BARRAS</span>
+                        </div>
+                      </td>
+                    </tr>
+                    {/* Bars */}
+                    {group.bars.map((bar) => (
+                      <tr key={bar.id} className="terminal-row">
+                        <td className={`${STICKY_CELL} whitespace-nowrap text-xs sm:text-sm font-mono text-slate-200`}>
+                          {bar.code}
+                        </td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-slate-300">
+                          {suppliers ? getSupplierName(suppliers, bar.supplierId) : '—'}
+                        </td>
+                        {purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.grossWeight)}</td>
+                        {!purityFirst && <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-blue-300">{bar.ley != null ? `${formatNumber(bar.ley, 2)}` : '\u2014'}</td>}
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.analytical, 1)}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.expected, 1)}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right text-xs sm:text-sm font-mono text-slate-100">{formatNumber(bar.recovered, 1)}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-3 whitespace-nowrap text-right">
+                          <span className={`inline-block px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${
+                            bar.available
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {bar.available ? 'Disponible' : 'En Proceso'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                ))}
+              </>
             )}
           </tbody>
         </table>

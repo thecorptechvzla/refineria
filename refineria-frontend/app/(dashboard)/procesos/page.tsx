@@ -1270,7 +1270,7 @@ export default function ProcesosPage() {
                 onClick={() => setFilterSelectOpen(!filterSelectOpen)}
                 className="w-full sm:w-auto px-3 py-2 text-xs font-medium uppercase tracking-widest bg-blue-500/5 border border-blue-500/20 text-slate-300 hover:border-blue-500/40 focus:outline-none focus:border-blue-500/50 text-left flex items-center justify-between gap-3 min-w-[200px]"
               >
-                <span className="truncate">{filterSupplierId === 'all' ? 'Todos los clientes' : suppliers?.find((s) => s.id === filterSupplierId)?.name}</span>
+                <span className="truncate">{filterSupplierId === 'all' ? 'Todos los proveedores' : suppliers?.find((s) => s.id === filterSupplierId)?.name}</span>
                 <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${filterSelectOpen ? 'rotate-180' : ''}`} />
               </button>
               {filterSelectOpen && (
@@ -1278,7 +1278,7 @@ export default function ProcesosPage() {
                   <li
                     className={`px-3 py-2.5 text-xs font-medium uppercase tracking-widest cursor-pointer ${filterSupplierId === 'all' ? 'text-gold-400 bg-blue-500/10' : 'text-slate-300 hover:bg-blue-500/10'}`}
                     onClick={() => { setFilterSupplierId('all'); setFilterSelectOpen(false); }}
-                  >Todos los clientes</li>
+                  >Todos los proveedores</li>
                   {suppliers?.map((s) => (
                     <li
                       key={s.id}
