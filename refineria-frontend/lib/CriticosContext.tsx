@@ -144,90 +144,15 @@ function now(): string {
 
 function buildDefaultState(): CriticosState {
   return {
-    quimicos: [
-      { id: '1', name: 'Ácido Clorhídrico', unit: 'Lts', initialStock: 6235, ajuste: 499, dailyConsumption: 216, minimum: 860, history: [
-        { date: '28/05', v: 216 }, { date: '29/05', v: 216 }, { date: '30/05', v: 216 }, { date: '31/05', v: 216 },
-        { date: '01/06', v: 216 }, { date: '02/06', v: 216 }, { date: '03/06', v: 216 }, { date: '04/06', v: 216 },
-        { date: '05/06', v: 216 }, { date: '06/06', v: 216 }, { date: '07/06', v: 216 }, { date: '08/06', v: 216 },
-        { date: '09/06', v: 216 }, { date: '10/06', v: 216 }, { date: '11/06', v: 216 }, { date: '12/06', v: 216 },
-        { date: '13/06', v: 216 }, { date: '14/06', v: 216 }, { date: '15/06', v: 216 }, { date: '16/06', v: 216 },
-        { date: '17/06', v: 216 }, { date: '18/06', v: 216 }, { date: '19/06', v: 216 },
-        { date: '20/06', v: 216 }, { date: '21/06', v: 216 }, { date: '22/06', v: 216 }, { date: '23/06', v: 216 },
-      ]},
-      { id: '2', name: 'Ácido Nítrico', unit: 'Lts', initialStock: 3510, ajuste: -380, dailyConsumption: 120, minimum: 500, history: [
-        { date: '28/05', v: 120 }, { date: '29/05', v: 102 }, { date: '30/05', v: 102 }, { date: '31/05', v: 102 },
-        { date: '01/06', v: 102 }, { date: '02/06', v: 72 }, { date: '03/06', v: 72 }, { date: '04/06', v: 72 },
-        { date: '05/06', v: 72 }, { date: '06/06', v: 72 }, { date: '07/06', v: 72 }, { date: '08/06', v: 72 },
-        { date: '09/06', v: 72 }, { date: '10/06', v: 72 }, { date: '11/06', v: 72 }, { date: '12/06', v: 72 },
-        { date: '13/06', v: 72 }, { date: '14/06', v: 72 }, { date: '15/06', v: 72 }, { date: '16/06', v: 72 },
-        { date: '17/06', v: 72 }, { date: '18/06', v: 72 }, { date: '19/06', v: 72 }, { date: '20/06', v: 72 },
-        { date: '21/06', v: 72 }, { date: '22/06', v: 72 }, { date: '23/06', v: 72 },
-      ]},
-      { id: '3', name: 'Metabisulfito', unit: 'kg', initialStock: 1625, ajuste: 2883, dailyConsumption: 75, minimum: 300, history: [
-        { date: '28/05', v: 75 }, { date: '29/05', v: 75 }, { date: '30/05', v: 74 }, { date: '31/05', v: 75 },
-        { date: '01/06', v: 72 }, { date: '02/06', v: 72 }, { date: '03/06', v: 72 }, { date: '04/06', v: 72 },
-        { date: '05/06', v: 72 }, { date: '06/06', v: 72 }, { date: '07/06', v: 72 }, { date: '08/06', v: 72 },
-        { date: '09/06', v: 72 }, { date: '10/06', v: 72 }, { date: '11/06', v: 72 }, { date: '12/06', v: 72 },
-        { date: '13/06', v: 72 }, { date: '14/06', v: 72 }, { date: '15/06', v: 72 }, { date: '16/06', v: 72 },
-        { date: '17/06', v: 72 }, { date: '18/06', v: 72 }, { date: '19/06', v: 72 }, { date: '20/06', v: 72 },
-        { date: '21/06', v: 72 }, { date: '22/06', v: 72 }, { date: '23/06', v: 72 },
-      ]},
-      { id: '4', name: 'Urea', unit: 'kg', initialStock: 5900, ajuste: 40, dailyConsumption: 72, minimum: 600, history: [
-        { date: '28/05', v: 70 }, { date: '29/05', v: 72 }, { date: '30/05', v: 72 }, { date: '31/05', v: 72 },
-        { date: '01/06', v: 72 }, { date: '02/06', v: 72 }, { date: '03/06', v: 72 }, { date: '04/06', v: 72 },
-        { date: '05/06', v: 72 }, { date: '06/06', v: 72 }, { date: '07/06', v: 42 }, { date: '08/06', v: 72 },
-        { date: '09/06', v: 72 }, { date: '10/06', v: 72 }, { date: '11/06', v: 72 }, { date: '12/06', v: 72 },
-        { date: '13/06', v: 72 }, { date: '14/06', v: 72 }, { date: '15/06', v: 72 }, { date: '16/06', v: 72 },
-        { date: '17/06', v: 72 }, { date: '18/06', v: 72 }, { date: '19/06', v: 72 }, { date: '20/06', v: 72 },
-        { date: '21/06', v: 72 }, { date: '22/06', v: 72 }, { date: '23/06', v: 72 },
-      ]},
-      { id: '5', name: 'Soda Caustica (Lts)', unit: 'Lts', initialStock: 350, ajuste: 0, dailyConsumption: 0, minimum: 120, history: [] },
-      { id: '6', name: 'Soda Caustica (Kg)', unit: 'Kg', initialStock: 1800, ajuste: 4, dailyConsumption: 0, minimum: 250, history: [] },
-      { id: '7', name: 'Amoniaco', unit: 'Lts', initialStock: 1880, ajuste: 74, dailyConsumption: 60, minimum: 500, history: [
-        { date: '28/05', v: 60 }, { date: '29/05', v: 60 }, { date: '30/05', v: 54 }, { date: '31/05', v: 60 },
-        { date: '01/06', v: 60 }, { date: '02/06', v: 60 }, { date: '03/06', v: 60 }, { date: '04/06', v: 60 },
-        { date: '05/06', v: 60 }, { date: '06/06', v: 60 }, { date: '07/06', v: 60 }, { date: '08/06', v: 60 },
-        { date: '09/06', v: 60 }, { date: '10/06', v: 60 }, { date: '11/06', v: 60 }, { date: '12/06', v: 60 },
-        { date: '13/06', v: 60 }, { date: '14/06', v: 60 }, { date: '15/06', v: 60 }, { date: '16/06', v: 60 },
-        { date: '17/06', v: 60 }, { date: '18/06', v: 60 }, { date: '19/06', v: 60 }, { date: '20/06', v: 60 },
-        { date: '21/06', v: 60 }, { date: '22/06', v: 60 }, { date: '23/06', v: 60 },
-      ]},
-      { id: '8', name: 'Alcohol Etilico', unit: 'Lts', initialStock: 190, ajuste: -70, dailyConsumption: 4, minimum: 40, history: [
-        { date: '28/05', v: 4 }, { date: '29/05', v: 0 }, { date: '30/05', v: 4 }, { date: '31/05', v: 0 },
-        { date: '01/06', v: 4 }, { date: '02/06', v: 0 }, { date: '03/06', v: 0 }, { date: '04/06', v: 20 },
-        { date: '09/06', v: 8 },
-      ]},
-    ],
-    gases: [
-      { id: '1', name: 'Propano', full: 1, inUse: 2, available: 1 },
-      { id: '2', name: 'Oxígeno', full: 0, inUse: 1, available: 7 },
-      { id: '3', name: 'Argón', full: 0, inUse: 1, available: 4 },
-    ],
-    combustible: {
-      initialAmount: 21449,
-      log: [
-        { date: '01/06/26', consumption: 3000 },
-        { date: '02/06/26', consumption: 473 },
-        { date: '05/06/26', consumption: 2050 },
-        { date: '08/06/26', consumption: 2046 },
-        { date: '13/06/26', consumption: 1000 },
-        { date: '15/06/26', consumption: 1000 },
-        { date: '19/06/26', consumption: 3813 },
-        { date: '21/06/26', consumption: 1000 },
-        { date: '23/06/26', consumption: 2000 },
-      ],
-    },
+    quimicos: [],
+    gases: [],
+    combustible: { initialAmount: 0, log: [] },
     historial: [],
-    novedades: [
-      { id: '1', equipo: 'Generador del campamento', diagnostico: 'No encendía, se reemplazó el módulo EIM, queda corregida la falla. El radiador está totalmente tapado con peluza (se debe lavar externamente). La velocidad del motor no es estable, la bomba de inyección requiere servicio. Ruido irregular en el motor (será necesario desmontar la cámara para evaluar).', accion: 'Ya está en manos de Nelson desde el sábado 20/06/2026.' },
-      { id: '2', equipo: 'Extractor', diagnostico: 'Persisten las rupturas de correas por falla en diseño de poleas.', accion: 'En espera de que baje equipo de Contreras para corregir falla.' },
-      { id: '3', equipo: 'Horno azul grande', diagnostico: 'Presenta falla en la bobina. Al parecer no es 100% cobre — las tuberías que están vendiendo tienen aleación y eso afecta la inducción.', accion: 'Hoy terminaron de entregar la otra bobina.' },
-      { id: '4', equipo: 'Casting bar', diagnostico: 'Presenta goteo interno (sudoración en las paredes). No se pudo hacer prueba por falla en el generador grande por el sensor de presión de aceite y que estaban en uso los hornos por fundición.', accion: 'Pendiente de reprogramar prueba.' },
-    ],
+    novedades: [],
   };
 }
 
-const STORAGE_KEY = 'goldtrack_criticos';
+const STORAGE_KEY = 'goldtrack_criticos_v2';
 
 /* ───── Context ───── */
 

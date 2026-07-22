@@ -30,19 +30,6 @@ function autonomyColor(days: number | null): { text: string; bar: string; label:
   return { text: 'text-emerald-400', bar: 'bg-emerald-500', label: 'Estable', icon: 'safe' };
 }
 
-function generateMockTrend(baseValue: number, length: number, volatility = 0.18): { v: number }[] {
-  const trend: { v: number }[] = [];
-  for (let i = 0; i < length; i++) {
-    const ratio = length > 1 ? i / (length - 1) : 0;
-    const curveFactor = Math.sin(Math.PI * ratio);
-    const dip = 0.85 + 0.15 * curveFactor;
-    const val = baseValue * dip;
-    const jitter = val * (Math.random() - 0.5) * volatility;
-    trend.push({ v: Math.round(Math.max(1, val + jitter) * 10) / 10 });
-  }
-  return trend;
-}
-
 /* ───── Mini KPI Card ───── */
 
 function KpiCard({
@@ -154,25 +141,15 @@ export function CriticosQuickView({ onClose }: { onClose: () => void }) {
       .sort((a, b) => (a.daysOfAutonomy ?? 0) - (b.daysOfAutonomy ?? 0));
   }, [quimicosActivos]);
 
-  const autonomySparkline = useMemo(() => {
-    if (minAutonomy === null) return [];
-    return generateMockTrend(minAutonomy, 7);
-  }, [minAutonomy]);
-
-  const criticosSparkline = useMemo(() => {
-    return criticosBajos.length > 0 ? generateMockTrend(criticosBajos.length, 7) : [];
-  }, [criticosBajos.length]);
-
-  const gasesSparkline = useMemo(() => {
-    const total = gases.reduce((s, g) => s + g.full + g.inUse + g.available, 0);
-    return total > 0 ? generateMockTrend(total, 7) : [];
-  }, [gases]);
+  const autonomySparkline: { v: number }[] = [];
+  const criticosSparkline: { v: number }[] = [];
+  const gasesSparkline: { v: number }[] = [];
 
   const combustibleSparkline = useMemo(() => {
     if (combustible.log.length >= 3) {
       return combustible.log.slice(-7).map((entry) => ({ v: entry.remaining }));
     }
-    return generateMockTrend(combustible.currentStock, 7);
+    return [];
   }, [combustible]);
 
   const [activeSubModal, setActiveSubModal] = useState<'autonomia' | 'criticos' | 'gases' | 'combustible' | null>(null);
